@@ -1,0 +1,8 @@
+# Version: 0.1
+# Request low-level control authority. m20_commander is the only server.
+uint8 tier                # ControlAuthority constants
+string requester
+uint32 lease_ms           # requested lease duration
+---
+bool granted
+string reason

@@ -1,0 +1,25 @@
+<!-- M20 test arena: vendor M20 model + SPACED obstacles + a target marker.
+     Uncluttered central area for movement benchmarks; obstacles for Phase-3 nav;
+     a 0.30 m pipe off to the side for Phase-8 jump_pipe. Sits next to M20.xml so the
+     <include> + ../meshes paths resolve (setup_sim.sh installs it). -->
+<mujoco model="m20_test_arena">
+  <include file="M20.xml"/>
+  <worldbody>
+    <!-- goal/target marker (visual only, no collision) -->
+    <site name="target" pos="4 3 0.10" size="0.25 0.10" rgba="0.2 0.9 0.2 0.5" type="cylinder"/>
+    <!-- benchmark waypoint course WP1..WP5 (must match tools/course_follower.py) -->
+    <site name="wp1" pos="2.0  0.0  0.05" size="0.15 0.05" type="cylinder" rgba="0.95 0.8 0.1 0.7"/>
+    <site name="wp2" pos="2.0  2.5  0.05" size="0.15 0.05" type="cylinder" rgba="0.95 0.8 0.1 0.7"/>
+    <site name="wp3" pos="-1.5 2.5  0.05" size="0.15 0.05" type="cylinder" rgba="0.95 0.8 0.1 0.7"/>
+    <site name="wp4" pos="-1.5 -1.0 0.05" size="0.15 0.05" type="cylinder" rgba="0.95 0.8 0.1 0.7"/>
+    <site name="wp5" pos="0.5  -1.0 0.05" size="0.15 0.05" type="cylinder" rgba="0.95 0.8 0.1 0.7"/>
+    <!-- spaced obstacles (spread over ~10 m, clean center) -->
+    <geom name="block_a" type="box" pos="3.0 -2.0 0.20" size="0.25 0.25 0.20" rgba="0.80 0.35 0.30 1"/>
+    <geom name="block_b" type="box" pos="-3.0 2.0 0.20" size="0.25 0.25 0.20" rgba="0.80 0.35 0.30 1"/>
+    <geom name="block_c" type="box" pos="5.0 -1.0 0.25" size="0.30 0.30 0.25" rgba="0.80 0.35 0.30 1"/>
+    <!-- one 0.30 m pipe, off to the side (jump_pipe, Phase 8) -->
+    <geom name="pipe_1" type="cylinder" fromto="6.0 -3.0 0.15  6.0 3.0 0.15" size="0.15" rgba="0.30 0.55 0.85 1"/>
+    <!-- a low step / curb -->
+    <geom name="step" type="box" pos="-4.0 -3.0 0.06" size="0.60 0.60 0.06" rgba="0.50 0.50 0.55 1"/>
+  </worldbody>
+</mujoco>

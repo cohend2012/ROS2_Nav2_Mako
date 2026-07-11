@@ -1,0 +1,17 @@
+# Host-level watchdog: systemd keeps the compose stack itself alive.
+# Install: sudo cp deploy/m20-stack.service /etc/systemd/system/ && sudo systemctl enable --now m20-stack
+[Unit]
+Description=M20 autonomy stack (docker compose)
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/m20_autonomy_ws
+ExecStart=/usr/bin/docker compose -f docker/compose.yaml up -d --remove-orphans
+ExecStop=/usr/bin/docker compose -f docker/compose.yaml down
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

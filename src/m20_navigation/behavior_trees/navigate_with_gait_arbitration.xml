@@ -1,0 +1,6 @@
+<!-- Phase-5 placeholder: NavigateToPose BT with a GaitArbitration decorator that
+     requests LEGGED over stair/rubble terrain classes and WHEELED on flat.
+     Custom BT nodes will live in this package. -->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree"/>
+</root>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>m20_locomotion_bridge</name>
+  <version>0.1.0</version>
+  <description>Sole gateway to the Deep Robotics SDK; cmd_vel + gait requests with watchdog.</description>
+  <maintainer email="todo@example.com">M20 Autonomy Team</maintainer>
+  <license>Apache-2.0</license>
+  <depend>rclpy</depend>
+  <depend>m20_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <exec_depend>drdds</exec_depend>  <!-- sim backend only (ADR-015); lazy-imported -->
+
+  <export><build_type>ament_python</build_type></export>
+</package>

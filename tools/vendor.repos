@@ -1,0 +1,35 @@
+# vcs import file for pinned external dependencies (ADR-003).
+# Pin every entry to a COMMIT HASH, not a branch — the vendor stack moves fast.
+# Usage: vcs import src/vendor < tools/vendor.repos
+#
+# Hashes captured 2026-07-07 from https://github.com/DeepRoboticsLab (rev 6).
+# Re-pin deliberately (contracts/decision process, §3) — do NOT float to a branch.
+repositories:
+  # M20 low-level deploy SDK: joint DDS interface (drdds) + ONNX policy runner +
+  # MuJoCo model & ROS 2 sim. Basis for the bridge's TIER_POLICY channel (ADR-008/015).
+  # Only src/M20_sdk_deploy is M20-relevant; the repo also carries Lite3 code.
+  vendor/sdk_deploy:
+    type: git
+    url: https://github.com/DeepRoboticsLab/sdk_deploy.git
+    version: 80e3d40084c4ed151ba6f88b0d55cf1d480aa45e
+  # RL training front end (Isaac Lab 2.3.2 / Isaac Sim 5.1), M20 supported, ONNX
+  # export. Phase-8 policy source (ADR-008). Updates frequently — pin hard.
+  vendor/rl_training:
+    type: git
+    url: https://github.com/DeepRoboticsLab/rl_training.git
+    version: 4c36d68cd54444797cdb8252c31c9dda0b3b45af
+  # URDF / model files (rviz, TF, description reuse).
+  vendor/deep_robotics_model:
+    type: git
+    url: https://github.com/DeepRoboticsLab/deep_robotics_model.git
+    version: 7b2522800d3d6ca6f22124e43a0787f6b6e91e7e
+  # SLAM candidate A (OQ-2): FAST-LIVO2 lidar-inertial-visual odometry, DR fork.
+  vendor/fast_livo2:
+    type: git
+    url: https://github.com/DeepRoboticsLab/fast-livo2-deep-robotics.git
+    version: 794ffee5b21465977ba77a503c2d3ff0a2c15363
+  # SLAM candidate B (OQ-2): Lightning-LM lidar localization & mapping, DR fork.
+  vendor/lightning_lm:
+    type: git
+    url: https://github.com/DeepRoboticsLab/lightning-lm-deep-robotics.git
+    version: 31ce5190bb2dc9c8be99a572fe2413380ad60cd6

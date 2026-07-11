@@ -1,0 +1,82 @@
+<svg width="820" height="880" viewBox="0 0 680 730" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>M20 autonomy stack architecture</title>
+<desc>Command path flows down the left: command interfaces to commander to navigator to locomotion bridge, crossing a dashed vendor boundary into the M20 onboard motion control. Sensing path flows up the right: vendor sensors to perception to state estimator, which feeds pose and costmaps into the navigator.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<style>
+text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 500; }
+.ts { font-size: 12px; font-weight: 400; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; }
+.purple rect { fill: #EEEDFE; stroke: #534AB7; stroke-width: 0.75; }
+.purple .th { fill: #3C3489; }
+.purple .ts { fill: #534AB7; }
+.gray rect { fill: #F1EFE8; stroke: #5F5E5A; stroke-width: 0.75; }
+.gray .th { fill: #444441; }
+.gray .ts { fill: #5F5E5A; }
+.muted { fill: #5F5E5A; }
+</style>
+</defs>
+<rect x="0" y="0" width="680" height="730" fill="#FFFFFF"/>
+
+<g class="purple">
+  <rect x="170" y="28" width="340" height="56" rx="8"/>
+  <text class="th" x="340" y="48" text-anchor="middle" dominant-baseline="central">Command interfaces</text>
+  <text class="ts" x="340" y="66" text-anchor="middle" dominant-baseline="central">Operator UI, AI agent, rosbridge</text>
+</g>
+
+<g class="purple">
+  <rect x="50" y="130" width="260" height="56" rx="8"/>
+  <text class="th" x="180" y="150" text-anchor="middle" dominant-baseline="central">Commander</text>
+  <text class="ts" x="180" y="168" text-anchor="middle" dominant-baseline="central">Modes, arming, failsafes</text>
+</g>
+
+<g class="purple">
+  <rect x="50" y="240" width="260" height="56" rx="8"/>
+  <text class="th" x="180" y="260" text-anchor="middle" dominant-baseline="central">Navigator</text>
+  <text class="ts" x="180" y="278" text-anchor="middle" dominant-baseline="central">Nav2 planning, behavior trees</text>
+</g>
+
+<g class="purple">
+  <rect x="420" y="240" width="230" height="56" rx="8"/>
+  <text class="th" x="535" y="260" text-anchor="middle" dominant-baseline="central">State estimator</text>
+  <text class="ts" x="535" y="278" text-anchor="middle" dominant-baseline="central">EKF sensor fusion</text>
+</g>
+
+<g class="purple">
+  <rect x="420" y="360" width="230" height="56" rx="8"/>
+  <text class="th" x="535" y="380" text-anchor="middle" dominant-baseline="central">Perception</text>
+  <text class="ts" x="535" y="398" text-anchor="middle" dominant-baseline="central">SLAM, costmaps, detection</text>
+</g>
+
+<g class="purple">
+  <rect x="50" y="460" width="260" height="56" rx="8"/>
+  <text class="th" x="180" y="480" text-anchor="middle" dominant-baseline="central">Locomotion bridge</text>
+  <text class="ts" x="180" y="498" text-anchor="middle" dominant-baseline="central">cmd_vel + gait requests</text>
+</g>
+
+<g class="gray">
+  <rect x="50" y="600" width="600" height="56" rx="8"/>
+  <text class="th" x="350" y="620" text-anchor="middle" dominant-baseline="central">M20 onboard motion control + sensors</text>
+  <text class="ts" x="350" y="638" text-anchor="middle" dominant-baseline="central">Deep Robotics — do not modify</text>
+</g>
+
+<path d="M340 84 V104 H180 V126" fill="none" class="arr" marker-end="url(#arrow)"/>
+<line x1="180" y1="186" x2="180" y2="236" class="arr" marker-end="url(#arrow)"/>
+<line x1="180" y1="296" x2="180" y2="456" class="arr" marker-end="url(#arrow)"/>
+<line x1="180" y1="516" x2="180" y2="596" class="arr" marker-end="url(#arrow)"/>
+<line x1="535" y1="596" x2="535" y2="420" class="arr" marker-end="url(#arrow)"/>
+<line x1="535" y1="356" x2="535" y2="300" class="arr" marker-end="url(#arrow)"/>
+<text class="ts muted" x="365" y="254" text-anchor="middle">pose, costmaps</text>
+<line x1="416" y1="268" x2="314" y2="268" class="arr" marker-end="url(#arrow)"/>
+
+<line x1="40" y1="558" x2="650" y2="558" stroke="#888780" stroke-width="0.75" stroke-dasharray="6 5"/>
+<text class="ts muted" x="350" y="542" text-anchor="middle" font-style="italic">vendor boundary — do not cross</text>
+
+<g class="purple"><rect x="170" y="690" width="14" height="14" rx="3"/></g>
+<text class="ts muted" x="192" y="697" dominant-baseline="central">Modules we build</text>
+<g class="gray"><rect x="400" y="690" width="14" height="14" rx="3"/></g>
+<text class="ts muted" x="422" y="697" dominant-baseline="central">Deep Robotics</text>
+</svg>
