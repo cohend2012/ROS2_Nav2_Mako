@@ -1,0 +1,26 @@
+<!-- M20 outdoor oil & gas field: open pad with GROUND PIPELINES, storage tanks, a pipe
+     rack, and wellhead/valve assemblies. Realistic inspection environment (no walls).
+     Sits next to M20.xml so <include> + ../meshes resolve (setup_sim.sh installs it). -->
+<mujoco model="m20_oil_gas_field">
+  <include file="M20.xml"/>
+  <worldbody>
+    <!-- ground pipelines (low horizontal cylinders lying on the pad) -->
+    <geom name="pipe_run_a" type="cylinder" fromto="-8 -3 0.15   8 -3 0.15" size="0.15" rgba="0.55 0.55 0.58 1"/>
+    <geom name="pipe_run_b" type="cylinder" fromto="-8 -3.4 0.15  8 -3.4 0.15" size="0.15" rgba="0.50 0.50 0.55 1"/>
+    <geom name="pipe_cross" type="cylinder" fromto="2 -3.4 0.15  2 3 0.15" size="0.15" rgba="0.55 0.55 0.58 1"/>
+    <!-- storage tanks (large vertical cylinders) -->
+    <geom name="tank1" type="cylinder" pos="-5 4 1.4" size="1.4 1.4" rgba="0.80 0.78 0.70 1"/>
+    <geom name="tank2" type="cylinder" pos="-1 4.5 1.4" size="1.4 1.4" rgba="0.80 0.78 0.70 1"/>
+    <!-- pipe rack: horizontal pipes elevated on posts -->
+    <geom name="rack_post1" type="box" pos="5 2 0.5" size="0.1 0.1 0.5" rgba="0.4 0.4 0.42 1"/>
+    <geom name="rack_post2" type="box" pos="7 2 0.5" size="0.1 0.1 0.5" rgba="0.4 0.4 0.42 1"/>
+    <geom name="rack_pipe1" type="cylinder" fromto="4.5 2 0.9  7.5 2 0.9" size="0.12" rgba="0.6 0.6 0.62 1"/>
+    <geom name="rack_pipe2" type="cylinder" fromto="4.5 2 1.15 7.5 2 1.15" size="0.12" rgba="0.6 0.6 0.62 1"/>
+    <!-- wellhead / valve assembly (box base + valve stacks) -->
+    <geom name="well_base" type="box" pos="6 -1 0.3" size="0.4 0.4 0.3" rgba="0.75 0.3 0.25 1"/>
+    <geom name="well_stack" type="cylinder" pos="6 -1 0.85" size="0.12 0.35" rgba="0.75 0.3 0.25 1"/>
+    <!-- a couple of scattered equipment skids (boxes) -->
+    <geom name="skid1" type="box" pos="-4 -1 0.35" size="0.5 0.7 0.35" rgba="0.5 0.55 0.6 1"/>
+    <geom name="skid2" type="box" pos="0 1.5 0.3" size="0.4 0.4 0.3" rgba="0.5 0.55 0.6 1"/>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,22 @@
+<!-- M20 mapping arena: a bounded room (walls) with pipes + boxes, for proper SLAM.
+     Walls give continuous LiDAR returns so slam_toolbox builds a complete map.
+     Sits next to M20.xml so <include> + ../meshes resolve (setup_sim.sh installs it). -->
+<mujoco model="m20_mapping_arena">
+  <include file="M20.xml"/>
+  <worldbody>
+    <!-- room perimeter walls (~12 x 9 m, 0.8 m tall) -->
+    <geom name="wall_n" type="box" pos="0  4.5 0.4" size="6.0 0.1 0.4" rgba="0.60 0.60 0.66 1"/>
+    <geom name="wall_s" type="box" pos="0 -4.5 0.4" size="6.0 0.1 0.4" rgba="0.60 0.60 0.66 1"/>
+    <geom name="wall_e" type="box" pos="6.0  0  0.4" size="0.1 4.5 0.4" rgba="0.60 0.60 0.66 1"/>
+    <geom name="wall_w" type="box" pos="-6.0 0  0.4" size="0.1 4.5 0.4" rgba="0.60 0.60 0.66 1"/>
+    <!-- an interior divider wall (makes the map interesting) -->
+    <geom name="wall_mid" type="box" pos="1.5 1.5 0.4" size="0.1 2.0 0.4" rgba="0.60 0.60 0.66 1"/>
+    <!-- interior box obstacles -->
+    <geom name="box1" type="box" pos="-3.0  2.5 0.3" size="0.4 0.4 0.3" rgba="0.80 0.35 0.30 1"/>
+    <geom name="box2" type="box" pos="-2.5 -2.5 0.3" size="0.4 0.4 0.3" rgba="0.80 0.35 0.30 1"/>
+    <geom name="box3" type="box" pos="3.5 -2.5 0.3" size="0.5 0.5 0.3" rgba="0.80 0.35 0.30 1"/>
+    <!-- pipes (0.4 m diameter) -->
+    <geom name="pipe1" type="cylinder" fromto="-4.5 -1.0 0.2  -2.5 -1.0 0.2" size="0.2" rgba="0.30 0.55 0.85 1"/>
+    <geom name="pipe2" type="cylinder" fromto="4.0 1.0 0.2  4.0 3.5 0.2" size="0.2" rgba="0.30 0.55 0.85 1"/>
+  </worldbody>
+</mujoco>

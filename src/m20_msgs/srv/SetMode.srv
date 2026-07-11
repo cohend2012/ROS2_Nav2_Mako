@@ -1,0 +1,7 @@
+# Version: 0.1
+# Request a mode change. m20_commander is the only server.
+uint8 mode                # RobotMode constants
+string requester
+---
+bool accepted
+string reason

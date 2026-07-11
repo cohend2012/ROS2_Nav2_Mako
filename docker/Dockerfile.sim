@@ -1,0 +1,15 @@
+# M20 MuJoCo sim image = stack image (ROS 2 Humble + drdds) + MuJoCo + OpenGL for WSLg.
+# Dev/test tool, NOT deployed to the robot. Model is mounted at runtime (M20_MJCF).
+FROM m20_autonomy:latest
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libgl1 libglx-mesa0 libgl1-mesa-dri libglx0 \
+      libegl1 libegl-mesa0 libgbm1 libglfw3 libosmesa6 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir mujoco
+
+COPY tools/mujoco_sim.py /mujoco_sim.py
+ENV M20_SIM_GUI=1
+# Entry via the base image's entrypoint (sources ROS + /ws overlay incl. drdds).
+CMD ["python3", "/mujoco_sim.py"]

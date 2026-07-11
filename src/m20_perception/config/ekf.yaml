@@ -1,0 +1,3 @@
+# Phase-2 placeholder for robot_localization.
+# Planned fusion: vendor odom (from bridge) + IMU + SLAM pose (OQ-2: vendor SLAM
+# vs FAST-LIO2 vs Isaac ROS VSLAM). TF: map -> odom -> base_link.

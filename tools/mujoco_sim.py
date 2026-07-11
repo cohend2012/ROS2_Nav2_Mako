@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""m20_mujoco_sim — minimal MuJoCo sim of the M20 on the ROS 2 bus (drdds interface).
+
+Faithful stand-in for the vendor low-level sim (ADR-002/015): publishes
+JointsData (/JOINTS_DATA) + ImuData (/IMU_DATA) at 200 Hz, subscribes JointsDataCmd
+(/JOINTS_CMD). Per joint it applies the vendor control law
+    tau = kp*(pos* - q) + kd*(vel* - qd) + tau_ff       (clamped to actuator range)
+Wheels (joint index %4==3) use kp=0 -> velocity/torque control, legs hold position.
+
+Env:  M20_MJCF=<path to M20.xml>   M20_SIM_GUI=1|0
+"""
+import os, math
+import numpy as np
+import mujoco
+import rclpy
+from rclpy.node import Node
+from drdds.msg import JointsData, JointsDataCmd, ImuData
+from nav_msgs.msg import Odometry            # ground-truth pose ("perfect estimator")
+from sensor_msgs.msg import LaserScan        # simulated LiDAR (/scan)
+from geometry_msgs.msg import TransformStamped
+from tf2_ros import TransformBroadcaster     # odom->base_link TF (for SLAM/Nav2)
+
+LIDAR_N = 360          # rays per scan (1 deg) — denser for a fuller SLAM map
+LIDAR_MIN, LIDAR_MAX = 0.6, 12.0
+LIDAR_Z = 0.35         # sensor height above ground
+
+NJ = 16
+WHEELS = (3, 7, 11, 15)
+# Standing pose (found empirically; body ~0.46 m, level). Per leg [hipx, hipy, knee, wheel].
+# NOTE: the vendor JOINT_INIT (knee≈2.76≈limit) is a FOLDED start pose, not standing.
+STANCE = np.array([
+    0.0, -0.7,  1.4, 0.0,   # FL
+    0.0, -0.7,  1.4, 0.0,   # FR
+    0.0,  0.7, -1.4, 0.0,   # HL
+    0.0,  0.7, -1.4, 0.0])  # HR
+MJCF = os.environ["M20_MJCF"]
+GUI = os.environ.get("M20_SIM_GUI", "1") == "1"
+SIM_HZ = 500.0
+PUB_HZ = 200.0
+
+
+def quat_to_rpy(w, x, y, z):
+    sinr, cosr = 2 * (w * x + y * z), 1 - 2 * (x * x + y * y)
+    roll = math.atan2(sinr, cosr)
+    sinp = 2 * (w * y - z * x)
+    pitch = math.copysign(math.pi / 2, sinp) if abs(sinp) >= 1 else math.asin(sinp)
+    siny, cosy = 2 * (w * z + x * y), 1 - 2 * (y * y + z * z)
+    return roll, pitch, math.atan2(siny, cosy)
+
+
+class Sim(Node):
+    def __init__(self):
+        super().__init__("m20_mujoco_sim")
+        self.m = mujoco.MjModel.from_xml_path(MJCF)
+        self.m.opt.timestep = 1.0 / SIM_HZ
+        # Wheel motor rotor inertia: real motors/gearboxes have it; without it the
+        # velocity controller chatters (±20 rad/s) and shakes the legs. Damps that.
+        for w in WHEELS:
+            self.m.dof_armature[6 + w] = 0.03
+        self.d = mujoco.MjData(self.m)
+        # Spawn at the vendor standing stance, auto-dropped so the lowest geom rests ~on
+        # the ground (avoids a hard fall on start). qpos: [xyz, quat(wxyz), 16 joints].
+        self.d.qpos[:] = 0.0
+        self.d.qpos[3] = 1.0                      # unit quaternion (w=1)
+        self.d.qpos[7:7 + NJ] = STANCE
+        self.d.qpos[2] = 1.0                      # lift high, then measure
+        mujoco.mj_forward(self.m, self.d)
+        self.d.qpos[2] = 1.0 - float(self.d.geom_xpos[:, 2].min()) + 0.03
+        mujoco.mj_forward(self.m, self.d)
+        self.lo = self.m.actuator_ctrlrange[:, 0].copy()
+        self.hi = self.m.actuator_ctrlrange[:, 1].copy()
+        # default command = hold the standing stance (legs stiff PD, wheels free).
+        self.kp = np.full(NJ, 200.0)
+        self.kd = np.full(NJ, 4.0)
+        self.pos = STANCE.copy()
+        self.vel = np.zeros(NJ)
+        self.tau = np.zeros(NJ)
+        for w in WHEELS:
+            self.kp[w] = 0.0
+        self.jd_pub = self.create_publisher(JointsData, "/JOINTS_DATA", 10)
+        self.imu_pub = self.create_publisher(ImuData, "/IMU_DATA", 10)
+        self.odom_pub = self.create_publisher(Odometry, "/odom", 10)
+        self.gps_pub = self.create_publisher(Odometry, "/gps", 10)   # noisy absolute pos (~5 Hz)
+        self.scan_pub = self.create_publisher(LaserScan, "/scan", 10) # simulated LiDAR (~10 Hz)
+        self.tf_bc = TransformBroadcaster(self)                        # odom->base_link
+        self._geomid = np.zeros(1, np.int32)
+        self._tick = 0
+        self._rng = np.random.default_rng(0)
+        self.create_subscription(JointsDataCmd, "/JOINTS_CMD", self.on_cmd, 10)
+        self.viewer = None
+        if GUI:
+            from mujoco import viewer as mj_viewer   # 'from' avoids shadowing `mujoco`
+            self.viewer = mj_viewer.launch_passive(self.m, self.d)
+        self.substeps = max(1, round(SIM_HZ / PUB_HZ))
+        self.create_timer(1.0 / PUB_HZ, self.tick)
+        self.get_logger().info(
+            f"M20 MuJoCo sim up (GUI={GUI}, nq={self.m.nq}, substeps={self.substeps})")
+
+    def on_cmd(self, msg: JointsDataCmd):
+        for i in range(NJ):
+            j = msg.data.joints_data[i]
+            self.pos[i], self.vel[i] = j.position, j.velocity
+            self.kp[i], self.kd[i], self.tau[i] = j.kp, j.kd, j.torque
+
+    def tick(self):
+        for _ in range(self.substeps):
+            q = self.d.qpos[7:7 + NJ]
+            qd = self.d.qvel[6:6 + NJ]
+            t = self.kp * (self.pos - q) + self.kd * (self.vel - qd) + self.tau
+            self.d.ctrl[:] = np.clip(t, self.lo, self.hi)
+            mujoco.mj_step(self.m, self.d)
+        if self.viewer is not None:
+            if not self.viewer.is_running():
+                raise KeyboardInterrupt
+            self.viewer.sync()
+        self.publish()
+
+    def publish(self):
+        now = self.get_clock().now().to_msg()
+        q = self.d.qpos[7:7 + NJ]
+        qd = self.d.qvel[6:6 + NJ]
+        ctrl = self.d.ctrl
+        jd = JointsData()
+        jd.header.stamp = now
+        for i in range(NJ):
+            e = jd.data.joints_data[i]
+            e.position, e.velocity, e.torque = float(q[i]), float(qd[i]), float(ctrl[i])
+        self.jd_pub.publish(jd)
+        imu = ImuData()
+        imu.header.stamp = now
+        r, p, y = quat_to_rpy(*(self.d.qpos[3:7]))
+        v = imu.data
+        v.roll, v.pitch, v.yaw = float(r), float(p), float(y)
+        v.omega_x, v.omega_y, v.omega_z = (float(x) for x in self.d.qvel[3:6])
+        v.acc_x, v.acc_y, v.acc_z = 0.0, 0.0, 9.81   # placeholder linear accel
+        self.imu_pub.publish(imu)
+        # ground-truth odometry (perfect pose) — for closing the loop before real estimation
+        od = Odometry()
+        od.header.stamp = now
+        od.header.frame_id = "odom"
+        od.child_frame_id = "base_link"
+        px, py, pz = self.d.qpos[0:3]
+        od.pose.pose.position.x = float(px)
+        od.pose.pose.position.y = float(py)
+        od.pose.pose.position.z = float(pz)
+        ow, ox, oy, oz = self.d.qpos[3:7]            # MuJoCo quat is (w,x,y,z)
+        od.pose.pose.orientation.x = float(ox)
+        od.pose.pose.orientation.y = float(oy)
+        od.pose.pose.orientation.z = float(oz)
+        od.pose.pose.orientation.w = float(ow)
+        od.twist.twist.linear.x, od.twist.twist.linear.y = float(self.d.qvel[0]), float(self.d.qvel[1])
+        od.twist.twist.angular.z = float(self.d.qvel[5])
+        self.odom_pub.publish(od)
+        # odom->base_link TF (SLAM/Nav2 place scans against this; slam_toolbox adds map->odom)
+        tf = TransformStamped()
+        tf.header.stamp = now
+        tf.header.frame_id = "odom"
+        tf.child_frame_id = "base_link"
+        tf.transform.translation.x = float(px)
+        tf.transform.translation.y = float(py)
+        tf.transform.translation.z = float(pz)
+        tf.transform.rotation.x = float(ox)
+        tf.transform.rotation.y = float(oy)
+        tf.transform.rotation.z = float(oz)
+        tf.transform.rotation.w = float(ow)
+        self.tf_bc.sendTransform(tf)
+        # simulated GPS: noisy absolute position at ~5 Hz (sensor the real M20 has)
+        self._tick += 1
+        if self._tick % 40 == 0:
+            g = Odometry()
+            g.header.stamp = now
+            g.header.frame_id = "map"
+            g.pose.pose.position.x = float(self.d.qpos[0] + self._rng.normal(0, 0.8))
+            g.pose.pose.position.y = float(self.d.qpos[1] + self._rng.normal(0, 0.8))
+            self.gps_pub.publish(g)
+        if self._tick % 20 == 0:                     # ~10 Hz LiDAR
+            self._publish_scan(now)
+
+    def _publish_scan(self, now):
+        s = LaserScan()
+        s.header.stamp = now
+        s.header.frame_id = "base_link"
+        s.angle_min = -math.pi
+        s.angle_max = math.pi
+        s.angle_increment = 2.0 * math.pi / LIDAR_N
+        s.range_min, s.range_max = LIDAR_MIN, LIDAR_MAX
+        w, x, y, z = self.d.qpos[3:7]
+        yaw = math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
+        origin = np.array([self.d.qpos[0], self.d.qpos[1], LIDAR_Z])
+        ranges = [float("inf")] * LIDAR_N
+        for i in range(LIDAR_N):
+            a = yaw + s.angle_min + i * s.angle_increment
+            vec = np.array([math.cos(a), math.sin(a), 0.0])
+            dist = mujoco.mj_ray(self.m, self.d, origin, vec, None, 1, 1, self._geomid)
+            if LIDAR_MIN < dist < LIDAR_MAX:          # else stays inf (no return / self-hit)
+                ranges[i] = float(dist)
+        s.ranges = ranges
+        self.scan_pub.publish(s)
+
+
+def main():
+    rclpy.init()
+    node = Sim()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

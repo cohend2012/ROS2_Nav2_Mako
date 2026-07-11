@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>m20_missions</name>
+  <version>0.1.0</version>
+  <description>Mission server and AI agent interface. Requests goals; Commander can veto.</description>
+  <maintainer email="todo@example.com">M20 Autonomy Team</maintainer>
+  <license>Apache-2.0</license>
+  <depend>rclpy</depend>
+  <depend>m20_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

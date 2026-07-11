@@ -1,0 +1,67 @@
+# One service per node group; shared host network for DDS discovery.
+# Restart policy + ROS-aware healthchecks = container-level watchdog layer.
+# systemd unit in deploy/ supervises this whole stack (host-level layer).
+x-stack: &stack
+  image: m20_autonomy:latest
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  network_mode: host
+  ipc: host
+  restart: unless-stopped
+
+x-healthcheck: &hc
+  # Must source ROS (rclpy/m20_msgs live in the overlay); CMD bypasses the entrypoint.
+  # Wrap in bash -c: /bin/sh is dash (no `source`), and ROS setup.bash needs bash.
+  test: ["CMD-SHELL", "bash -c 'source /opt/ros/humble/setup.bash && source /ws/install/setup.bash && python3 /healthcheck.py'"]
+  interval: 10s
+  timeout: 6s
+  retries: 3
+  start_period: 20s
+
+services:
+  commander:
+    <<: *stack
+    command: ros2 run m20_commander commander_node
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "HEALTH_NODE=m20_commander"
+    healthcheck: *hc
+
+  locomotion_bridge:
+    <<: *stack
+    command: ros2 run m20_locomotion_bridge bridge_node
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "HEALTH_NODE=m20_locomotion_bridge"
+    healthcheck: *hc
+    # devices/privileged for real robot I/O added once OQ-3 resolves transport
+
+  behavior_engine:
+    <<: *stack
+    command: ros2 run m20_behaviors behavior_engine
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "HEALTH_NODE=m20_behavior_engine"
+    healthcheck: *hc
+
+  mission_server:
+    <<: *stack
+    command: ros2 run m20_missions mission_server
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "HEALTH_NODE=m20_mission_server"
+    healthcheck: *hc
+
+  station_bridge:
+    <<: *stack
+    # ROS 2 launch args use name:=value; only pass robot_id when set (empty = single robot, ADR-014).
+    # $$ escapes compose substitution so the container shell expands ROBOT_ID at runtime.
+    command: 'bash -c "ros2 launch m20_station station_bridge.launch.py $${ROBOT_ID:+robot_id:=$$ROBOT_ID}"'
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "ROBOT_ID=${ROBOT_ID:-}"
+    # no ROS healthcheck: bridges don't publish HealthReport; process-level restart suffices
+
+  # navigation / perception services join here in Phases 2-3 (nav2 bringup, EKF,
+  # SLAM). GPU services on Jetson add: runtime: nvidia  (see OQ-13).

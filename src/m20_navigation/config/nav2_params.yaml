@@ -1,0 +1,3 @@
+# Phase-3 placeholder. Start from Nav2 defaults for a differential-ish base.
+# Decisions pending: controller (MPPI likely), costmap layers (lidar + nvblox),
+# footprint for wheeled vs legged stance. See SECOND_BRAIN.md Phase 3 / OQ-2.
