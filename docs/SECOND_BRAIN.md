@@ -66,7 +66,7 @@ Facts gathered from vendor material and third-party coverage. Verify anything ma
 | Endurance | ~3 h / 15 km unloaded, ~2.5 h / 12 km loaded; hot-swappable battery (~724 Wh) |
 | Payload | 15 kg rated (figures up to 20 kg appear in some coverage — confirm for Pro) |
 | Environmental | IP66, −20 °C to 55 °C |
-| Sensors (built-in) | Dual 96-line LiDARs (360°×90° combined FOV), wide-angle cameras, GPS, lighting |
+| Sensors (built-in) | Dual 96-line LiDARs (360°×90° combined FOV), wide-angle cameras, GPS, lighting (2 bidirectional front/rear LED flashlights for low-light/dark ops; vendor does not publish a lumens rating) |
 | Onboard compute | Industrial processors + NVIDIA Jetson Orin NX class module (reported ~100 TOPS, ~50 Hz onboard SLAM) (unconfirmed exact SKU for Pro) |
 | Built-in autonomy | Vendor SLAM mapping/navigation, omnidirectional obstacle avoidance, point-cloud surround view |
 | Connectivity / expansion | Wi-Fi image transmission, Gigabit Ethernet payload port, USB 3.0, 72 V power out, mounting rails, OTA updates |
