@@ -7,7 +7,7 @@
   - occupancy map          (/map)               -> map.npz
 The gap TRUE vs RAW = accumulated drift; TRUE vs EST staying small = SLAM working.
 """
-import os, time, csv
+import os, time, csv, math
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -31,7 +31,9 @@ class Logger(Node):
         self.create_subscription(OccupancyGrid, "/map", self.on_map, mqos)
         self.tfbuf = Buffer(); self.tfl = TransformListener(self.tfbuf, self)
     def on_true(self, m):
-        self.true.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y))
+        q = m.pose.pose.orientation
+        yaw = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
+        self.true.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y, yaw))
     def on_drift(self, m):
         self.drift.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y))
     def on_plan(self, m):
@@ -58,7 +60,7 @@ def main():
     def dump(name, rows, hdr):
         with open(f"{OUT}/{name}", "w", newline="") as f:
             w = csv.writer(f); w.writerow(hdr); w.writerows(rows)
-    dump("traj_true.csv", n.true, ["t", "x", "y"])
+    dump("traj_true.csv", n.true, ["t", "x", "y", "yaw"])
     dump("traj_drift.csv", n.drift, ["t", "x", "y"])
     dump("traj_est.csv", n.est, ["t", "x", "y"])
     if n.plan:
