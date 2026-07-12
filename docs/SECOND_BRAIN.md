@@ -6,15 +6,19 @@
 
 **Project codename:** `m20_autonomy`
 **Last updated:** 2026-07-07 (rev 6)
-**Status (2026-07-10, honest):** Phase 1 DONE + heavily polished in MuJoCo sim (stand,
+**Status (2026-07-11, honest):** Phase 1 DONE + heavily polished in MuJoCo sim (stand,
 drive, turn/circle/fig-8, watchdog, armature + yaw-rate feedback — all benchmarked/videoed).
 Phase 2 PARTIAL: a *custom* lightweight EKF (wheel+IMU+GPS) live-verified at 0.48 m — NOT
-yet robot_localization, and nav doesn't yet run on it. Phase 3 DEMO-ONLY: real slam_toolbox
-map + a custom A* planner + turn-in-place follower reach a goal in a realistic oil & gas
-field — **but on PERFECT INFO (ground-truth pose + a complete pre-built map), no Nav2, no
-live-SLAM map, no replanning.** Phase 1.5 (Foxglove) skipped (used rendered videos). Behavior
-engine + standup behavior exist early. **Biggest gap: the integrated real-time loop —
-limited-range LiDAR → SLAM map-as-you-go → EKF pose → replanning — is NOT closed.**
+yet robot_localization, and nav doesn't yet run on it. **Phase 3 PLAN A WORKING (rev 35):**
+the PRODUCTION stack — **Nav2** (Regulated Pure Pursuit + rotate-to-heading + NavFn/A*,
+rolling costmaps) + **slam_toolbox** — autonomously navigated the oil & gas field to a
+NavigateToPose goal, threading between skid1/skid2 (real costmap obstacle avoidance,
+live 10 m LiDAR), 0.30 m final error, SLAM map built live. Perception/mapping/planning/
+avoidance/following are ALL real; **localization still fed by ground-truth odom TF**
+(SLAM map→odom ≈ identity) — honest dead-reckoned odom is the next Plan-A step. Config:
+`src/m20_navigation/config/nav2_params.yaml`; repro: `tools/nav/bringup_plan_a.sh`;
+proof: `docs/media/nav2_plan_a_result.png`. Plan B (3D perception/traversability) deferred.
+Phase 1.5 (Foxglove) skipped (used rendered videos). Behavior engine + standup exist early.
 Vendor SDK reality mapped from public GitHub (rev 6). **First integration run done
 (rev 7):** full stack builds and runs green in docker compose on a dev box (WSL2) —
 all 5 services up, 4 healthy + station bridge serving Foxglove/rosbridge. Still no
@@ -463,6 +467,24 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-11 (rev 35) — CHECKPOINT-02: Plan A (Nav2 + slam_toolbox) WORKING in sim.**
+  Stood up the production 2D-nav stack on the MuJoCo oil & gas field and sent a real
+  `NavigateToPose` goal. Pipeline: sim (`/scan` honest ray-cast ring at z=0.35 m, `/odom`,
+  TF `odom→base_link`) → **slam_toolbox** (`/map` + TF `map→odom`, scan-matching) →
+  **Nav2** (`navigation_launch.py`) with `nav2_params.yaml` = Regulated Pure Pursuit
+  (`use_rotate_to_heading:true` — anti-tip, matches our validated turn-then-drive) + NavFn/A*
+  planner + **rolling 40 m global costmap** (unknown=free, live obstacle layer, inflation) →
+  bridge `/cmd_vel` → wheels. **Result:** autonomously drove ~7 m from (1.06, 0.23) to the
+  goal (−6.0, −0.5), threading BETWEEN skid1 and skid2 (real costmap obstacle avoidance),
+  final error **0.30 m** (< 0.35 m tol), "Goal succeeded". slam_toolbox built a real live
+  map (tanks as arcs, skids/wellhead as boxes). Proof: `docs/media/nav2_plan_a_result.png`.
+  **Bugs fixed en route:** (a) image-baked bridge was STALE (old sign/`kd`, no yaw feedback)
+  → run repo `bridge_node.py` with `sdk_backend:=sim`; (b) default backend `stub` → no
+  `/JOINTS_CMD` (robot inert) → pass `sdk_backend:=sim`; (c) planner "goal off global
+  costmap" (costmap sized to incremental SLAM map) → rolling 40 m window. **Honest limits:**
+  localization is ground-truth odom TF (SLAM `map→odom` ≈ identity) — dead-reckoned-odom
+  drift is the next Plan-A step; 2D scan misses ground pipes (tops 0.30 m < sensor 0.35 m)
+  → Plan B (3D). Repro: `tools/nav/bringup_plan_a.sh`. Next: honest odom drift, then Plan B.
 - **2026-07-10 (rev 34) — CHECKPOINT.** All autonomy *components* proven individually in
   MuJoCo sim (with videos): stand-up, drive/turn/circle/fig-8 (armature + yaw-feedback),
   watchdog, custom EKF (wheel+IMU+GPS, live 0.48 m), honest 3D-LiDAR model, real
