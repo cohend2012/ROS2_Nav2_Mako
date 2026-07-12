@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Animated GIF of the REAL logged Nav2 run: robot driving the field, trailing path."""
+"""Animated GIF of the REAL logged Nav2 run with drifting odometry:
+robot driving the field (TRUE, green) vs where raw dead-reckoning THINKS it is (orange).
+The gap = drift that slam_toolbox corrects so the robot still reaches the true goal."""
 import csv, os
 import numpy as np
 import matplotlib
@@ -15,13 +17,19 @@ RECTS = [(-4, -1, 0.5, 0.7, "skid1"), (0, 1.5, 0.4, 0.4, "skid2"),
 PIPES = [((-8, -3), (8, -3)), ((-8, -3.4), (8, -3.4)), ((2, -3.4), (2, 3))]
 GOAL = (-6.0, -0.5)
 
-with open(f"{OUT}/traj.csv") as f:
-    r = csv.reader(f); next(r)
-    traj = [(float(a[1]), float(a[2])) for a in r if a]
-# downsample to ~140 frames
-step = max(1, len(traj) // 140)
-pts = traj[::step]
-tx = [p[0] for p in pts]; ty = [p[1] for p in pts]
+def load(path):
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        r = csv.reader(f); next(r)
+        return [(float(a[1]), float(a[2])) for a in r if a]
+
+true = load(f"{OUT}/traj_true.csv")
+drift = load(f"{OUT}/traj_drift.csv")
+step = max(1, len(true) // 140)
+tp = true[::step]; dp = drift[::step]
+n = min(len(tp), len(dp))
+tp, dp = tp[:n], dp[:n]
 
 fig, ax = plt.subplots(figsize=(9, 6.5))
 for (x, y, rad) in TANKS:
@@ -34,18 +42,22 @@ for (x, y, hx, hy, name) in RECTS:
 for (a, b) in PIPES:
     ax.plot([a[0], b[0]], [a[1], b[1]], "--", color="#888", lw=3, alpha=0.5)
 ax.plot(*GOAL, "X", color="red", ms=16, label="goal")
-ax.plot(tx[0], ty[0], "o", color="k", ms=10, label="start")
-trail, = ax.plot([], [], "-", color="#2ca02c", lw=2.5, label="path driven")
-robot, = ax.plot([], [], "o", color="#2ca02c", ms=13, mec="k")
+ax.plot(0, 0, "o", color="k", ms=10, label="start")
+dtrail, = ax.plot([], [], "-", color="#ff7f0e", lw=2, alpha=0.9, label="raw odom (drifts)")
+drob, = ax.plot([], [], "o", color="#ff7f0e", ms=9, mec="k")
+ttrail, = ax.plot([], [], "-", color="#2ca02c", lw=2.6, label="TRUE (SLAM keeps on track)")
+trob, = ax.plot([], [], "o", color="#2ca02c", ms=13, mec="k")
 ax.set_xlim(-9, 9); ax.set_ylim(-5, 6); ax.set_aspect("equal"); ax.grid(alpha=0.3)
-ax.set_title("M20 autonomous nav (Nav2 + slam_toolbox) — oil & gas field")
+ax.set_title("M20 autonomous nav (Nav2 + slam_toolbox, drifting odom) — oil & gas field")
 ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)"); ax.legend(loc="upper right", fontsize=8)
 
 def upd(i):
-    trail.set_data(tx[:i+1], ty[:i+1])
-    robot.set_data([tx[i]], [ty[i]])
-    return trail, robot
+    ttrail.set_data([p[0] for p in tp[:i+1]], [p[1] for p in tp[:i+1]])
+    trob.set_data([tp[i][0]], [tp[i][1]])
+    dtrail.set_data([p[0] for p in dp[:i+1]], [p[1] for p in dp[:i+1]])
+    drob.set_data([dp[i][0]], [dp[i][1]])
+    return ttrail, trob, dtrail, drob
 
-ani = animation.FuncAnimation(fig, upd, frames=len(pts), interval=80, blit=True)
+ani = animation.FuncAnimation(fig, upd, frames=n, interval=80, blit=True)
 ani.save(f"{OUT}/nav_run.gif", writer=animation.PillowWriter(fps=14))
-print(f"wrote {OUT}/nav_run.gif  frames={len(pts)}")
+print(f"wrote {OUT}/nav_run.gif  frames={n}")

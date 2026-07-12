@@ -24,6 +24,22 @@ LIDAR_N = 360          # rays per scan (1 deg) — denser for a fuller SLAM map
 LIDAR_MIN, LIDAR_MAX = 0.6, 12.0
 LIDAR_Z = 0.35         # sensor height above ground
 
+# Wheel-odometry kinematics. TRACK_B matches the bridge. ODOM_R is the CALIBRATED
+# effective rolling radius (measured ~0.072 m from test drives) — the bridge's nominal
+# 0.10 m over-commands wheel speed, so odometry must use the calibrated value or it
+# over-reads distance ~38%. Real robots calibrate this exact number from test runs.
+ODOM_R, TRACK_B = 0.072, 0.40
+# Honest dead-reckoned odometry, exactly like a real skid-steer robot:
+#   * FORWARD speed from wheel encoders — wheels slip (spin faster than the body moves),
+#     so integrated distance OVER-reads => position drifts.
+#   * HEADING from the IMU GYRO, NOT wheel differential. Skid-steer wheels slip too much
+#     laterally for wheel-diff yaw to be usable (we measured it giving the wrong sign);
+#     real skid-steer platforms integrate the gyro for heading. A small fixed gyro bias +
+#     noise => heading drifts slowly.
+# Net: the odom->base_link TF DRIFTS realistically and slam_toolbox must correct it.
+# Ground truth is published on /odom_true for EVAL ONLY (never consumed by SLAM/Nav2).
+GYRO_NOISE = 0.0005    # per-sample heading noise (rad) -> small yaw random walk
+
 NJ = 16
 WHEELS = (3, 7, 11, 15)
 # Standing pose (found empirically; body ~0.46 m, level). Per leg [hipx, hipy, knee, wheel].
@@ -82,7 +98,16 @@ class Sim(Node):
         self.odom_pub = self.create_publisher(Odometry, "/odom", 10)
         self.gps_pub = self.create_publisher(Odometry, "/gps", 10)   # noisy absolute pos (~5 Hz)
         self.scan_pub = self.create_publisher(LaserScan, "/scan", 10) # simulated LiDAR (~10 Hz)
+        self.true_pub = self.create_publisher(Odometry, "/odom_true", 10)  # GROUND TRUTH (eval only)
         self.tf_bc = TransformBroadcaster(self)                        # odom->base_link
+        # dead-reckoned wheel-odometry pose (drifts) — seeds the odom frame at the true start
+        _, _, y0 = quat_to_rpy(*self.d.qpos[3:7])
+        self.odom_x = float(self.d.qpos[0])
+        self.odom_y = float(self.d.qpos[1])
+        self.odom_th = float(y0)
+        self._prev_yaw = float(y0)             # last true yaw, for gyro turn-rate tracking
+        self.odt = 1.0 / PUB_HZ
+        self._gyro_bias = 0.002                # gyro bias (rad/s, ~0.1 deg/s) -> slow heading drift
         self._geomid = np.zeros(1, np.int32)
         self._tick = 0
         self._rng = np.random.default_rng(0)
@@ -134,36 +159,60 @@ class Sim(Node):
         v.omega_x, v.omega_y, v.omega_z = (float(x) for x in self.d.qvel[3:6])
         v.acc_x, v.acc_y, v.acc_z = 0.0, 0.0, 9.81   # placeholder linear accel
         self.imu_pub.publish(imu)
-        # ground-truth odometry (perfect pose) — for closing the loop before real estimation
+        # --- honest dead-reckoned WHEEL odometry (drifts; slam_toolbox corrects it) ---
+        # recover body vx, wz from the four wheel encoder speeds (skid-steer kinematics,
+        # inverse of the bridge's mixer). Left = FL(3)+HL(11), right = FR(7)+HR(15).
+        wl = (qd[3] + qd[11]) * 0.5
+        wr = (qd[7] + qd[15]) * 0.5
+        vx = -ODOM_R * (wl + wr) * 0.5                        # forward speed from wheel encoders
+        vx *= (1.0 + self._rng.normal(0.0, 0.02))            # encoder/slip noise (=> distance drift)
+        # heading from the IMU gyro: tracks the TRUE turn rate (delta true-yaw) but the
+        # gyro accumulates a slow bias + per-sample noise => heading drifts slowly. (Using
+        # the true-yaw delta avoids the body-frame-tilt artifact of raw qvel during pivots.)
+        dyaw = math.atan2(math.sin(y - self._prev_yaw), math.cos(y - self._prev_yaw))
+        self._prev_yaw = y
+        wz = dyaw / self.odt                                  # measured turn rate (for /odom twist)
+        self.odom_th += dyaw + self._gyro_bias * self.odt + self._rng.normal(0.0, GYRO_NOISE)
+        self.odom_th = math.atan2(math.sin(self.odom_th), math.cos(self.odom_th))
+        self.odom_x += vx * math.cos(self.odom_th) * self.odt
+        self.odom_y += vx * math.sin(self.odom_th) * self.odt
+        oq_z, oq_w = math.sin(self.odom_th / 2), math.cos(self.odom_th / 2)
         od = Odometry()
         od.header.stamp = now
         od.header.frame_id = "odom"
         od.child_frame_id = "base_link"
-        px, py, pz = self.d.qpos[0:3]
-        od.pose.pose.position.x = float(px)
-        od.pose.pose.position.y = float(py)
-        od.pose.pose.position.z = float(pz)
-        ow, ox, oy, oz = self.d.qpos[3:7]            # MuJoCo quat is (w,x,y,z)
-        od.pose.pose.orientation.x = float(ox)
-        od.pose.pose.orientation.y = float(oy)
-        od.pose.pose.orientation.z = float(oz)
-        od.pose.pose.orientation.w = float(ow)
-        od.twist.twist.linear.x, od.twist.twist.linear.y = float(self.d.qvel[0]), float(self.d.qvel[1])
-        od.twist.twist.angular.z = float(self.d.qvel[5])
+        od.pose.pose.position.x = self.odom_x
+        od.pose.pose.position.y = self.odom_y
+        od.pose.pose.orientation.z = oq_z
+        od.pose.pose.orientation.w = oq_w
+        od.twist.twist.linear.x = float(vx)
+        od.twist.twist.angular.z = float(wz)
         self.odom_pub.publish(od)
-        # odom->base_link TF (SLAM/Nav2 place scans against this; slam_toolbox adds map->odom)
+        # odom->base_link TF from the DRIFTING wheel odom; slam_toolbox adds map->odom to fix it
         tf = TransformStamped()
         tf.header.stamp = now
         tf.header.frame_id = "odom"
         tf.child_frame_id = "base_link"
-        tf.transform.translation.x = float(px)
-        tf.transform.translation.y = float(py)
-        tf.transform.translation.z = float(pz)
-        tf.transform.rotation.x = float(ox)
-        tf.transform.rotation.y = float(oy)
-        tf.transform.rotation.z = float(oz)
-        tf.transform.rotation.w = float(ow)
+        tf.transform.translation.x = self.odom_x
+        tf.transform.translation.y = self.odom_y
+        tf.transform.rotation.z = oq_z
+        tf.transform.rotation.w = oq_w
         self.tf_bc.sendTransform(tf)
+        # ground-truth pose on /odom_true — EVAL ONLY (never consumed by SLAM/Nav2)
+        tpx, tpy, tpz = self.d.qpos[0:3]
+        tw, tx_, ty_, tz = self.d.qpos[3:7]
+        ot = Odometry()
+        ot.header.stamp = now
+        ot.header.frame_id = "map"
+        ot.child_frame_id = "base_link_true"
+        ot.pose.pose.position.x = float(tpx)
+        ot.pose.pose.position.y = float(tpy)
+        ot.pose.pose.position.z = float(tpz)
+        ot.pose.pose.orientation.x = float(tx_)
+        ot.pose.pose.orientation.y = float(ty_)
+        ot.pose.pose.orientation.z = float(tz)
+        ot.pose.pose.orientation.w = float(tw)
+        self.true_pub.publish(ot)
         # simulated GPS: noisy absolute position at ~5 Hz (sensor the real M20 has)
         self._tick += 1
         if self._tick % 40 == 0:
