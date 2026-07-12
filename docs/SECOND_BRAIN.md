@@ -9,15 +9,18 @@
 **Status (2026-07-11, honest):** Phase 1 DONE + heavily polished in MuJoCo sim (stand,
 drive, turn/circle/fig-8, watchdog, armature + yaw-rate feedback — all benchmarked/videoed).
 Phase 2 PARTIAL: a *custom* lightweight EKF (wheel+IMU+GPS) live-verified at 0.48 m — NOT
-yet robot_localization, and nav doesn't yet run on it. **Phase 3 PLAN A WORKING (rev 35):**
-the PRODUCTION stack — **Nav2** (Regulated Pure Pursuit + rotate-to-heading + NavFn/A*,
-rolling costmaps) + **slam_toolbox** — autonomously navigated the oil & gas field to a
-NavigateToPose goal, threading between skid1/skid2 (real costmap obstacle avoidance,
-live 10 m LiDAR), 0.30 m final error, SLAM map built live. Perception/mapping/planning/
-avoidance/following are ALL real; **localization still fed by ground-truth odom TF**
-(SLAM map→odom ≈ identity) — honest dead-reckoned odom is the next Plan-A step. Config:
+yet robot_localization, and nav doesn't yet run on it. **Phase 3 PLAN A WORKING + HONEST
+(rev 36):** the PRODUCTION stack — **Nav2** (Regulated Pure Pursuit + rotate-to-heading +
+NavFn/A*, rolling costmaps) + **slam_toolbox** — autonomously navigated the oil & gas field
+to a NavigateToPose goal, threading between skid1/skid2 (real costmap obstacle avoidance,
+live 10 m LiDAR), SLAM map built live. **Localization is HONEST: no ground-truth TF** — the
+sim feeds dead-reckoned wheel+gyro odometry that DRIFTS, slam_toolbox corrects it via
+scan-matching, and the robot reaches the TRUE goal within 0.82 m (raw uncorrected odom
+alone ends ~5 m off). Nothing consumes perfect info. Config:
 `src/m20_navigation/config/nav2_params.yaml`; repro: `tools/nav/bringup_plan_a.sh`;
-proof: `docs/media/nav2_plan_a_result.png`. Plan B (3D perception/traversability) deferred.
+proof: `docs/media/nav2_plan_a_result.png` + `nav2_plan_a_run.gif`. Next honesty/accuracy
+step: fuse GPS (robot_localization EKF) to bound residual SLAM error outdoors.
+Plan B (3D perception/traversability) deferred.
 Phase 1.5 (Foxglove) skipped (used rendered videos). Behavior engine + standup exist early.
 Vendor SDK reality mapped from public GitHub (rev 6). **First integration run done
 (rev 7):** full stack builds and runs green in docker compose on a dev box (WSL2) —
@@ -467,6 +470,21 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-11 (rev 36) — Closed the localization honesty gap (no more perfect info).**
+  Replaced the sim's ground-truth `odom→base_link` TF with DEAD-RECKONED odometry that
+  drifts, exactly like a real skid-steer: forward speed from wheel encoders × a CALIBRATED
+  effective radius (`ODOM_R=0.072`, since the bridge's nominal 0.10 over-commands ~38%),
+  heading from the gyro (true turn-rate + fixed bias 0.002 rad/s + per-sample noise). Ground
+  truth moved to `/odom_true` (eval only, never consumed). slam_toolbox now corrects REAL
+  drift: robot reaches the true goal within **0.82 m**; raw uncorrected odom ends **~5 m** off
+  (proof overlays true/raw-odom/SLAM-estimate in `nav2_plan_a_result.png`, animation in
+  `nav2_plan_a_run.gif`). **Debug journey (kept honest):** first attempt used wheel-diff yaw →
+  wrong sign (skid slip); switched to gyro but integrated body-frame `qvel[5]` → +21°/turn
+  error from body tilt during pivots → SLAM couldn't recover (aborted, 5 m off); fixed to
+  track true turn-rate delta + bias/noise → 3°/turn, clean. Residual 0.82 m (vs 0.30 m on the
+  old perfect localization) is the honest cost of drift in a sparse open field → motivates GPS
+  fusion (robot_localization) next. Files: `tools/mujoco_sim.py` (odom model),
+  `tools/nav/nav_logger.py` + `render_nav.py` (log/plot true vs drift vs estimate).
 - **2026-07-11 (rev 35) — CHECKPOINT-02: Plan A (Nav2 + slam_toolbox) WORKING in sim.**
   Stood up the production 2D-nav stack on the MuJoCo oil & gas field and sent a real
   `NavigateToPose` goal. Pipeline: sim (`/scan` honest ray-cast ring at z=0.35 m, `/odom`,
