@@ -64,8 +64,19 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
   ones; after `kill -9`, wait for DDS to reap phantom publishers before trusting counts.
 - **`sdk_backend:=sim`** or the bridge is a no-op stub (no `/JOINTS_CMD`).
 
-## Current status (2026-07-12)
-- L1.1–L1.3 ✅ · L2.1–L2.2 ✅ · L3.1 ✅ (0.28 m best; 0.82 m typical).
-- L3.2 ❌ not yet measured — **this is the first D task** (batch harness). Observed
-  reliability is currently marginal in the open field (localization-driven failures),
-  which is exactly what A (GPS/EKF) targets.
+## Current status (2026-07-12, updated after first L3.2 batch)
+- L1.1–L1.3 ✅ · L2.1–L2.2 ✅ · L3.1 ✅ (0.28 m best).
+- **L3.2 MEASURED & PASSED: 8/10 success, mean 0.54 m, p95 0.59 m**
+  (`tools/ci/batch_nav_test.sh`, results in `tools/ci/out/batch_results.csv`).
+  Failure analysis (honest):
+  - run 2 ABORTED and run 3 TIMEOUT — both in the FINAL APPROACH, truly 0.57 m /
+    0.29 m from the goal (run 3 was within tolerance in ground truth when the
+    150 s harness timeout hit). Nobody drives into obstacles anymore; the
+    fresh-stack discipline killed that failure class.
+  - Successes cluster tight: x ≈ −5.77±0.04, y ≈ 0.0±0.04 vs goal (−6, −0.5) —
+    a SYSTEMATIC ~0.5 m offset (mostly in y), i.e. residual localization drift:
+    Nav2 reaches the goal in the *estimated* frame; truth is offset by drift.
+    That bias is precisely what Phase A (GPS EKF) is for — expect mean error to
+    drop well under 0.4 m once GPS anchors the estimate.
+  - Pass is at the floor (8/10 = exactly 80%): do not merge D on a single batch;
+    re-run the gate after the interface switch.
