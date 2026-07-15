@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Interactive ROS 2 shell inside the running autonomy container (docker-commander-1).
+# Everything is pre-sourced: ROS 2 Humble + our /ws overlay + ROS_DOMAIN_ID=42.
+#
+# From WSL:      bash tools/dev/m20sh
+# From Windows:  wsl -d Ubuntu -e bash /mnt/c/GIT/StatefullXOne/m20_autonomy_ws/m20_autonomy_ws/tools/dev/m20sh
+#
+# Then try:  ros2 topic list · ros2 topic echo /scan · ros2 topic hz /LIDAR/POINTS
+#            ros2 run tf2_ros tf2_echo map base_link
+C=docker-commander-1
+if ! docker ps --format '{{.Names}}' | grep -q "^$C$"; then
+  echo "container $C is not running — start the stack first: bash tools/nav/bringup_plan_a.sh"
+  exit 1
+fi
+exec docker exec -it $C bash -c '
+  source /opt/ros/humble/setup.bash
+  source /ws/install/setup.bash
+  export ROS_DOMAIN_ID=42
+  export PS1="[m20] \w \$ "
+  echo "M20 dev shell — ROS 2 Humble sourced, domain 42. Configs in /cfg."
+  cd /cfg 2>/dev/null || cd /
+  exec bash --norc -i'
