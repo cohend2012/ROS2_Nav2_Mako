@@ -23,7 +23,8 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 | L1.3 | Honest odom | `tools/nav/odom_drift_check.py` | fwd odom vs true err; yaw err/turn | <0.1 m fwd; <5°/turn |
 | L1.4 | Bridge arming | set_mode + cmd_vel | moves only when armed; halts on veto | enforced |
 | L1.5 | Watchdog | stop cmd_vel | zero-velocity within `cmd_timeout_s` | halts |
-| L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander detects extreme roll/pitch → disarm + zero cmd | disarms (NOT YET BUILT — observed flip 2026-07-13, robot drove onto pipe_cross in teleop and flipped; no failsafe fired) |
+| L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander latches FS_TIPOVER >35° roll/pitch → ESTOP+disarm; auto-clears flag after 5 s upright (no auto re-arm) | BUILT 2026-07-15 (observed flip 2026-07-13 prompted it) — bench test pending |
+| L1.7 | Real LiDAR interface | stack up, probe /LIDAR/POINTS | ~10 Hz PointCloud2 in lidar_link; no returns <0.5 m standing; derived /scan (pointcloud_to_laserscan) ~10 Hz; ground pipes visible ahead | ✅ 2026-07-15: 9.8 Hz, rmin 0.79, /scan 10.0 Hz from projection node, pipe_cross seen at 1.85 m |
 
 ### L2 — Subsystem checks
 | # | System | Test | Metric | Pass |

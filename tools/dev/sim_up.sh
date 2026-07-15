@@ -27,11 +27,15 @@ echo "[sim_up] cleaning any prior stack..."
 bash "$REPO/tools/nav/kill_stack.sh" >/dev/null 2>&1 || true
 sleep 1
 
+echo "[sim_up] checking container deps..."
+bash "$REPO/tools/dev/container_deps.sh" || exit 1
+
 echo "[sim_up] staging configs..."
 docker exec $C bash -lc "mkdir -p /cfg /cfg/out"
 docker cp "$REPO/src/m20_locomotion_bridge/m20_locomotion_bridge/bridge_node.py" $C:/cfg/bridge_node.py >/dev/null
 docker cp "$REPO/src/m20_navigation/config/nav2_params.yaml" $C:/cfg/nav2_params.yaml >/dev/null
 docker cp "$REPO/tools/slam/mapper_params.yaml" $C:/cfg/mapper_params.yaml >/dev/null
+docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml" $C:/cfg/pointcloud_to_laserscan.yaml >/dev/null
 
 if [ "$GUI" = "1" ]; then
   echo "[sim_up] starting MuJoCo sim (oil_gas_field) WITH LIVE VIEWER — a window will open..."
@@ -56,6 +60,10 @@ if ! docker ps --format '{{.Names}}' | grep -q '^m20_sim_run$'; then
   echo "[sim_up] SIM FAILED TO START — log:"; docker logs m20_sim_run 2>&1 | tail -5
   exit 1
 fi
+
+echo "[sim_up] starting pointcloud_to_laserscan (/LIDAR/POINTS -> /scan, real interface)..."
+docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
+sleep 2
 
 echo "[sim_up] starting bridge + arming..."
 docker exec -d $C bash -lc "$SRC; python3 /cfg/bridge_node.py --ros-args -p sdk_backend:=sim"

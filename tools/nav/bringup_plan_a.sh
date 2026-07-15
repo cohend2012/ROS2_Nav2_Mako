@@ -31,10 +31,12 @@ GOAL_X="${GOAL_X:--6.0}"; GOAL_Y="${GOAL_Y:--0.5}"
 SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=$DOM"
 
 echo "[1/7] staging config + tools into $C:/cfg"
+bash "$REPO/tools/dev/container_deps.sh" || exit 1
 docker exec $C bash -lc "mkdir -p /cfg /cfg/out"
 docker cp "$REPO/src/m20_locomotion_bridge/m20_locomotion_bridge/bridge_node.py" $C:/cfg/bridge_node.py
 docker cp "$REPO/src/m20_navigation/config/nav2_params.yaml"                      $C:/cfg/nav2_params.yaml
 docker cp "$REPO/tools/slam/mapper_params.yaml"                                   $C:/cfg/mapper_params.yaml
+docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml"          $C:/cfg/pointcloud_to_laserscan.yaml
 docker cp "$REPO/tools/nav/nav_logger.py"                                         $C:/cfg/nav_logger.py
 
 echo "[2/7] starting MuJoCo sim (oil_gas_field, headless)"
@@ -45,6 +47,10 @@ docker run -d --rm --name m20_sim_run --network host --ipc host \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py
 sleep 8
+
+echo "[2.5/7] starting pointcloud_to_laserscan (/LIDAR/POINTS -> /scan)"
+docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
+sleep 2
 
 echo "[3/7] starting bridge (sim backend) + arming"
 docker exec -d $C bash -lc "$SRC; python3 /cfg/bridge_node.py --ros-args -p sdk_backend:=sim"

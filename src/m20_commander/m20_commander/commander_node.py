@@ -14,6 +14,15 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from m20_msgs.msg import RobotMode, FailsafeStatus, HealthReport, ControlAuthority
 from m20_msgs.srv import SetMode, SetControlAuthority
 
+# Tip-over failsafe (TEST_PLAN L1.6, added after a live flip onto a ground pipe):
+# |roll| or |pitch| beyond TIP_LIMIT latches FS_TIPOVER at severity 2 (-> ESTOP,
+# disarm; the bridge halts on armed=False). The flag auto-clears only after the
+# body has been back within TIP_CLEAR for TIP_CLEAR_S continuous seconds (operator
+# still has to command ESTOP -> IDLE -> re-arm; clearing never re-arms by itself).
+TIP_LIMIT = 0.61       # rad (~35 deg)
+TIP_CLEAR = 0.26       # rad (~15 deg) hysteresis for clearing
+TIP_CLEAR_S = 5.0
+
 # Legal transitions. ESTOP is reachable from everywhere; leaving ESTOP requires IDLE.
 LEGAL = {
     RobotMode.MODE_IDLE: {RobotMode.MODE_TELEOP, RobotMode.MODE_ASSISTED,
@@ -54,6 +63,16 @@ class Commander(Node):
                                                    self.on_health, 20)
         # Commander publishes its own heartbeat too (HealthReport contract: every m20_* node @1 Hz).
         self.health_pub = self.create_publisher(HealthReport, "/m20/health", 10)
+
+        # Tip-over monitor (L1.6). drdds ImuData is the vendor attitude source; import
+        # lazily so the commander still runs on hosts without the vendor msgs built.
+        self._tip_since = None       # when attitude first exceeded TIP_LIMIT
+        self._upright_since = None   # when attitude came back within TIP_CLEAR
+        try:
+            from drdds.msg import ImuData
+            self.create_subscription(ImuData, "/IMU_DATA", self.on_imu, 10)
+        except ImportError:
+            self.get_logger().warn("drdds msgs unavailable — tip-over failsafe DISABLED")
 
         # TODO(OQ-3): subscribe battery state from the bridge.
         # TODO(OQ-4): subscribe physical/software e-stop state.
@@ -132,6 +151,28 @@ class Commander(Node):
         self.authority_pub.publish(a)
 
     # ---------- failsafes ----------
+    def on_imu(self, msg):
+        """Tip-over watch (L1.6): latch FS_TIPOVER past TIP_LIMIT; clear only after
+        TIP_CLEAR_S continuous seconds back upright (never re-arms by itself)."""
+        roll, pitch = abs(msg.data.roll), abs(msg.data.pitch)
+        now = self.get_clock().now().nanoseconds * 1e-9
+        if roll > TIP_LIMIT or pitch > TIP_LIMIT:
+            self._upright_since = None
+            if not (self.active_failsafes & FailsafeStatus.FS_TIPOVER):
+                self.raise_failsafe(
+                    FailsafeStatus.FS_TIPOVER, 2,
+                    f"tip-over: |roll|={roll:.2f} |pitch|={pitch:.2f} rad")
+        elif self.active_failsafes & FailsafeStatus.FS_TIPOVER \
+                and roll < TIP_CLEAR and pitch < TIP_CLEAR:
+            if self._upright_since is None:
+                self._upright_since = now
+            elif now - self._upright_since > TIP_CLEAR_S:
+                self.active_failsafes &= ~FailsafeStatus.FS_TIPOVER
+                self._upright_since = None
+                self.get_logger().warn(
+                    "tip-over failsafe CLEARED (upright + stable); still ESTOP — "
+                    "operator must go IDLE and re-arm")
+
     def on_health(self, msg: HealthReport):
         if msg.status >= HealthReport.STATUS_ERROR:
             self.raise_failsafe(FailsafeStatus.FS_MODULE_UNHEALTHY,
