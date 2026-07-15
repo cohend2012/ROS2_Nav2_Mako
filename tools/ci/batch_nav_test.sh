@@ -21,6 +21,7 @@ OUT="$REPO/tools/ci/out"
 GX=-6.0; GY=-0.5
 SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42"
 mkdir -p "$OUT"
+bash "$REPO/tools/dev/container_deps.sh" || exit 1
 RES="$OUT/batch_results.csv"
 echo "run,result,true_x,true_y,err_m,secs" > "$RES"
 
@@ -29,10 +30,11 @@ stage() {  # copy current configs/tools into the container once
   docker cp "$REPO/src/m20_locomotion_bridge/m20_locomotion_bridge/bridge_node.py" $C:/cfg/bridge_node.py
   docker cp "$REPO/src/m20_navigation/config/nav2_params.yaml" $C:/cfg/nav2_params.yaml
   docker cp "$REPO/tools/slam/mapper_params.yaml" $C:/cfg/mapper_params.yaml
+  docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml" $C:/cfg/pointcloud_to_laserscan.yaml
 }
 
 teardown() {
-  docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger";
+  docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan";
     PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}"); kill -9 $PIDS 2>/dev/null; true' >/dev/null 2>&1
   docker rm -f m20_sim_run >/dev/null 2>&1
 }
@@ -62,6 +64,9 @@ for i in $(seq 1 "$N"); do
     m20_sim:latest python3 /mujoco_sim.py >/dev/null 2>&1
   sleep 8
   stage >/dev/null 2>&1
+  # projection: /LIDAR/POINTS (real interface) -> /scan for slam/Nav2
+  docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
+  sleep 2
   # bridge + arm (idempotent: 'illegal transition 1 -> 1' means already armed)
   docker exec -d $C bash -lc "$SRC; python3 /cfg/bridge_node.py --ros-args -p sdk_backend:=sim"
   sleep 4
