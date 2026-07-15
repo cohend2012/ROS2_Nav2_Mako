@@ -9,8 +9,15 @@
 #            ros2 run tf2_ros tf2_echo map base_link
 C=docker-commander-1
 if ! docker ps --format '{{.Names}}' | grep -q "^$C$"; then
-  echo "container $C is not running — start the stack first: bash tools/nav/bringup_plan_a.sh"
+  echo "container $C is not running — start the stack first: bash tools/dev/sim_up.sh"
   exit 1
+fi
+if ! docker ps --format '{{.Names}}' | grep -q '^m20_sim_run$'; then
+  echo "!!==============================================================!!"
+  echo "!!  WARNING: THE SIM IS NOT RUNNING — there is no robot.         "
+  echo "!!  cmd_vel/goals will go nowhere. Start it in another terminal: "
+  echo "!!    wsl -d Ubuntu -e bash <repo>/tools/dev/sim_up.sh           "
+  echo "!!==============================================================!!"
 fi
 exec docker exec -it $C bash -c '
   cat > /tmp/m20rc <<"RC"
