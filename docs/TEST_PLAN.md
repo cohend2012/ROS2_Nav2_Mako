@@ -23,6 +23,7 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 | L1.3 | Honest odom | `tools/nav/odom_drift_check.py` | fwd odom vs true err; yaw err/turn | <0.1 m fwd; <5°/turn |
 | L1.4 | Bridge arming | set_mode + cmd_vel | moves only when armed; halts on veto | enforced |
 | L1.5 | Watchdog | stop cmd_vel | zero-velocity within `cmd_timeout_s` | halts |
+| L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander detects extreme roll/pitch → disarm + zero cmd | disarms (NOT YET BUILT — observed flip 2026-07-13, robot drove onto pipe_cross in teleop and flipped; no failsafe fired) |
 
 ### L2 — Subsystem checks
 | # | System | Test | Metric | Pass |
