@@ -137,7 +137,10 @@ class Sim(Node):
         if self.viewer is not None:
             if not self.viewer.is_running():
                 raise KeyboardInterrupt
-            self.viewer.sync()
+            # sync the window at ~25 Hz, not 200 Hz — full-rate sync costs ~25%
+            # real-time under WSLg software GL and the eye can't tell the difference
+            if self._tick % 8 == 0:
+                self.viewer.sync()
         self.publish()
 
     def publish(self):
