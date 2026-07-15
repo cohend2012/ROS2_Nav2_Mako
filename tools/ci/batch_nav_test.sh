@@ -103,8 +103,14 @@ rows = list(csv.DictReader(open(sys.argv[1])))
 n = len(rows)
 succ = [r for r in rows if r["result"] == "SUCCEEDED"]
 errs = sorted(float(r["err_m"]) for r in succ if r["err_m"] != "nan")
+# a normal run is ~110-190 s wall; anything wildly longer means the HOST SLEPT
+# mid-run (observed 2026-07-15: 5032 s runs) and the whole batch is suspect.
+slept = [r["run"] for r in rows if r["secs"] not in ("", "nan") and float(r["secs"]) > 400]
 print("\n=== L3.2 SUMMARY ===")
 print(f"runs={n}  success={len(succ)}/{n}")
+if slept:
+    print(f"!! HOST-SLEEP SUSPECTED in run(s) {','.join(slept)} (>400 s wall) — "
+          f"BATCH UNRELIABLE, disable PC sleep and RE-RUN before trusting the gate")
 if errs:
     mean = sum(errs)/len(errs)
     p95 = errs[min(len(errs)-1, int(round(0.95*len(errs)))-1)]
