@@ -13,10 +13,13 @@ if ! docker ps --format '{{.Names}}' | grep -q "^$C$"; then
   exit 1
 fi
 exec docker exec -it $C bash -c '
-  source /opt/ros/humble/setup.bash
-  source /ws/install/setup.bash
-  export ROS_DOMAIN_ID=42
-  export PS1="[m20] \w \$ "
-  echo "M20 dev shell — ROS 2 Humble sourced, domain 42. Configs in /cfg."
+  cat > /tmp/m20rc <<"RC"
+source /opt/ros/humble/setup.bash
+source /ws/install/setup.bash
+export ROS_DOMAIN_ID=42
+export PS1="[m20] \w \$ "
+eval "$(register-python-argcomplete3 ros2 2>/dev/null || register-python-argcomplete ros2 2>/dev/null)" || true
+RC
+  echo "M20 dev shell — ROS 2 Humble sourced, domain 42. Configs in /cfg. Type exit to leave."
   cd /cfg 2>/dev/null || cd /
-  exec bash --norc -i'
+  exec bash --rcfile /tmp/m20rc -i'
