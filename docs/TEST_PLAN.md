@@ -59,6 +59,10 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
   blocked path without driving into obstacles.
 
 ## Known operational gotchas (regression guards)
+- **Host sleep poisons batch runs.** The dev box sleeping mid-batch produced 5,000 s
+  "runs" and bogus TIMEOUTs (2026-07-15). batch_nav_test.sh now flags any run >400 s
+  wall as HOST-SLEEP SUSPECTED and declares the batch unreliable. Disable Windows
+  sleep (or run `powercfg /change standby-timeout-ac 0`) before starting a gate.
 - **Restart Nav2 whenever the sim restarts.** Reusing Nav2 across a sim restart leaves stale
   costmap/TF state (robot "teleports") → repeated collision/TF aborts. Full-stack fresh
   restart is reliable. (Root cause of the 3 failed runs on 2026-07-12.)
