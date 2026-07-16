@@ -25,6 +25,7 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 | L1.5 | Watchdog | stop cmd_vel | zero-velocity within `cmd_timeout_s` | halts |
 | L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander latches FS_TIPOVER >35° roll/pitch → ESTOP+disarm; auto-clears flag after 5 s upright (no auto re-arm) | BUILT 2026-07-15 (observed flip 2026-07-13 prompted it) — bench test pending |
 | L1.7 | Real LiDAR interface | stack up, probe /LIDAR/POINTS | ~10 Hz PointCloud2 in lidar_link; no returns <0.5 m standing; derived /scan (pointcloud_to_laserscan) ~10 Hz; ground pipes visible ahead | ✅ 2026-07-15: 9.8 Hz, rmin 0.79, /scan 10.0 Hz from projection node, pipe_cross seen at 1.85 m |
+| L1.8 | LiDAR realism | `tools/nav/lidar_realism_check.py` | XYZIRT contract (32-byte points, rslidar offsets); timestamps span ~100 ms, monotone; noise σ 0.5–3 cm; ground dropout 0.5–12%; skew: pipe line-fit RMS >2× parked and >3 cm at 1 rad/s | ✅ 2026-07-15 PASS 7/7: 98.6 ms / 20 steps, σ 1.49 cm, drop 3.3%, skew 3.6→22.7 cm (6.4×) |
 
 ### L2 — Subsystem checks
 | # | System | Test | Metric | Pass |
@@ -59,6 +60,12 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
   blocked path without driving into obstacles.
 
 ## Known operational gotchas (regression guards)
+- **WSL kills the whole VM (and every container) when no session is open.** Root cause
+  of the 2026-07-15 "sim died between commands" mystery: WSL idles the VM out after the
+  last session closes; `docker-commander-1` auto-restarts on next boot (restart policy)
+  but the sim container silently vanishes. RULE: every scripted live test must start
+  its own sim INSIDE its own single session (batch_nav_test.sh already does); never
+  assume a container started by a previous command is still alive.
 - **Host sleep poisons batch runs.** The dev box sleeping mid-batch produced 5,000 s
   "runs" and bogus TIMEOUTs (2026-07-15). batch_nav_test.sh now flags any run >400 s
   wall as HOST-SLEEP SUSPECTED and declares the batch unreliable. Disable Windows
