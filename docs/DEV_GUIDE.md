@@ -87,6 +87,13 @@ reproducible, and rebuild the image when disk allows.
 **Editing the sim** needs no build at all: `tools/mujoco_sim.py` is volume-mounted;
 edit, then restart the stack.
 
+**Sim LiDAR env flags** (set on the sim container / in sim_up.sh):
+- `M20_LIDAR_REALISM=1` (default) — XYZIRT points, real motion skew (progressive
+  sector casting, per-point timestamps), σ=1.5 cm range noise + dropout.
+  `=0` reverts to a clean instantaneous xyz-only cloud (A/B debugging).
+- `M20_WEATHER=clear|dust` (default clear) — `dust` adds 3% phantom 1–3 m returns
+  and extra far-range dropout, for weather-robustness testing (see L1.8).
+
 ## 4. Test your ideas (the gates)
 
 ```bash
