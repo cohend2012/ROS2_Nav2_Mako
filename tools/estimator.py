@@ -17,7 +17,8 @@ from drdds.msg import JointsData, ImuData
 from nav_msgs.msg import Odometry
 
 WHEELS = (3, 7, 11, 15)
-R = 0.10
+R = 0.072   # CALIBRATED effective rolling radius (measured from test drives) — the
+            # nominal 0.10 over-reads distance ~38%; must match ODOM_R in mujoco_sim.py
 GPS_SIGMA = 0.8
 
 

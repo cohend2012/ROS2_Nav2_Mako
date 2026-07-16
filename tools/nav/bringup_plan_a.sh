@@ -38,6 +38,7 @@ docker cp "$REPO/src/m20_navigation/config/nav2_params.yaml"                    
 docker cp "$REPO/tools/slam/mapper_params.yaml"                                   $C:/cfg/mapper_params.yaml
 docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml"          $C:/cfg/pointcloud_to_laserscan.yaml
 docker cp "$REPO/tools/nav/nav_logger.py"                                         $C:/cfg/nav_logger.py
+docker cp "$REPO/tools/estimator.py"                                              $C:/cfg/estimator.py
 
 echo "[2/7] starting MuJoCo sim (oil_gas_field, headless)"
 docker rm -f m20_sim_run 2>/dev/null || true
@@ -57,6 +58,11 @@ sleep 1
 echo "[2.5/7] starting pointcloud_to_laserscan (/LIDAR/POINTS -> /scan)"
 docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
 sleep 2
+
+if [ "${M20_EKF:-0}" = "1" ]; then
+  echo "[2.6/7] starting GPS-fused EKF estimator (wheel+IMU+GPS -> /odom_filtered)"
+  docker exec -d $C bash -lc "$SRC; python3 /cfg/estimator.py"
+fi
 
 echo "[3/7] starting bridge (sim backend) + arming"
 docker exec -d $C bash -lc "$SRC; python3 /cfg/bridge_node.py --ros-args -p sdk_backend:=sim"
