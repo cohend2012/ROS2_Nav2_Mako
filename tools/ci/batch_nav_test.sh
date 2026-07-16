@@ -52,7 +52,15 @@ for l in sys.stdin:
 print(f'{x} {y}' if x is not None else 'nan nan')"
 }
 
-echo "=== batch_nav_test: $N runs, goal ($GX,$GY) ==="
+# contention guard: a loaded box starves Nav2's 20 Hz control loop below the bridge
+# watchdog (observed 2026-07-15: concurrent workload -> load 4.7 -> robot never moved,
+# 3 bogus TIMEOUTs). Warn loudly; the gate is only meaningful on a quiet box.
+LOAD=$(awk '{print $1}' /proc/loadavg)
+if awk "BEGIN{exit !($LOAD > 2.0)}"; then
+  echo "!! WARNING: load average $LOAD > 2.0 — ANOTHER WORKLOAD IS RUNNING."
+  echo "!! Gate results will be CONTENTION-CONTAMINATED. Run on a quiet box."
+fi
+echo "=== batch_nav_test: $N runs, goal ($GX,$GY), start load=$LOAD ==="
 for i in $(seq 1 "$N"); do
   T0=$(date +%s)
   teardown; sleep 2
