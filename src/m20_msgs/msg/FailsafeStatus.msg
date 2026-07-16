@@ -8,6 +8,7 @@ uint16 FS_ESTIMATOR_DIVERGED=8
 uint16 FS_ESTOP=16
 uint16 FS_MODULE_UNHEALTHY=32
 uint16 FS_CMD_TIMEOUT=64
+uint16 FS_TIPOVER=128
 
 std_msgs/Header header
 uint16 active             # OR of FS_* flags
