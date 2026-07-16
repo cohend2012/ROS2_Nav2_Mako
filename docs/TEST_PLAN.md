@@ -59,6 +59,18 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 - **C — Missions / robustness.** **Accept:** L3.4 + L3.5 pass; recovery behaviors handle a
   blocked path without driving into obstacles.
 
+## OPEN INVESTIGATION (2026-07-17): nav runs abort in rotate-to-heading
+Fixed today (each verified at its level): commander-local lidar static TF
+(sensing chain green), estimator radius 0.072, bridge mixer radius 0.072
+(L1.2 best-ever: 99% forward speed, +42°/3s turn). Yet full nav runs STILL
+never leave rotate-to-heading (true yaw frozen while Nav2 recoveries flap the
+wheels; batch #9 was 0/10 this way). Ruled out: arming, sensing (/scan+/map
+green), physics authority (L1.2), the ±π singularity (south goal fails too),
+IMU delivery (199 Hz). NOT yet ruled out: what Nav2 itself thinks — because
+**bringup discards Nav2's logs (`docker exec -d`)**. NEXT INSTRUMENT: launch
+Nav2 with stdout captured to a file and read the planner/controller/BT errors
+during a failing run. Do this BEFORE any further tuning or batches.
+
 ## Known operational gotchas (regression guards)
 - **Cross-container latched (transient_local) topics are NOT reliable on this box.**
   After a host sleep/resume cycle (2026-07-16), the sim's once-published `/tf_static`
