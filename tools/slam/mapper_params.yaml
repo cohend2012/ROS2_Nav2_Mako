@@ -23,12 +23,13 @@ slam_toolbox:
 
     # scan matching / motion
     use_scan_matching: true
-    # 0.1 (was 0.2): with realistic sensor noise the pose must keep correcting during
-    # slow final approach — at 0.2 the last update lands too far from the goal and the
-    # goal checker starves (2 finish-line timeouts in the 2026-07-15 realism batch).
-    minimum_travel_distance: 0.1
-    minimum_travel_heading: 0.1
-    scan_buffer_size: 20
+    # NOTE (2026-07-15): tried 0.1/0.1/buffer-20 to fix finish-line timeouts under
+    # realistic sensor noise — it made things WORSE (batch 7/10 -> 5/10): the extra
+    # scan-matching load slows the whole stack on this box and pushes runs into
+    # timeout. Reverted; the finish-line fix lives in the Nav2 goal tolerance instead.
+    minimum_travel_distance: 0.2
+    minimum_travel_heading: 0.2
+    scan_buffer_size: 10
     link_match_minimum_response_fine: 0.1
     loop_search_maximum_distance: 3.0
     do_loop_closing: true
