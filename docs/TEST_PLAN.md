@@ -70,7 +70,19 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
   ones; after `kill -9`, wait for DDS to reap phantom publishers before trusting counts.
 - **`sdk_backend:=sim`** or the bridge is a no-op stub (no `/JOINTS_CMD`).
 
-## Current status (2026-07-12, updated after first L3.2 batch)
+## Current status (2026-07-15: REAL LiDAR INTERFACE GATED — phase D complete)
+- **L3.2 re-gate on the real interface (`/LIDAR/POINTS` → pointcloud_to_laserscan →
+  `/scan`): PASS — 8/10, mean 0.57 m, p95 0.63 m, no contamination.** Statistically
+  equivalent to the old native-/scan baseline (8/10, 0.54 m): the interface switch
+  cost nothing. Failures were 2 mid-course TIMEOUTs (1.55 m / 2.86 m from goal,
+  genuine stalls) — same localization-driven class Phase A targets.
+- First batch on the new interface (2026-07-15 early) was HOST-SLEEP contaminated
+  (7/10 with 5,000 s runs) — detected, discarded, re-run. The gate now flags this.
+- L1.6 tip-over failsafe implemented in commander (FS_TIPOVER → ESTOP); bench test
+  still to be run against a scripted flip (carry into next phase).
+- Phase D closes at tag `checkpoint-03-real-lidar-interface`. Next: Phase A (GPS EKF).
+
+## Prior status (2026-07-12, first L3.2 batch — old native /scan interface)
 - L1.1–L1.3 ✅ · L2.1–L2.2 ✅ · L3.1 ✅ (0.28 m best).
 - **L3.2 MEASURED & PASSED: 8/10 success, mean 0.54 m, p95 0.59 m**
   (`tools/ci/batch_nav_test.sh`, results in `tools/ci/out/batch_results.csv`).
