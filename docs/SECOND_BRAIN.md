@@ -470,6 +470,22 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-15 (rev 37) — CHECKPOINT-03: REAL LiDAR INTERFACE, phase D closed.**
+  The sim now speaks the real M20 sensor contract: **`/LIDAR/POINTS`** (hemispherical
+  reduced-beam PointCloud2, 0.5 m blind, body frame — per the verified vendor configs)
+  with `/scan` DERIVED by the production `pointcloud_to_laserscan` node, exactly as it
+  will run on hardware. **Gated: L3.2 = 8/10, mean 0.57 m** — statistically identical
+  to the old native-/scan shortcut (8/10, 0.54 m): the honest interface cost nothing.
+  Also landed in phase D: tier-1 CI precommit hook; batch gate with host-sleep
+  contamination detection (one batch was poisoned by the PC sleeping — detected,
+  discarded, re-run clean); L1.6 tip-over failsafe in commander (FS_TIPOVER→ESTOP,
+  after a live teleop flip onto a ground pipe); dev workflow (sim_up.sh live MuJoCo
+  viewer via WSLg + m20sh shell + DEV_GUIDE.md); LIDAR_RESEARCH.md (RoboSense dual
+  96-line, extrinsics = merged body frame, RK3588/Foxy constraints). Branch
+  `phase-d-reliability` merged to master, tag `checkpoint-03-real-lidar-interface`.
+  **Next: Phase A — robot_localization EKF (wheel+IMU+GPS), target ≥9/10 & <0.4 m**
+  (the 2 remaining failures/batch are mid-course localization stalls; measured
+  systematic ~0.5 m bias is exactly what GPS anchoring removes).
 - **2026-07-11 (rev 36) — Closed the localization honesty gap (no more perfect info).**
   Replaced the sim's ground-truth `odom→base_link` TF with DEAD-RECKONED odometry that
   drifts, exactly like a real skid-steer: forward speed from wheel encoders × a CALIBRATED
