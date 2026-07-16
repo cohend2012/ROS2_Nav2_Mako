@@ -45,13 +45,23 @@ _WHEELS = (3, 7, 11, 15)
 _LEFT = (3, 11)          # FL, HL wheels
 _RIGHT = (7, 15)         # FR, HR wheels
 
+# TODO: Build a system that can connect to the real robot and the sim and switch between them.
+
+# TODO: Build a way to make the robot walk in a gait. I think we need to add a gait request topic to the bridge node.
+
 
 class SimVendorSDK:
     """Sim 'vendor' backend: drives the MuJoCo sim over the drdds joint interface
     (ADR-015). Holds the standing stance on the legs and skid-steers the wheels from
     the /cmd_vel the bridge forwards. This is the sim analog of the real VendorSDK."""
 
-    def __init__(self, node, wheel_radius=0.10, track=0.40):
+    # wheel_radius: CALIBRATED effective rolling radius (0.072 m, measured from test
+    # drives — matches ODOM_R in mujoco_sim.py and R in estimator.py). The nominal
+    # 0.10 m under-commands wheel speed ~28%: forward runs slow, and pivot falls below
+    # the skid-scrub stiction threshold entirely (root cause of the 2026-07-17
+    # rotate-to-heading deadlock: Nav2 flapping reset the yaw integral faster than it
+    # could wind up the missing 39% of wheel speed).
+    def __init__(self, node, wheel_radius=0.072, track=0.40):
         from drdds.msg import JointsDataCmd, ImuData   # lazy: only when sim backend chosen
         self._Cmd = JointsDataCmd
         self.node = node
@@ -75,6 +85,8 @@ class SimVendorSDK:
     def send_velocity(self, vx: float, vy: float, wz: float) -> None:
         # +vx = forward, +wz = CCW. Trim wz by the yaw-rate error so the body actually
         # turns at wz despite skid-steer slip. In this model +wheel-vel drives -x (vx negated).
+
+        #TODO: Remove magic numbers and make the gains configurable.
         now = self.node.get_clock().now().nanoseconds * 1e-9
         dt = (now - self._last_t) if self._last_t else 0.05
         self._last_t = now
