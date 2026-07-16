@@ -48,6 +48,12 @@ docker run -d --rm --name m20_sim_run --network host --ipc host \
   m20_sim:latest python3 /mujoco_sim.py
 sleep 8
 
+echo "[2.4/7] static TF base_link->lidar_link (commander-local; cross-container"
+echo "        transient_local latching proved unreliable after WSL reboots)"
+# 0.10 m z-offset = LIDAR_OFFSET in tools/mujoco_sim.py (keep in sync)
+docker exec -d $C bash -lc "$SRC; ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 0.10 --frame-id base_link --child-frame-id lidar_link"
+sleep 1
+
 echo "[2.5/7] starting pointcloud_to_laserscan (/LIDAR/POINTS -> /scan)"
 docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
 sleep 2

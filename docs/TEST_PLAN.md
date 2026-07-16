@@ -60,6 +60,18 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
   blocked path without driving into obstacles.
 
 ## Known operational gotchas (regression guards)
+- **Cross-container latched (transient_local) topics are NOT reliable on this box.**
+  After a host sleep/resume cycle (2026-07-16), the sim's once-published `/tf_static`
+  (base_link→lidar_link) stopped reaching other containers while continuously-published
+  topics flowed fine — silently killing pc2ls → /scan → SLAM → all navigation (the
+  "never-moved" batch-#8 runs). FIX: the lidar static TF is now published
+  commander-local by `static_transform_publisher` in bringup/sim_up (kill pattern
+  updated). Rule: never depend on cross-container latched delivery for anything
+  critical; publish static TFs in the consumer's container.
+- **Host sleep/resume also corrupts state, not just timing:** it can restart the
+  commander, remove --rm containers (the sim), skew `uptime` vs wall clock (the
+  diagnostic tell: `/sbin/init` start time ≠ boot time implied by `uptime`), and leave
+  the ROS 2 CLI daemon with a stale topic cache (`ros2 daemon stop/start` fixes views).
 - **WSL kills the whole VM (and every container) when no session is open.** Root cause
   of the 2026-07-15 "sim died between commands" mystery: WSL idles the VM out after the
   last session closes; `docker-commander-1` auto-restarts on next boot (restart policy)
