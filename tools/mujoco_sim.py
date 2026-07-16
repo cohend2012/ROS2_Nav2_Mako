@@ -24,7 +24,7 @@ from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 # The real robot's dual RoboSense 96-line units are merged by the vendor driver into
 # ONE PointCloud2 on /LIDAR/POINTS, expressed in a single body frame (lidar_link),
 # 360x90 deg hemispherical FOV, 0.5 m blind radius. We model a reduced-beam version of
-# that: 16 elevation rings x 90 azimuths = 1440 rays at ~10 Hz (real: ~860k pts/s).
+# that: 16 elevation rings x 120 azimuths = 1920 rays at ~10 Hz (real: ~860k pts/s).
 # A 2D /scan for slam_toolbox/Nav2 is DERIVED by the real pointcloud_to_laserscan node,
 # exactly as it will be on the robot. Elevations are densest near horizon-down where
 # ground pipes live (sensor ~0.56 m above ground; a 0.30 m pipe top at 5 m is ~ -3 deg).
@@ -36,7 +36,7 @@ LIDAR_OFFSET = 0.10                  # lidar_link height above base_link (ASSUME
 # Rays test geom GROUP 0 ONLY = floor + field obstacles. The robot's own geoms live in
 # groups 1 (collision primitives) and 2 (visual meshes); masking them out (a) matches
 # the real vendor driver, which self-filters the robot body from the merged cloud, and
-# (b) is 40x faster (0.8 ms vs 31 ms per 1440-ray cast — the 17 visual meshes were the
+# (b) is 40x faster (0.8 ms vs 31 ms per full-sweep cast — the 17 visual meshes were the
 # cost). NOTE: new sim scenes must keep world obstacles in group 0 (the default).
 LIDAR_GEOMGROUP = np.array([1, 0, 0, 0, 0, 0], np.uint8)
 
