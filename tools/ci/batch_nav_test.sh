@@ -34,7 +34,7 @@ stage() {  # copy current configs/tools into the container once
 }
 
 teardown() {
-  docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan";
+  docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan|static_transform_publisher";
     PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}"); kill -9 $PIDS 2>/dev/null; true' >/dev/null 2>&1
   docker rm -f m20_sim_run >/dev/null 2>&1
 }
@@ -72,6 +72,10 @@ for i in $(seq 1 "$N"); do
     m20_sim:latest python3 /mujoco_sim.py >/dev/null 2>&1
   sleep 8
   stage >/dev/null 2>&1
+  # lidar static TF, commander-local (cross-container transient_local latching is
+  # unreliable on this box — see TEST_PLAN gotchas). 0.10 m = LIDAR_OFFSET in the sim.
+  docker exec -d $C bash -lc "$SRC; ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 0.10 --frame-id base_link --child-frame-id lidar_link"
+  sleep 1
   # projection: /LIDAR/POINTS (real interface) -> /scan for slam/Nav2
   docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
   sleep 2
