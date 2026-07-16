@@ -1,0 +1,21 @@
+# Projection: /LIDAR/POINTS (PointCloud2, lidar_link) -> /scan (LaserScan, base_link).
+# This node is the SAME one that will run on the real robot — the sim publishes the
+# real interface (merged cloud) and everything 2D is derived, never native.
+# Height slice is in the TARGET frame (base_link, origin ~0.46 m above ground):
+#   -0.36 .. +0.54  =>  0.10 .. 1.00 m above ground.
+# That includes ground-pipe tops (0.15-0.30 m) — a deliberate change vs the old native
+# scan at 0.35 m which passed OVER pipes. Fallback if the L3.2 gate regresses:
+# min_height: -0.16 (=> 0.30 m) to replicate the old slice for the D merge only.
+/**:
+  ros__parameters:
+    target_frame: base_link
+    transform_tolerance: 0.2
+    min_height: -0.36
+    max_height: 0.54
+    angle_min: -3.14159
+    angle_max: 3.14159
+    angle_increment: 0.01745      # 1 deg bins
+    scan_time: 0.1
+    range_min: 0.5
+    range_max: 12.0
+    use_inf: true

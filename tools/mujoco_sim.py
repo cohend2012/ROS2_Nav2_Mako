@@ -9,20 +9,36 @@ Wheels (joint index %4==3) use kp=0 -> velocity/torque control, legs hold positi
 
 Env:  M20_MJCF=<path to M20.xml>   M20_SIM_GUI=1|0
 """
-import os, math
+import os, math, time
 import numpy as np
 import mujoco
 import rclpy
 from rclpy.node import Node
 from drdds.msg import JointsData, JointsDataCmd, ImuData
 from nav_msgs.msg import Odometry            # ground-truth pose ("perfect estimator")
-from sensor_msgs.msg import LaserScan        # simulated LiDAR (/scan)
+from sensor_msgs.msg import PointCloud2, PointField   # real LiDAR interface (/LIDAR/POINTS)
 from geometry_msgs.msg import TransformStamped
-from tf2_ros import TransformBroadcaster     # odom->base_link TF (for SLAM/Nav2)
+from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 
-LIDAR_N = 360          # rays per scan (1 deg) — denser for a fuller SLAM map
-LIDAR_MIN, LIDAR_MAX = 0.6, 12.0
-LIDAR_Z = 0.35         # sensor height above ground
+# --- LiDAR: the REAL M20 interface (see docs/LIDAR_RESEARCH.md) ---------------------
+# The real robot's dual RoboSense 96-line units are merged by the vendor driver into
+# ONE PointCloud2 on /LIDAR/POINTS, expressed in a single body frame (lidar_link),
+# 360x90 deg hemispherical FOV, 0.5 m blind radius. We model a reduced-beam version of
+# that: 16 elevation rings x 90 azimuths = 1440 rays at ~10 Hz (real: ~860k pts/s).
+# A 2D /scan for slam_toolbox/Nav2 is DERIVED by the real pointcloud_to_laserscan node,
+# exactly as it will be on the robot. Elevations are densest near horizon-down where
+# ground pipes live (sensor ~0.56 m above ground; a 0.30 m pipe top at 5 m is ~ -3 deg).
+LIDAR_ELEVS_DEG = [15, 10, 5, 2, 0, -2, -4, -6, -8, -10, -13, -16, -20, -25, -32, -45]
+LIDAR_AZIMS = 120                    # 3 deg azimuth spacing (180 was marginal under live load)
+LIDAR_BLIND, LIDAR_MAX = 0.5, 12.0   # blind radius per vendor config; our range budget
+LIDAR_OFFSET = 0.10                  # lidar_link height above base_link (ASSUMED site,
+                                     # top of body — verify on hardware day 1)
+# Rays test geom GROUP 0 ONLY = floor + field obstacles. The robot's own geoms live in
+# groups 1 (collision primitives) and 2 (visual meshes); masking them out (a) matches
+# the real vendor driver, which self-filters the robot body from the merged cloud, and
+# (b) is 40x faster (0.8 ms vs 31 ms per 1440-ray cast — the 17 visual meshes were the
+# cost). NOTE: new sim scenes must keep world obstacles in group 0 (the default).
+LIDAR_GEOMGROUP = np.array([1, 0, 0, 0, 0, 0], np.uint8)
 
 # Wheel-odometry kinematics. TRACK_B matches the bridge. ODOM_R is the CALIBRATED
 # effective rolling radius (measured ~0.072 m from test drives) — the bridge's nominal
@@ -97,9 +113,34 @@ class Sim(Node):
         self.imu_pub = self.create_publisher(ImuData, "/IMU_DATA", 10)
         self.odom_pub = self.create_publisher(Odometry, "/odom", 10)
         self.gps_pub = self.create_publisher(Odometry, "/gps", 10)   # noisy absolute pos (~5 Hz)
-        self.scan_pub = self.create_publisher(LaserScan, "/scan", 10) # simulated LiDAR (~10 Hz)
+        self.cloud_pub = self.create_publisher(PointCloud2, "/LIDAR/POINTS", 10)  # real interface (~10 Hz)
         self.true_pub = self.create_publisher(Odometry, "/odom_true", 10)  # GROUND TRUTH (eval only)
         self.tf_bc = TransformBroadcaster(self)                        # odom->base_link
+        # static TF base_link -> lidar_link (the frame /LIDAR/POINTS is expressed in,
+        # matching the real robot where the merged cloud arrives in one body frame)
+        self.static_bc = StaticTransformBroadcaster(self)
+        st = TransformStamped()
+        st.header.stamp = self.get_clock().now().to_msg()
+        st.header.frame_id = "base_link"
+        st.child_frame_id = "lidar_link"
+        st.transform.translation.z = LIDAR_OFFSET
+        st.transform.rotation.w = 1.0
+        self.static_bc.sendTransform(st)
+        # precompute the hemispherical ray table in the SENSOR frame (unit vectors);
+        # per scan the table is rotated by the body rotation (sensor is body-fixed).
+        dirs = []
+        for ed in LIDAR_ELEVS_DEG:
+            el = math.radians(ed)
+            for k in range(LIDAR_AZIMS):
+                az = 2.0 * math.pi * k / LIDAR_AZIMS
+                dirs.append([math.cos(el) * math.cos(az),
+                             math.cos(el) * math.sin(az),
+                             math.sin(el)])
+        self._ray_dirs = np.array(dirs)                       # (NRAY, 3) sensor frame
+        self._nray = len(dirs)
+        self._ray_geomid = np.full(self._nray, -1, np.int32)  # mj_multiRay outputs
+        self._ray_dist = np.zeros(self._nray, np.float64)
+        self._slow_scans = 0                                   # perf-guard counter
         # dead-reckoned wheel-odometry pose (drifts) — seeds the odom frame at the true start
         _, _, y0 = quat_to_rpy(*self.d.qpos[3:7])
         self.odom_x = float(self.d.qpos[0])
@@ -108,7 +149,6 @@ class Sim(Node):
         self._prev_yaw = float(y0)             # last true yaw, for gyro turn-rate tracking
         self.odt = 1.0 / PUB_HZ
         self._gyro_bias = 0.002                # gyro bias (rad/s, ~0.1 deg/s) -> slow heading drift
-        self._geomid = np.zeros(1, np.int32)
         self._tick = 0
         self._rng = np.random.default_rng(0)
         self.create_subscription(JointsDataCmd, "/JOINTS_CMD", self.on_cmd, 10)
@@ -137,7 +177,10 @@ class Sim(Node):
         if self.viewer is not None:
             if not self.viewer.is_running():
                 raise KeyboardInterrupt
-            self.viewer.sync()
+            # sync the window at ~25 Hz, not 200 Hz — full-rate sync costs ~25%
+            # real-time under WSLg software GL and the eye can't tell the difference
+            if self._tick % 8 == 0:
+                self.viewer.sync()
         self.publish()
 
     def publish(self):
@@ -223,28 +266,51 @@ class Sim(Node):
             g.pose.pose.position.y = float(self.d.qpos[1] + self._rng.normal(0, 0.8))
             self.gps_pub.publish(g)
         if self._tick % 20 == 0:                     # ~10 Hz LiDAR
-            self._publish_scan(now)
+            self._publish_cloud(now)
 
-    def _publish_scan(self, now):
-        s = LaserScan()
-        s.header.stamp = now
-        s.header.frame_id = "base_link"
-        s.angle_min = -math.pi
-        s.angle_max = math.pi
-        s.angle_increment = 2.0 * math.pi / LIDAR_N
-        s.range_min, s.range_max = LIDAR_MIN, LIDAR_MAX
-        w, x, y, z = self.d.qpos[3:7]
-        yaw = math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
-        origin = np.array([self.d.qpos[0], self.d.qpos[1], LIDAR_Z])
-        ranges = [float("inf")] * LIDAR_N
-        for i in range(LIDAR_N):
-            a = yaw + s.angle_min + i * s.angle_increment
-            vec = np.array([math.cos(a), math.sin(a), 0.0])
-            dist = mujoco.mj_ray(self.m, self.d, origin, vec, None, 1, 1, self._geomid)
-            if LIDAR_MIN < dist < LIDAR_MAX:          # else stays inf (no return / self-hit)
-                ranges[i] = float(dist)
-        s.ranges = ranges
-        self.scan_pub.publish(s)
+    def _publish_cloud(self, now):
+        """Cast the hemispherical ray pattern and publish /LIDAR/POINTS (PointCloud2,
+        sensor frame lidar_link) — the real M20 interface. One mj_multiRay C call."""
+        t0 = time.perf_counter()
+        # body rotation matrix from the base quaternion (sensor is body-fixed: tilts too)
+        R = np.empty(9)
+        mujoco.mju_quat2Mat(R, self.d.qpos[3:7])
+        R = R.reshape(3, 3)
+        origin = self.d.qpos[0:3] + R @ np.array([0.0, 0.0, LIDAR_OFFSET])
+        vecs = (self._ray_dirs @ R.T).reshape(-1)     # world-frame directions, flat
+        # bodyexclude=-1: exclude nothing by body (the geomgroup mask already removes
+        # the robot; 0 would wrongly exclude the WORLD body = floor + field obstacles)
+        mujoco.mj_multiRay(self.m, self.d, origin.astype(np.float64), vecs,
+                           LIDAR_GEOMGROUP, True, -1, self._ray_geomid, self._ray_dist,
+                           None, self._nray, LIDAR_MAX)
+        dist = self._ray_dist
+        valid = (dist > LIDAR_BLIND) & (dist < LIDAR_MAX) & (self._ray_geomid >= 0)
+        # points in the SENSOR frame (= what the real merged cloud is expressed in)
+        pts = (self._ray_dirs[valid] * dist[valid, None]).astype(np.float32)
+        msg = PointCloud2()
+        msg.header.stamp = now
+        msg.header.frame_id = "lidar_link"
+        msg.height = 1
+        msg.width = int(pts.shape[0])
+        msg.fields = [
+            PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1)]
+        msg.is_bigendian = False
+        msg.point_step = 12
+        msg.row_step = 12 * msg.width
+        msg.is_dense = True
+        msg.data = pts.tobytes()
+        self.cloud_pub.publish(msg)
+        # perf guard: ~4-5 ms per cloud every 20th tick costs ~2% real-time (measured
+        # 9.78 Hz vs 10) — acceptable. Warn only if a cast goes genuinely bad (>8 ms);
+        # fallback ladder then: azimuths 120->90, or drop elevation rings.
+        if time.perf_counter() - t0 > 0.008:
+            self._slow_scans += 1
+            if self._slow_scans in (1, 10, 100):
+                self.get_logger().warn(
+                    f"LiDAR cast >8ms ({(time.perf_counter()-t0)*1e3:.1f} ms, "
+                    f"#{self._slow_scans}) — consider ray fallback ladder")
 
 
 def main():

@@ -23,6 +23,8 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 | L1.3 | Honest odom | `tools/nav/odom_drift_check.py` | fwd odom vs true err; yaw err/turn | <0.1 m fwd; <5°/turn |
 | L1.4 | Bridge arming | set_mode + cmd_vel | moves only when armed; halts on veto | enforced |
 | L1.5 | Watchdog | stop cmd_vel | zero-velocity within `cmd_timeout_s` | halts |
+| L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander latches FS_TIPOVER >35° roll/pitch → ESTOP+disarm; auto-clears flag after 5 s upright (no auto re-arm) | BUILT 2026-07-15 (observed flip 2026-07-13 prompted it) — bench test pending |
+| L1.7 | Real LiDAR interface | stack up, probe /LIDAR/POINTS | ~10 Hz PointCloud2 in lidar_link; no returns <0.5 m standing; derived /scan (pointcloud_to_laserscan) ~10 Hz; ground pipes visible ahead | ✅ 2026-07-15: 9.8 Hz, rmin 0.79, /scan 10.0 Hz from projection node, pipe_cross seen at 1.85 m |
 
 ### L2 — Subsystem checks
 | # | System | Test | Metric | Pass |
@@ -57,6 +59,10 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
   blocked path without driving into obstacles.
 
 ## Known operational gotchas (regression guards)
+- **Host sleep poisons batch runs.** The dev box sleeping mid-batch produced 5,000 s
+  "runs" and bogus TIMEOUTs (2026-07-15). batch_nav_test.sh now flags any run >400 s
+  wall as HOST-SLEEP SUSPECTED and declares the batch unreliable. Disable Windows
+  sleep (or run `powercfg /change standby-timeout-ac 0`) before starting a gate.
 - **Restart Nav2 whenever the sim restarts.** Reusing Nav2 across a sim restart leaves stale
   costmap/TF state (robot "teleports") → repeated collision/TF aborts. Full-stack fresh
   restart is reliable. (Root cause of the 3 failed runs on 2026-07-12.)
@@ -64,8 +70,31 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
   ones; after `kill -9`, wait for DDS to reap phantom publishers before trusting counts.
 - **`sdk_backend:=sim`** or the bridge is a no-op stub (no `/JOINTS_CMD`).
 
-## Current status (2026-07-12)
-- L1.1–L1.3 ✅ · L2.1–L2.2 ✅ · L3.1 ✅ (0.28 m best; 0.82 m typical).
-- L3.2 ❌ not yet measured — **this is the first D task** (batch harness). Observed
-  reliability is currently marginal in the open field (localization-driven failures),
-  which is exactly what A (GPS/EKF) targets.
+## Current status (2026-07-15: REAL LiDAR INTERFACE GATED — phase D complete)
+- **L3.2 re-gate on the real interface (`/LIDAR/POINTS` → pointcloud_to_laserscan →
+  `/scan`): PASS — 8/10, mean 0.57 m, p95 0.63 m, no contamination.** Statistically
+  equivalent to the old native-/scan baseline (8/10, 0.54 m): the interface switch
+  cost nothing. Failures were 2 mid-course TIMEOUTs (1.55 m / 2.86 m from goal,
+  genuine stalls) — same localization-driven class Phase A targets.
+- First batch on the new interface (2026-07-15 early) was HOST-SLEEP contaminated
+  (7/10 with 5,000 s runs) — detected, discarded, re-run. The gate now flags this.
+- L1.6 tip-over failsafe implemented in commander (FS_TIPOVER → ESTOP); bench test
+  still to be run against a scripted flip (carry into next phase).
+- Phase D closes at tag `checkpoint-03-real-lidar-interface`. Next: Phase A (GPS EKF).
+
+## Prior status (2026-07-12, first L3.2 batch — old native /scan interface)
+- L1.1–L1.3 ✅ · L2.1–L2.2 ✅ · L3.1 ✅ (0.28 m best).
+- **L3.2 MEASURED & PASSED: 8/10 success, mean 0.54 m, p95 0.59 m**
+  (`tools/ci/batch_nav_test.sh`, results in `tools/ci/out/batch_results.csv`).
+  Failure analysis (honest):
+  - run 2 ABORTED and run 3 TIMEOUT — both in the FINAL APPROACH, truly 0.57 m /
+    0.29 m from the goal (run 3 was within tolerance in ground truth when the
+    150 s harness timeout hit). Nobody drives into obstacles anymore; the
+    fresh-stack discipline killed that failure class.
+  - Successes cluster tight: x ≈ −5.77±0.04, y ≈ 0.0±0.04 vs goal (−6, −0.5) —
+    a SYSTEMATIC ~0.5 m offset (mostly in y), i.e. residual localization drift:
+    Nav2 reaches the goal in the *estimated* frame; truth is offset by drift.
+    That bias is precisely what Phase A (GPS EKF) is for — expect mean error to
+    drop well under 0.4 m once GPS anchors the estimate.
+  - Pass is at the floor (8/10 = exactly 80%): do not merge D on a single batch;
+    re-run the gate after the interface switch.
