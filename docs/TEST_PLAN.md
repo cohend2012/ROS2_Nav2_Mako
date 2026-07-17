@@ -90,7 +90,29 @@ State: NO Nav2 goal has succeeded since the post-suspend era began. Master
    a straight-ahead goal aborts; a bisect to last-committed config ALSO fails at
    origin (but that config still contains the accel deadlock, so it discriminates
    nothing — bisect design error, see next steps).
+SESSION 2 FINDINGS (2026-07-17, forensics on fresh VM — suspects CLEARED):
+  * COMMANDER CRASH-LOOP EPOCH FOUND: docker logs showed ~30 "Commander up" boots
+    over hours — the commander container's PID 1 was dying every 1-3 min, and every
+    death killed ALL exec'd nodes (bridge/slam/Nav2/pc2ls) mid-run, and each rebirth
+    published latched DISARMED (bridge halts). This invalidates EVERY WIP-fix test
+    run during that epoch. Post-clean-reboot: commander stable 10+ min, zero deaths.
+    (Docker RestartCount resets after 10 s healthy — deaths were invisible to it.)
+  * Omniscient run (full observability) on batch-#6 config: commander armed
+    throughout, ZERO failsafes (L1.6 innocent), planner publishes plans fine (118
+    msgs — earlier "/plan missing" was a probe artifact). Failure = the known
+    accel-1.5 rotate deadlock, as designed. Watchdog 1.0 s holds through BT gaps.
+  * Fair test of the full 5-fix stack on healthy VM: STILL aborts (one
+    progress-checker strike at 40 s), and /odom_true was GONE at run end —
+    NEW PRIME SUSPECT: the SIM CONTAINER dying mid-run (~80-90 s), traceless
+    because all scripts run it with --rm. A dead sim = no scan/odom = no progress
+    = abort, matching everything.
 NEXT SESSION (do in order, one variable at a time):
+  0. Re-run omniscient_run.sh with the sim started WITHOUT --rm; if it dies:
+     docker logs + docker inspect exit code + dmesg (OOM?) give the cause directly.
+     Also record `docker events` during the run (catches death timestamps).
+  0b. If the sim IS dying: prime suspects = MuJoCo instability from the robot
+     rocking during compensated pivots (check sim log for physics warnings/NaN)
+     or WSL OOM (sim ~1 GB RSS). Fix accordingly (solver params / memory).
   a. TRUE bisect: git checkout 665b6f9 -- bridge_node.py nav2_params.yaml AND
      revert bridge R to 0.10 (= exact batch-#6 files) + keep ONLY the static-TF
      script fix. One goal run. Batches #5/#6 scored 7/10 & 5/10 on that config.
