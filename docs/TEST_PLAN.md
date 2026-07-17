@@ -71,6 +71,37 @@ IMU delivery (199 Hz). NOT yet ruled out: what Nav2 itself thinks — because
 Nav2 with stdout captured to a file and read the planner/controller/BT errors
 during a failing run. Do this BEFORE any further tuning or batches.
 
+## OPEN INVESTIGATION (2026-07-17): Nav2 rotate-to-heading deadlock — nav broken on this branch
+State: NO Nav2 goal has succeeded since the post-suspend era began. Master
+(checkpoint-03) remains last known-good. Debugging ledger, all measured:
+1. FIXED (verified): cross-container /tf_static latching died after host suspend →
+   commander-local static_transform_publisher in all bringups (8372513, e65d64d).
+2. FIXED (verified): bridge mixer R was nominal 0.10 vs calibrated 0.072 (40b69b3);
+   teleop now tracks commands (0.3 cmd → 0.309 actual; pivot 42°/3 s at wz=0.5).
+3. FIXED (verified, WIP): inner PI yaw loop (Ki=0.8) limit-cycled against Nav2's
+   20 Hz heading loop (body −0.59 on −0.44 cmd, sign-flapping) → Kp/Ki = 3.0/0.1;
+   oscillation gone, tracking clean.
+4. FIXED (verified, WIP): RPP transform_tolerance 0.1 → "extrapolation into the
+   future" zero-ticks chopped the angular ramp → 0.3; errors now zero.
+5. IMPROVED (WIP): max_angular_accel 1.5→4.0 raised the rotation-command ceiling
+   0.19→0.44 rad/s (RPP ramps from MEASURED rate; can never out-ramp a dead zone
+   wider than accel*dt).
+6. UNSOLVED: two runs froze at yaw = −0.44..−0.45 rad (−25°) and Nav2 aborts; even
+   a straight-ahead goal aborts; a bisect to last-committed config ALSO fails at
+   origin (but that config still contains the accel deadlock, so it discriminates
+   nothing — bisect design error, see next steps).
+NEXT SESSION (do in order, one variable at a time):
+  a. TRUE bisect: git checkout 665b6f9 -- bridge_node.py nav2_params.yaml AND
+     revert bridge R to 0.10 (= exact batch-#6 files) + keep ONLY the static-TF
+     script fix. One goal run. Batches #5/#6 scored 7/10 & 5/10 on that config.
+  b. If (a) drives: walk forward one delta at a time (R=0.072 → gains → tolerance
+     → accel → comp), one run each, find the poison pair.
+  c. If (a) fails: the breakage is environmental/sim-side (post-suspend WSL state,
+     realism sensor timing?) — A/B M20_LIDAR_REALISM=0, then reboot WSL cleanly.
+  d. Capture /plan + rotate-mode state in the probe (why yaw froze at exactly −25°:
+     suspicion = RPP rotating toward the CARROT heading, not the path end — check
+     transformed-plan geometry near the robot).
+
 ## Known operational gotchas (regression guards)
 - **Cross-container latched (transient_local) topics are NOT reliable on this box.**
   After a host sleep/resume cycle (2026-07-16), the sim's once-published `/tf_static`
