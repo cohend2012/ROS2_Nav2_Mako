@@ -106,7 +106,25 @@ SESSION 2 FINDINGS (2026-07-17, forensics on fresh VM — suspects CLEARED):
     NEW PRIME SUSPECT: the SIM CONTAINER dying mid-run (~80-90 s), traceless
     because all scripts run it with --rm. A dead sim = no scan/odom = no progress
     = abort, matching everything.
-NEXT SESSION (do in order, one variable at a time):
+SESSION 3 (2026-07-17 late) — THE VM WAS THE SERIAL KILLER:
+  * Sim corpse (no --rm) died with rclpy "publisher's context is invalid" = graceful
+    SIGTERM crash. Source: **WSL2's default vmIdleTimeout shuts the VM ~60 s after
+    the last wsl session closes** — killing sim (stays dead: no restart policy),
+    commander (reborn by restart policy = the "crash-loop" boots), and every exec'd
+    node — BETWEEN interactive debugging commands. Batches ran inside one long wsl
+    call and were largely immune; interactive probes self-destructed. FIX:
+    vmIdleTimeout=3600000 in ~/.wslconfig (requires wsl --shutdown once to apply).
+  * DDS discovery-server migration verified live: arming, plans (132 msgs), all
+    topics visible, chain hz taps: /cmd_vel_nav 17 Hz -> /cmd_vel 20 Hz ->
+    /JOINTS_CMD 20 Hz. Whole command chain flows.
+  * REMAINING PUZZLE (one item): commands flow but motion is ~10x slow — teleop
+    vx=0.3 moved ~0.17 m in 6 s; goals creep cm-level. Next probe (IN ONE
+    PERSISTENT SESSION, after wsl --shutdown applies the idle fix): /JOINTS_DATA
+    hz (sim tick rate — real-time factor suspect: realism sector-cast CPU cost) and
+    commanded-vs-actual wheel velocity. If sim runs ~10-20% real-time, EVERYTHING
+    (rotation timeouts included) follows; fix = ray-count fallback ladder / tick
+    budget in the sim.
+NEXT SESSION (older items, superseded where above applies):
   0. Re-run omniscient_run.sh with the sim started WITHOUT --rm; if it dies:
      docker logs + docker inspect exit code + dmesg (OOM?) give the cause directly.
      Also record `docker events` during the run (catches death timestamps).
