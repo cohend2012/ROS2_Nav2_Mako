@@ -42,7 +42,7 @@ docker cp "$REPO/tools/estimator.py"                                            
 
 echo "[2/7] starting MuJoCo sim (oil_gas_field, headless)"
 docker rm -f m20_sim_run 2>/dev/null || true
-docker run -d --rm --name m20_sim_run --network host --ipc host \
+docker run -d --name m20_sim_run --network host --ipc host \
   -e ROS_DOMAIN_ID=$DOM -e M20_SIM_GUI=0 \
   -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \

@@ -65,7 +65,7 @@ for i in $(seq 1 "$N"); do
   T0=$(date +%s)
   teardown; sleep 2
   # sim (fresh field, robot at origin)
-  docker run -d --rm --name m20_sim_run --network host --ipc host \
+  docker run -d --name m20_sim_run --network host --ipc host \
     -e ROS_DOMAIN_ID=42 -e M20_SIM_GUI=0 \
     -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
     -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \

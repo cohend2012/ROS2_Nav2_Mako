@@ -39,7 +39,7 @@ docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml" $C:/cfg
 
 if [ "$GUI" = "1" ]; then
   echo "[sim_up] starting MuJoCo sim (oil_gas_field) WITH LIVE VIEWER — a window will open..."
-  docker run -d --rm --name m20_sim_run --network host --ipc host \
+  docker run -d --name m20_sim_run --network host --ipc host \
     -e ROS_DOMAIN_ID=42 -e M20_SIM_GUI=1 \
     -e DISPLAY="${DISPLAY:-:0}" -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
     -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
@@ -49,7 +49,7 @@ if [ "$GUI" = "1" ]; then
     m20_sim:latest python3 /mujoco_sim.py >/dev/null
 else
   echo "[sim_up] starting MuJoCo sim (oil_gas_field, headless — M20_GUI=0)..."
-  docker run -d --rm --name m20_sim_run --network host --ipc host \
+  docker run -d --name m20_sim_run --network host --ipc host \
     -e ROS_DOMAIN_ID=42 -e M20_SIM_GUI=0 \
     -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
     -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
