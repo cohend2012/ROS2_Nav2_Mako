@@ -4,16 +4,18 @@
 set -u
 R=/mnt/c/GIT/StatefullXOne/m20_autonomy_ws/m20_autonomy_ws
 MODEL=$HOME/m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description
-S="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42"
+S="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 ROS_DISCOVERY_SERVER=127.0.0.1:11811 ROS_SUPER_CLIENT=TRUE"
 C=docker-commander-1
 
 bash $R/tools/nav/kill_stack.sh >/dev/null 2>&1; sleep 2
 docker run -d --name m20_sim_run --network host --ipc host \
-  -e ROS_DOMAIN_ID=42 -e M20_SIM_GUI=0 \
+  -e ROS_DOMAIN_ID=42 -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=0 \
   -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
   -v "$MODEL":/model:ro -v "$R/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py >/dev/null 2>&1
 sleep 8
+bash "$R/tools/dev/container_deps.sh" || exit 1
+docker exec $C bash -lc "mkdir -p /cfg /cfg/out"
 docker cp "$R/src/m20_locomotion_bridge/m20_locomotion_bridge/bridge_node.py" $C:/cfg/bridge_node.py >/dev/null
 docker cp "$R/src/m20_navigation/config/nav2_params.yaml" $C:/cfg/nav2_params.yaml >/dev/null
 docker cp "$R/tools/slam/mapper_params.yaml" $C:/cfg/mapper_params.yaml >/dev/null
