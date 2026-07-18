@@ -43,7 +43,7 @@ docker cp "$REPO/tools/estimator.py"                                            
 echo "[2/7] starting MuJoCo sim (oil_gas_field, headless)"
 docker rm -f m20_sim_run 2>/dev/null || true
 docker run -d --name m20_sim_run --network host --ipc host \
-  -e ROS_DOMAIN_ID=$DOM -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=0 \
+  -e ROS_DOMAIN_ID=$DOM -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
   -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py

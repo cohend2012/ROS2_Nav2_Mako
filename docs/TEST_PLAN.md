@@ -124,6 +124,22 @@ SESSION 3 (2026-07-17 late) — THE VM WAS THE SERIAL KILLER:
     commanded-vs-actual wheel velocity. If sim runs ~10-20% real-time, EVERYTHING
     (rotation timeouts included) follows; fix = ray-count fallback ladder / tick
     budget in the sim.
+SESSION 3b (single-session discipline era) — remaining chain, all measured:
+  * Teleop forward: PERFECT (cmd -4.17 rad/s, actual -4.17, body 0.31 m/s vs 0.3
+    commanded, 1.37 m in 8 s). Sim tick 196/200 Hz. Chain hz all green.
+  * Nav goal STILL aborts, WITH realism AND with M20_LIDAR_REALISM=0 (A/B done —
+    realism exonerated). Active failure evidence: "[tf_help] Transform data too
+    old converting map->odom" (420 ms stale) => slam_toolbox's map->odom lags.
+  * Secondary: post-run CLI probes increasingly fail to join ("context invalid",
+    empty echoes) — suspect fastdds discovery-server degradation under heavy
+    short-lived CLI participant churn. Consider restarting docker-discovery-1
+    between batches; also reduce probe churn (reuse one shell).
+  NEXT PROBE (single session): capture slam_toolbox log + measure map->odom TF
+  age every second during a goal + confirm slam RECEIVES /scan (its subscription
+  under discovery-server). If slam lags: check its CPU, scan queue, and consider
+  transform_publish_period/threading; if slam never gets /scan: DDS matching bug
+  for that one subscription. Also: teleop ROTATION check never completed cleanly
+  — include wz=0.7 yaw-delta measurement in the same probe.
 NEXT SESSION (older items, superseded where above applies):
   0. Re-run omniscient_run.sh with the sim started WITHOUT --rm; if it dies:
      docker logs + docker inspect exit code + dmesg (OOM?) give the cause directly.
