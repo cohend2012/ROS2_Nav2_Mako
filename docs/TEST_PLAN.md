@@ -216,3 +216,19 @@ NEXT SESSION (older items, superseded where above applies):
     drop well under 0.4 m once GPS anchors the estimate.
   - Pass is at the floor (8/10 = exactly 80%): do not merge D on a single batch;
     re-run the gate after the interface switch.
+
+SESSION 3c — THE BUG ON CAMERA (listen_probe during live goal):
+  * Robot ROTATES correctly (mechanical chain fully exonerated: 46 deg in 6 s,
+    wheels tracking commands), then converges + dithers at yaw ~ -12 deg with
+    vx=0.00 forever — but the goal direction is ~ -175 deg. Nav2 is rotating to
+    a heading ~165 deg away from the goal and believes it is aligned.
+  * TF freshness exonerated (tf_age_probe: -0.05..-0.18 s stationary AND moving).
+  * /scan single publisher, correct QoS (probe warning was probe-side RELIABLE).
+  * => LOCALIZATION or PLAN-FRAME error. DISCRIMINATOR (next session, single
+    run): during the dither, log slam estimated yaw (TF map->base_link) vs true
+    yaw (/odom_true). If est==true: plan/carrot transform bug (inspect /plan
+    first poses vs goal). If est is ~165 deg off: slam localization broken
+    (likely bad map init from pre-goal motion — also investigate WHY the robot
+    is already at +50 deg yaw when the goal starts: something moves it during
+    bringup).
+  * Probes committed: tools/nav/tf_age_probe.py, tools/nav/listen_probe.py.
