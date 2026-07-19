@@ -25,6 +25,7 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 | L1.5 | Watchdog | stop cmd_vel | zero-velocity within `cmd_timeout_s` | halts |
 | L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander latches FS_TIPOVER >35° roll/pitch → ESTOP+disarm; auto-clears flag after 5 s upright (no auto re-arm) | BUILT 2026-07-15 (observed flip 2026-07-13 prompted it) — bench test pending |
 | L1.7 | Real LiDAR interface | stack up, probe /LIDAR/POINTS | ~10 Hz PointCloud2 in lidar_link; no returns <0.5 m standing; derived /scan (pointcloud_to_laserscan) ~10 Hz; ground pipes visible ahead | ✅ 2026-07-15: 9.8 Hz, rmin 0.79, /scan 10.0 Hz from projection node, pipe_cross seen at 1.85 m |
+| L1.8 | LiDAR realism | `tools/nav/lidar_realism_check.py` | XYZIRT contract (32-byte points, rslidar offsets); timestamps span ~100 ms, monotone; noise σ 0.5–3 cm; ground dropout 0.5–12%; skew: pipe line-fit RMS >2× parked and >3 cm at 1 rad/s | ✅ 2026-07-15 PASS 7/7: 98.6 ms / 20 steps, σ 1.49 cm, drop 3.3%, skew 3.6→22.7 cm (6.4×) |
 
 ### L2 — Subsystem checks
 | # | System | Test | Metric | Pass |
@@ -58,7 +59,124 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 - **C — Missions / robustness.** **Accept:** L3.4 + L3.5 pass; recovery behaviors handle a
   blocked path without driving into obstacles.
 
+## OPEN INVESTIGATION (2026-07-17): nav runs abort in rotate-to-heading
+Fixed today (each verified at its level): commander-local lidar static TF
+(sensing chain green), estimator radius 0.072, bridge mixer radius 0.072
+(L1.2 best-ever: 99% forward speed, +42°/3s turn). Yet full nav runs STILL
+never leave rotate-to-heading (true yaw frozen while Nav2 recoveries flap the
+wheels; batch #9 was 0/10 this way). Ruled out: arming, sensing (/scan+/map
+green), physics authority (L1.2), the ±π singularity (south goal fails too),
+IMU delivery (199 Hz). NOT yet ruled out: what Nav2 itself thinks — because
+**bringup discards Nav2's logs (`docker exec -d`)**. NEXT INSTRUMENT: launch
+Nav2 with stdout captured to a file and read the planner/controller/BT errors
+during a failing run. Do this BEFORE any further tuning or batches.
+
+## OPEN INVESTIGATION (2026-07-17): Nav2 rotate-to-heading deadlock — nav broken on this branch
+State: NO Nav2 goal has succeeded since the post-suspend era began. Master
+(checkpoint-03) remains last known-good. Debugging ledger, all measured:
+1. FIXED (verified): cross-container /tf_static latching died after host suspend →
+   commander-local static_transform_publisher in all bringups (8372513, e65d64d).
+2. FIXED (verified): bridge mixer R was nominal 0.10 vs calibrated 0.072 (40b69b3);
+   teleop now tracks commands (0.3 cmd → 0.309 actual; pivot 42°/3 s at wz=0.5).
+3. FIXED (verified, WIP): inner PI yaw loop (Ki=0.8) limit-cycled against Nav2's
+   20 Hz heading loop (body −0.59 on −0.44 cmd, sign-flapping) → Kp/Ki = 3.0/0.1;
+   oscillation gone, tracking clean.
+4. FIXED (verified, WIP): RPP transform_tolerance 0.1 → "extrapolation into the
+   future" zero-ticks chopped the angular ramp → 0.3; errors now zero.
+5. IMPROVED (WIP): max_angular_accel 1.5→4.0 raised the rotation-command ceiling
+   0.19→0.44 rad/s (RPP ramps from MEASURED rate; can never out-ramp a dead zone
+   wider than accel*dt).
+6. UNSOLVED: two runs froze at yaw = −0.44..−0.45 rad (−25°) and Nav2 aborts; even
+   a straight-ahead goal aborts; a bisect to last-committed config ALSO fails at
+   origin (but that config still contains the accel deadlock, so it discriminates
+   nothing — bisect design error, see next steps).
+SESSION 2 FINDINGS (2026-07-17, forensics on fresh VM — suspects CLEARED):
+  * COMMANDER CRASH-LOOP EPOCH FOUND: docker logs showed ~30 "Commander up" boots
+    over hours — the commander container's PID 1 was dying every 1-3 min, and every
+    death killed ALL exec'd nodes (bridge/slam/Nav2/pc2ls) mid-run, and each rebirth
+    published latched DISARMED (bridge halts). This invalidates EVERY WIP-fix test
+    run during that epoch. Post-clean-reboot: commander stable 10+ min, zero deaths.
+    (Docker RestartCount resets after 10 s healthy — deaths were invisible to it.)
+  * Omniscient run (full observability) on batch-#6 config: commander armed
+    throughout, ZERO failsafes (L1.6 innocent), planner publishes plans fine (118
+    msgs — earlier "/plan missing" was a probe artifact). Failure = the known
+    accel-1.5 rotate deadlock, as designed. Watchdog 1.0 s holds through BT gaps.
+  * Fair test of the full 5-fix stack on healthy VM: STILL aborts (one
+    progress-checker strike at 40 s), and /odom_true was GONE at run end —
+    NEW PRIME SUSPECT: the SIM CONTAINER dying mid-run (~80-90 s), traceless
+    because all scripts run it with --rm. A dead sim = no scan/odom = no progress
+    = abort, matching everything.
+SESSION 3 (2026-07-17 late) — THE VM WAS THE SERIAL KILLER:
+  * Sim corpse (no --rm) died with rclpy "publisher's context is invalid" = graceful
+    SIGTERM crash. Source: **WSL2's default vmIdleTimeout shuts the VM ~60 s after
+    the last wsl session closes** — killing sim (stays dead: no restart policy),
+    commander (reborn by restart policy = the "crash-loop" boots), and every exec'd
+    node — BETWEEN interactive debugging commands. Batches ran inside one long wsl
+    call and were largely immune; interactive probes self-destructed. FIX:
+    vmIdleTimeout=3600000 in ~/.wslconfig (requires wsl --shutdown once to apply).
+  * DDS discovery-server migration verified live: arming, plans (132 msgs), all
+    topics visible, chain hz taps: /cmd_vel_nav 17 Hz -> /cmd_vel 20 Hz ->
+    /JOINTS_CMD 20 Hz. Whole command chain flows.
+  * REMAINING PUZZLE (one item): commands flow but motion is ~10x slow — teleop
+    vx=0.3 moved ~0.17 m in 6 s; goals creep cm-level. Next probe (IN ONE
+    PERSISTENT SESSION, after wsl --shutdown applies the idle fix): /JOINTS_DATA
+    hz (sim tick rate — real-time factor suspect: realism sector-cast CPU cost) and
+    commanded-vs-actual wheel velocity. If sim runs ~10-20% real-time, EVERYTHING
+    (rotation timeouts included) follows; fix = ray-count fallback ladder / tick
+    budget in the sim.
+SESSION 3b (single-session discipline era) — remaining chain, all measured:
+  * Teleop forward: PERFECT (cmd -4.17 rad/s, actual -4.17, body 0.31 m/s vs 0.3
+    commanded, 1.37 m in 8 s). Sim tick 196/200 Hz. Chain hz all green.
+  * Nav goal STILL aborts, WITH realism AND with M20_LIDAR_REALISM=0 (A/B done —
+    realism exonerated). Active failure evidence: "[tf_help] Transform data too
+    old converting map->odom" (420 ms stale) => slam_toolbox's map->odom lags.
+  * Secondary: post-run CLI probes increasingly fail to join ("context invalid",
+    empty echoes) — suspect fastdds discovery-server degradation under heavy
+    short-lived CLI participant churn. Consider restarting docker-discovery-1
+    between batches; also reduce probe churn (reuse one shell).
+  NEXT PROBE (single session): capture slam_toolbox log + measure map->odom TF
+  age every second during a goal + confirm slam RECEIVES /scan (its subscription
+  under discovery-server). If slam lags: check its CPU, scan queue, and consider
+  transform_publish_period/threading; if slam never gets /scan: DDS matching bug
+  for that one subscription. Also: teleop ROTATION check never completed cleanly
+  — include wz=0.7 yaw-delta measurement in the same probe.
+NEXT SESSION (older items, superseded where above applies):
+  0. Re-run omniscient_run.sh with the sim started WITHOUT --rm; if it dies:
+     docker logs + docker inspect exit code + dmesg (OOM?) give the cause directly.
+     Also record `docker events` during the run (catches death timestamps).
+  0b. If the sim IS dying: prime suspects = MuJoCo instability from the robot
+     rocking during compensated pivots (check sim log for physics warnings/NaN)
+     or WSL OOM (sim ~1 GB RSS). Fix accordingly (solver params / memory).
+  a. TRUE bisect: git checkout 665b6f9 -- bridge_node.py nav2_params.yaml AND
+     revert bridge R to 0.10 (= exact batch-#6 files) + keep ONLY the static-TF
+     script fix. One goal run. Batches #5/#6 scored 7/10 & 5/10 on that config.
+  b. If (a) drives: walk forward one delta at a time (R=0.072 → gains → tolerance
+     → accel → comp), one run each, find the poison pair.
+  c. If (a) fails: the breakage is environmental/sim-side (post-suspend WSL state,
+     realism sensor timing?) — A/B M20_LIDAR_REALISM=0, then reboot WSL cleanly.
+  d. Capture /plan + rotate-mode state in the probe (why yaw froze at exactly −25°:
+     suspicion = RPP rotating toward the CARROT heading, not the path end — check
+     transformed-plan geometry near the robot).
+
 ## Known operational gotchas (regression guards)
+- **Cross-container latched (transient_local) topics are NOT reliable on this box.**
+  After a host sleep/resume cycle (2026-07-16), the sim's once-published `/tf_static`
+  (base_link→lidar_link) stopped reaching other containers while continuously-published
+  topics flowed fine — silently killing pc2ls → /scan → SLAM → all navigation (the
+  "never-moved" batch-#8 runs). FIX: the lidar static TF is now published
+  commander-local by `static_transform_publisher` in bringup/sim_up (kill pattern
+  updated). Rule: never depend on cross-container latched delivery for anything
+  critical; publish static TFs in the consumer's container.
+- **Host sleep/resume also corrupts state, not just timing:** it can restart the
+  commander, remove --rm containers (the sim), skew `uptime` vs wall clock (the
+  diagnostic tell: `/sbin/init` start time ≠ boot time implied by `uptime`), and leave
+  the ROS 2 CLI daemon with a stale topic cache (`ros2 daemon stop/start` fixes views).
+- **WSL kills the whole VM (and every container) when no session is open.** Root cause
+  of the 2026-07-15 "sim died between commands" mystery: WSL idles the VM out after the
+  last session closes; `docker-commander-1` auto-restarts on next boot (restart policy)
+  but the sim container silently vanishes. RULE: every scripted live test must start
+  its own sim INSIDE its own single session (batch_nav_test.sh already does); never
+  assume a container started by a previous command is still alive.
 - **Host sleep poisons batch runs.** The dev box sleeping mid-batch produced 5,000 s
   "runs" and bogus TIMEOUTs (2026-07-15). batch_nav_test.sh now flags any run >400 s
   wall as HOST-SLEEP SUSPECTED and declares the batch unreliable. Disable Windows
@@ -98,3 +216,19 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
     drop well under 0.4 m once GPS anchors the estimate.
   - Pass is at the floor (8/10 = exactly 80%): do not merge D on a single batch;
     re-run the gate after the interface switch.
+
+SESSION 3c — THE BUG ON CAMERA (listen_probe during live goal):
+  * Robot ROTATES correctly (mechanical chain fully exonerated: 46 deg in 6 s,
+    wheels tracking commands), then converges + dithers at yaw ~ -12 deg with
+    vx=0.00 forever — but the goal direction is ~ -175 deg. Nav2 is rotating to
+    a heading ~165 deg away from the goal and believes it is aligned.
+  * TF freshness exonerated (tf_age_probe: -0.05..-0.18 s stationary AND moving).
+  * /scan single publisher, correct QoS (probe warning was probe-side RELIABLE).
+  * => LOCALIZATION or PLAN-FRAME error. DISCRIMINATOR (next session, single
+    run): during the dither, log slam estimated yaw (TF map->base_link) vs true
+    yaw (/odom_true). If est==true: plan/carrot transform bug (inspect /plan
+    first poses vs goal). If est is ~165 deg off: slam localization broken
+    (likely bad map init from pre-goal motion — also investigate WHY the robot
+    is already at +50 deg yaw when the goal starts: something moves it during
+    bringup).
+  * Probes committed: tools/nav/tf_age_probe.py, tools/nav/listen_probe.py.

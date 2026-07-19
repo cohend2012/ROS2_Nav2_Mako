@@ -149,7 +149,8 @@
       "PowerShell(wsl -d Ubuntu -- bash -c 'python3 /mnt/c/Users/16024/AppData/Local/Temp/claude/C--GIT-StatefullXOne-m20-autonomy-ws-m20-autonomy-ws/06227379-f151-4c17-a580-0b0e4555e6cc/scratchpad/gps_benchmark.py > /tmp/gps.log 2>&1; echo done')",
       "PowerShell(wsl -d Ubuntu -- cat /tmp/gps.log)",
       "Bash(wsl -d Ubuntu -e bash -c 'docker exec docker-commander-1 bash -c \"apt-get update -qq >/dev/null 2>&1; apt-get install -y -qq ros-humble-pointcloud-to-laserscan 2>&1 | tail -2; source /opt/ros/humble/setup.bash; ros2 pkg prefix pointcloud_to_laserscan\"')",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(wsl -d Ubuntu -e bash -c ' *)"
     ]
   }
 }
