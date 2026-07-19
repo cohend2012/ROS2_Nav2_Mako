@@ -251,3 +251,13 @@ SESSION 4 (2026-07-18/19) — CHECKPOINT-04 MERGED; observability crisis blocks 
   * Also filed: eastern pipe-corridor goals (7.5,4.0) abort — planner probes the
     gap, declines; corridor-width vs DWB scoring tuning item (robot did NOT touch
     the pipes — costmap sees them).
+
+SESSION 5 (2026-07-19) — Block 1+2 COMPLETE:
+  * CycloneDDS migration done (derived images, ~300 MB; discovery server retired).
+  * observer_trust.sh PASS 2/2 (new standing check after any transport change).
+  * Blind-logger/phantom root cause: nav_logger end-only writes + 120 s window vs
+    DWB slow-align phase. Fixed (incremental dumps + 300 s). Estimator EXONERATED.
+  * Videos delivered from one verified run (SUCCEEDED, all observers agree,
+    0.54 m true error): checkpoint-04-autonomous-run.mp4 + integrated GPS video
+    (dead-reckon 3.20 m vs GPS-fused EKF 0.07 m at end).
+  * NEXT: Block 3 — phase-a-ekf branch (robot_localization design note first).
