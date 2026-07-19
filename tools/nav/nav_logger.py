@@ -59,14 +59,27 @@ class Logger(Node):
 def main():
     os.makedirs(OUT, exist_ok=True)
     rclpy.init(); n = Logger()
-    t0 = time.time(); last = 0.0
+    t0 = time.time(); last = 0.0; last_dump = time.time()
+
+    def dump(name, rows, hdr):
+        with open(f"{OUT}/{name}", "w", newline="") as f:
+            w = csv.writer(f); w.writerow(hdr); w.writerows(rows)
+
+    def dump_all():
+        dump("traj_true.csv", n.true, ["t", "x", "y", "yaw"])
+        dump("traj_drift.csv", n.drift, ["t", "x", "y"])
+        dump("traj_est.csv", n.est, ["t", "x", "y"])
+        dump("gps.csv", n.gps, ["t", "x", "y"])
+        dump("traj_ekf.csv", n.ekf, ["t", "x", "y"])
+
     while rclpy.ok() and time.time() - t0 < RUN_SECS:
         rclpy.spin_once(n, timeout_sec=0.05)
         if time.time() - last > 0.1:
             n.sample_est(); last = time.time()
-    def dump(name, rows, hdr):
-        with open(f"{OUT}/{name}", "w", newline="") as f:
-            w = csv.writer(f); w.writerow(hdr); w.writerows(rows)
+        # incremental dump: observers copy CSVs while we run — end-only writes made
+        # every mid-run copy read the PREVIOUS run (the "blind logger" of session 4)
+        if time.time() - last_dump > 10.0:
+            dump_all(); last_dump = time.time()
     dump("traj_true.csv", n.true, ["t", "x", "y", "yaw"])
     dump("traj_drift.csv", n.drift, ["t", "x", "y"])
     dump("traj_est.csv", n.est, ["t", "x", "y"])

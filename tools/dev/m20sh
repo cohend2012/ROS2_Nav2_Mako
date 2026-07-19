@@ -24,8 +24,7 @@ exec docker exec -it $C bash -c '
 source /opt/ros/humble/setup.bash
 source /ws/install/setup.bash
 export ROS_DOMAIN_ID=42
-export ROS_DISCOVERY_SERVER=127.0.0.1:11811
-export ROS_SUPER_CLIENT=TRUE
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 export PS1="[m20] \w \$ "
 eval "$(register-python-argcomplete3 ros2 2>/dev/null || register-python-argcomplete ros2 2>/dev/null)" || true
 RC

@@ -1,0 +1,2 @@
+FROM m20_autonomy:latest
+RUN apt-get update -qq && apt-get install -y -qq ros-humble-rmw-cyclonedds-cpp ros-humble-pointcloud-to-laserscan && rm -rf /var/lib/apt/lists/*

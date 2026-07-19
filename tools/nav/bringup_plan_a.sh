@@ -28,7 +28,7 @@ DOM=42
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 MODEL="$HOME/m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description"
 GOAL_X="${GOAL_X:--6.0}"; GOAL_Y="${GOAL_Y:--0.5}"
-SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=$DOM ROS_DISCOVERY_SERVER=127.0.0.1:11811 ROS_SUPER_CLIENT=TRUE"
+SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=$DOM RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
 
 echo "[1/7] staging config + tools into $C:/cfg"
 bash "$REPO/tools/dev/container_deps.sh" || exit 1
@@ -43,7 +43,7 @@ docker cp "$REPO/tools/estimator.py"                                            
 echo "[2/7] starting MuJoCo sim (oil_gas_field, headless)"
 docker rm -f m20_sim_run 2>/dev/null || true
 docker run -d --name m20_sim_run --network host --ipc host \
-  -e ROS_DOMAIN_ID=$DOM -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
+  -e ROS_DOMAIN_ID=$DOM -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
   -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py
@@ -78,7 +78,7 @@ docker exec -d $C bash -lc "$SRC; ros2 launch nav2_bringup navigation_launch.py 
 sleep 14
 
 echo "[6/7] logging + sending goal ($GOAL_X, $GOAL_Y)"
-docker exec -d $C bash -lc "$SRC; RUN_SECS=120 python3 /cfg/nav_logger.py"
+docker exec -d $C bash -lc "$SRC; RUN_SECS=300 python3 /cfg/nav_logger.py"
 sleep 2
 docker exec $C bash -lc "$SRC; ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
   '{pose: {header: {frame_id: map}, pose: {position: {x: $GOAL_X, y: $GOAL_Y}, orientation: {z: 1.0, w: 0.0}}}}'" | tail -3
