@@ -36,7 +36,44 @@ controller_server:
       xy_goal_tolerance: 0.45
       yaw_goal_tolerance: 0.5
       stateful: True
+    # CONTROLLER SWAP (2026-07-18): RPP 1.1.20 emitted sign-flapping ~±0.2 rad/s
+    # rotate commands (vx pinned 0) for ANY goal direction despite verified-good
+    # plan/localization/chain — 6 probes deep, root cause inside the plugin.
+    # DWB is the equally-stock alternative; RPP investigation filed in TEST_PLAN.
     FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      min_vel_x: 0.0
+      max_vel_x: 0.4
+      max_vel_theta: 0.7
+      min_speed_xy: 0.0
+      max_speed_xy: 0.4
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_theta: 4.0
+      decel_lim_x: -1.5
+      decel_lim_theta: -4.0
+      vx_samples: 12
+      vtheta_samples: 20
+      sim_time: 1.5
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      transform_tolerance: 0.3
+      xy_goal_tolerance: 0.45
+      trans_stopped_velocity: 0.05
+      short_circuit_trajectory_evaluation: True
+      stateful: True
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      BaseObstacle.scale: 0.02
+      PathAlign.scale: 32.0
+      PathAlign.forward_point_distance: 0.325
+      GoalAlign.scale: 24.0
+      GoalAlign.forward_point_distance: 0.325
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 32.0
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
+    FollowPathRPP_disabled:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       # 0.3 s (default 0.1): slam_toolbox's map->odom lags real time by ~50-150 ms on
       # this box; at 0.1 the controller threw "extrapolation into the future" on many
