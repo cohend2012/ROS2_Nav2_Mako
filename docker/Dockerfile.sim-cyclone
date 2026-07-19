@@ -1,0 +1,2 @@
+FROM m20_sim:latest
+RUN apt-get update -qq && apt-get install -y -qq ros-humble-rmw-cyclonedds-cpp && rm -rf /var/lib/apt/lists/*

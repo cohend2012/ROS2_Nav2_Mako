@@ -20,27 +20,26 @@ x-healthcheck: &hc
   start_period: 20s
 
 services:
-  # FastDDS discovery SERVER: WSL2's localhost multicast discovery proved flaky
-  # (2026-07-17: per-participant topic invisibility — /tf_static losses, recorders
-  # seeing 0/53/118 plan msgs run-to-run). Client-server unicast discovery bypasses
-  # multicast entirely. Every ROS process must set ROS_DISCOVERY_SERVER=127.0.0.1:11811.
-  discovery:
-    <<: *stack
-    command: fastdds discovery -i 0 -l 127.0.0.1 -p 11811
-    healthcheck:
-      # the server speaks UDP (no TCP probe possible) — liveness = process present
-      test: ["CMD-SHELL", "pgrep -f 'fastdds discovery' >/dev/null || exit 1"]
-      interval: 15s
-      timeout: 3s
-      retries: 3
+  # RMW: CycloneDDS everywhere (2026-07-19). History: WSL2 localhost multicast
+  # broke FastDDS discovery per participant-pair; a FastDDS discovery server fixed
+  # that but failed under participant churn (ghost registrations -> blind loggers,
+  # 2x phantom SUCCEEDED). CycloneDDS is the robust single-host choice. The old
+  # discovery service is kept below (commented) for emergency rollback.
+  # discovery:
+  #   <<: *stack
+  #   command: fastdds discovery -i 0 -l 127.0.0.1 -p 11811
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pgrep -f 'fastdds discovery' >/dev/null || exit 1"]
+  #     interval: 15s
+  #     timeout: 3s
+  #     retries: 3
 
   commander:
     <<: *stack
     command: ros2 run m20_commander commander_node
-    depends_on: [discovery]
     environment:
       - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
-      - "ROS_DISCOVERY_SERVER=127.0.0.1:11811"
+      - "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
       - "HEALTH_NODE=m20_commander"
     healthcheck: *hc
 

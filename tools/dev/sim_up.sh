@@ -9,7 +9,7 @@ set -e
 C=docker-commander-1
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 MODEL="$HOME/m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description"
-SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 ROS_DISCOVERY_SERVER=127.0.0.1:11811 ROS_SUPER_CLIENT=TRUE"
+SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
 
 # GUI: live MuJoCo viewer window via WSLg (default ON). M20_GUI=0 for headless.
 GUI="${M20_GUI:-1}"
@@ -40,7 +40,7 @@ docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml" $C:/cfg
 if [ "$GUI" = "1" ]; then
   echo "[sim_up] starting MuJoCo sim (oil_gas_field) WITH LIVE VIEWER — a window will open..."
   docker run -d --name m20_sim_run --network host --ipc host \
-    -e ROS_DOMAIN_ID=42 -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=1 \
+    -e ROS_DOMAIN_ID=42 -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=1 \
     -e DISPLAY="${DISPLAY:-:0}" -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
     -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
     -v /tmp/.X11-unix:/tmp/.X11-unix -v /mnt/wslg:/mnt/wslg \
@@ -50,7 +50,7 @@ if [ "$GUI" = "1" ]; then
 else
   echo "[sim_up] starting MuJoCo sim (oil_gas_field, headless — M20_GUI=0)..."
   docker run -d --name m20_sim_run --network host --ipc host \
-    -e ROS_DOMAIN_ID=42 -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=0 \
+    -e ROS_DOMAIN_ID=42 -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=0 \
     -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
     -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
     m20_sim:latest python3 /mujoco_sim.py >/dev/null

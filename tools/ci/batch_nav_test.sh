@@ -17,7 +17,7 @@ C=docker-commander-1
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="$REPO/tools/ci/out"
 GX=-6.0; GY=-0.5
-SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 ROS_DISCOVERY_SERVER=127.0.0.1:11811 ROS_SUPER_CLIENT=TRUE"
+SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
 mkdir -p "$OUT"
 RES="$OUT/batch_results.csv"
 echo "run,result,true_x,true_y,err_m,secs" > "$RES"

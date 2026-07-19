@@ -6,7 +6,7 @@
 # offline) instead of silently missing nodes. Keep docker/Dockerfile in sync — it is
 # the reproducible record; this script is the live-container stopgap.
 C=docker-commander-1
-DEPS="ros-humble-pointcloud-to-laserscan"
+DEPS="ros-humble-pointcloud-to-laserscan ros-humble-rmw-cyclonedds-cpp"
 
 for d in $DEPS; do
   if ! docker exec $C dpkg -s "$d" >/dev/null 2>&1; then
