@@ -232,3 +232,22 @@ SESSION 3c — THE BUG ON CAMERA (listen_probe during live goal):
     is already at +50 deg yaw when the goal starts: something moves it during
     bringup).
   * Probes committed: tools/nav/tf_age_probe.py, tools/nav/listen_probe.py.
+
+SESSION 4 (2026-07-18/19) — CHECKPOINT-04 MERGED; observability crisis blocks video:
+  * GATE PASS batch #14: 9/10 @ 0.63 m mean (DWB + unified bringup + wait-teardown).
+    Merged to master, tag checkpoint-04-sensor-realism. Travel measurements real
+    (9 distinct endpoints −5.7..−5.9).
+  * NEW OPEN CLASS — PHANTOM SUCCESS + observer split-brain: with M20_EKF=1 (2/2)
+    Nav2 reported SUCCEEDED with the robot parked (true err 6.05); separately the
+    in-run nav_logger recorded a motionless robot during runs whose live probes
+    (and batch measurements) showed real travel. Discovery-server registry under
+    participant churn serves stale/ghost bindings to long-lived observers. Graceful
+    sim stop + discovery+commander restart did NOT cure it.
+  * DIRECTION: the durable fix is switching RMW to CycloneDDS (add
+    ros-humble-rmw-cyclonedds-cpp to BOTH images — needs image rebuild + disk).
+    Discovery-server was a good bridge; churn fragility is its ceiling.
+  * OWED, blocked only on trustworthy logging: checkpoint-04 progress video +
+    integrated pipe/GPS video. Navigation itself is gate-proven.
+  * Also filed: eastern pipe-corridor goals (7.5,4.0) abort — planner probes the
+    gap, declines; corridor-width vs DWB scoring tuning item (robot did NOT touch
+    the pipes — costmap sees them).
