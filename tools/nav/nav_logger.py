@@ -3,9 +3,12 @@
   - TRUE trajectory        (/odom_true)         -> traj_true.csv   (ground truth)
   - RAW dead-reckoned odom (/odom)              -> traj_drift.csv  (drifts, uncorrected)
   - SLAM-corrected estimate (TF map->base_link) -> traj_est.csv    (what Nav2 uses)
+  - GPS fixes              (/gps)               -> gps.csv         (noisy absolutes)
+  - GPS-fused EKF estimate (/odom_filtered)     -> traj_ekf.csv    (if estimator runs)
   - Nav2 global plan       (/plan)              -> plan.csv
   - occupancy map          (/map)               -> map.npz
-The gap TRUE vs RAW = accumulated drift; TRUE vs EST staying small = SLAM working.
+The gap TRUE vs RAW = accumulated drift; TRUE vs EST staying small = SLAM working;
+TRUE vs EKF bounded = GPS doing its job (Phase A preview).
 """
 import os, time, csv, math
 import numpy as np
@@ -21,10 +24,14 @@ RUN_SECS = float(os.environ.get("RUN_SECS", "120"))
 class Logger(Node):
     def __init__(self):
         super().__init__("nav_logger")
-        self.true = []; self.drift = []; self.est = []
+        self.true = []; self.drift = []; self.est = []; self.gps = []; self.ekf = []
         self.plan = None; self.map = None
         self.create_subscription(Odometry, "/odom_true", self.on_true, 10)
         self.create_subscription(Odometry, "/odom", self.on_drift, 10)
+        self.create_subscription(Odometry, "/gps",
+            lambda m: self.gps.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y)), 10)
+        self.create_subscription(Odometry, "/odom_filtered",
+            lambda m: self.ekf.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y)), 10)
         self.create_subscription(Path, "/plan", self.on_plan, 10)
         mqos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL,
                           reliability=ReliabilityPolicy.RELIABLE, history=HistoryPolicy.KEEP_LAST)
@@ -63,12 +70,15 @@ def main():
     dump("traj_true.csv", n.true, ["t", "x", "y", "yaw"])
     dump("traj_drift.csv", n.drift, ["t", "x", "y"])
     dump("traj_est.csv", n.est, ["t", "x", "y"])
+    dump("gps.csv", n.gps, ["t", "x", "y"])
+    dump("traj_ekf.csv", n.ekf, ["t", "x", "y"])
     if n.plan:
         dump("plan.csv", n.plan, ["x", "y"])
     if n.map is not None:
         res, wdt, hgt, ox, oy, grid = n.map
         np.savez(f"{OUT}/map.npz", res=res, width=wdt, height=hgt, ox=ox, oy=oy, grid=grid)
     print(f"true={len(n.true)} drift={len(n.drift)} est={len(n.est)} "
+          f"gps={len(n.gps)} ekf={len(n.ekf)} "
           f"plan={len(n.plan) if n.plan else 0} map={'y' if n.map is not None else 'n'}")
     n.destroy_node(); rclpy.shutdown()
 

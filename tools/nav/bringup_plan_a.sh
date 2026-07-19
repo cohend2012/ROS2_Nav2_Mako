@@ -28,7 +28,7 @@ DOM=42
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 MODEL="$HOME/m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description"
 GOAL_X="${GOAL_X:--6.0}"; GOAL_Y="${GOAL_Y:--0.5}"
-SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=$DOM"
+SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=$DOM ROS_DISCOVERY_SERVER=127.0.0.1:11811 ROS_SUPER_CLIENT=TRUE"
 
 echo "[1/7] staging config + tools into $C:/cfg"
 bash "$REPO/tools/dev/container_deps.sh" || exit 1
@@ -38,19 +38,31 @@ docker cp "$REPO/src/m20_navigation/config/nav2_params.yaml"                    
 docker cp "$REPO/tools/slam/mapper_params.yaml"                                   $C:/cfg/mapper_params.yaml
 docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml"          $C:/cfg/pointcloud_to_laserscan.yaml
 docker cp "$REPO/tools/nav/nav_logger.py"                                         $C:/cfg/nav_logger.py
+docker cp "$REPO/tools/estimator.py"                                              $C:/cfg/estimator.py
 
 echo "[2/7] starting MuJoCo sim (oil_gas_field, headless)"
 docker rm -f m20_sim_run 2>/dev/null || true
-docker run -d --rm --name m20_sim_run --network host --ipc host \
-  -e ROS_DOMAIN_ID=$DOM -e M20_SIM_GUI=0 \
+docker run -d --name m20_sim_run --network host --ipc host \
+  -e ROS_DOMAIN_ID=$DOM -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
   -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py
 sleep 8
 
+echo "[2.4/7] static TF base_link->lidar_link (commander-local; cross-container"
+echo "        transient_local latching proved unreliable after WSL reboots)"
+# 0.10 m z-offset = LIDAR_OFFSET in tools/mujoco_sim.py (keep in sync)
+docker exec -d $C bash -lc "$SRC; ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 0.10 --frame-id base_link --child-frame-id lidar_link"
+sleep 1
+
 echo "[2.5/7] starting pointcloud_to_laserscan (/LIDAR/POINTS -> /scan)"
 docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
 sleep 2
+
+if [ "${M20_EKF:-0}" = "1" ]; then
+  echo "[2.6/7] starting GPS-fused EKF estimator (wheel+IMU+GPS -> /odom_filtered)"
+  docker exec -d $C bash -lc "$SRC; python3 /cfg/estimator.py"
+fi
 
 echo "[3/7] starting bridge (sim backend) + arming"
 docker exec -d $C bash -lc "$SRC; python3 /cfg/bridge_node.py --ros-args -p sdk_backend:=sim"

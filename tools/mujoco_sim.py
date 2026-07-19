@@ -40,6 +40,25 @@ LIDAR_OFFSET = 0.10                  # lidar_link height above base_link (ASSUME
 # cost). NOTE: new sim scenes must keep world obstacles in group 0 (the default).
 LIDAR_GEOMGROUP = np.array([1, 0, 0, 0, 0, 0], np.uint8)
 
+# --- LiDAR realism (sensor-realism update; closes the "gaps" table in LIDAR_RESEARCH.md)
+# XYZIRT points (rslidar field convention), progressive sector casting (real motion
+# skew + per-point timestamps an LIO can deskew with), range noise + dropout, and an
+# optional dust mode. M20_LIDAR_REALISM=0 reverts to the clean instantaneous xyz cloud.
+# Deliberately NOT modeled (documented): multipath/ghost returns off reflective tanks —
+# that needs EM-level simulation; a bad fake is worse than a declared gap.
+LIDAR_REALISM = os.environ.get("M20_LIDAR_REALISM", "1") == "1"
+WEATHER = os.environ.get("M20_WEATHER", "clear")   # clear | dust
+LIDAR_SECTORS = 20          # one sector cast per 200 Hz tick -> 20 sectors = 100 ms sweep
+RANGE_SIGMA = 0.015         # gaussian range noise, m (typical +-2 cm class spec)
+DROP_BASE, DROP_SLOPE = 0.02, 0.04    # dropout prob = base + slope*(d/LIDAR_MAX)
+DUST_PHANTOM_P = 0.03       # dust: fraction of rays returning a 1-3 m phantom "wall"
+DUST_FAR_DROP = 0.30        # dust: extra dropout for returns beyond 8 m
+# intensity: base reflectivity by geom-name keyword (0-255 scale), ~50% linear falloff
+# across full range; ground/unnamed geoms get the default.
+REFLECTIVITY = (("tank", 200.0), ("pipe", 120.0), ("rack", 120.0), ("well", 120.0),
+                ("skid", 80.0))
+REFL_DEFAULT = 30.0
+
 # Wheel-odometry kinematics. TRACK_B matches the bridge. ODOM_R is the CALIBRATED
 # effective rolling radius (measured ~0.072 m from test drives) — the bridge's nominal
 # 0.10 m over-commands wheel speed, so odometry must use the calibrated value or it
@@ -126,21 +145,37 @@ class Sim(Node):
         st.transform.translation.z = LIDAR_OFFSET
         st.transform.rotation.w = 1.0
         self.static_bc.sendTransform(st)
-        # precompute the hemispherical ray table in the SENSOR frame (unit vectors);
-        # per scan the table is rotated by the body rotation (sensor is body-fixed).
-        dirs = []
-        for ed in LIDAR_ELEVS_DEG:
-            el = math.radians(ed)
-            for k in range(LIDAR_AZIMS):
-                az = 2.0 * math.pi * k / LIDAR_AZIMS
+        # precompute the hemispherical ray table in the SENSOR frame (unit vectors),
+        # AZIMUTH-MAJOR so one spinning "sector" (all 16 rings at 6 consecutive
+        # azimuths) is a contiguous slice: sector s = rays [s*96, (s+1)*96). The table
+        # is rotated per cast by the body rotation (sensor is body-fixed).
+        dirs, rings = [], []
+        for k in range(LIDAR_AZIMS):
+            az = 2.0 * math.pi * k / LIDAR_AZIMS
+            for ri, ed in enumerate(LIDAR_ELEVS_DEG):
+                el = math.radians(ed)
                 dirs.append([math.cos(el) * math.cos(az),
                              math.cos(el) * math.sin(az),
                              math.sin(el)])
+                rings.append(ri)
         self._ray_dirs = np.array(dirs)                       # (NRAY, 3) sensor frame
+        self._ray_ring = np.array(rings, np.uint16)
         self._nray = len(dirs)
         self._ray_geomid = np.full(self._nray, -1, np.int32)  # mj_multiRay outputs
         self._ray_dist = np.zeros(self._nray, np.float64)
+        self._sector = 0                                      # next sector to cast
+        self._sector_n = self._nray // LIDAR_SECTORS          # rays per sector (96)
+        self._sweep = []                                      # per-sector XYZIRT chunks
         self._slow_scans = 0                                   # perf-guard counter
+        # per-geom base reflectivity for the intensity channel (name-keyword lookup)
+        refl = np.full(self.m.ngeom, REFL_DEFAULT, np.float32)
+        for gid in range(self.m.ngeom):
+            gname = mujoco.mj_id2name(self.m, mujoco.mjtObj.mjOBJ_GEOM, gid) or ""
+            for kw, v in REFLECTIVITY:
+                if kw in gname:
+                    refl[gid] = v
+                    break
+        self._geom_refl = refl
         # dead-reckoned wheel-odometry pose (drifts) — seeds the odom frame at the true start
         _, _, y0 = quat_to_rpy(*self.d.qpos[3:7])
         self.odom_x = float(self.d.qpos[0])
@@ -265,8 +300,94 @@ class Sim(Node):
             g.pose.pose.position.x = float(self.d.qpos[0] + self._rng.normal(0, 0.8))
             g.pose.pose.position.y = float(self.d.qpos[1] + self._rng.normal(0, 0.8))
             self.gps_pub.publish(g)
-        if self._tick % 20 == 0:                     # ~10 Hz LiDAR
+        if LIDAR_REALISM:
+            self._cast_sector(now)                   # 1 sector/tick -> 10 Hz sweeps
+        elif self._tick % 20 == 0:                   # legacy clean instantaneous cloud
             self._publish_cloud(now)
+
+    # ---- realistic LiDAR: progressive sector casting (motion skew + XYZIRT) --------
+    _CLOUD_DTYPE = np.dtype({"names": ["x", "y", "z", "intensity", "ring", "timestamp"],
+                             "formats": [np.float32, np.float32, np.float32, np.float32,
+                                         np.uint16, np.float64],
+                             "offsets": [0, 4, 8, 12, 16, 24], "itemsize": 32})
+
+    def _cast_sector(self, now):
+        """Cast ONE azimuth sector (96 rays) from the robot's CURRENT pose; 20 sectors
+        assemble into a 100 ms sweep, so the published cloud carries the same motion
+        skew a real spinning unit does, with per-point capture timestamps (5 ms steps)
+        an LIO can deskew with. Assumption (documented in LIDAR_RESEARCH.md): a single
+        mechanical 10 Hz rotation — the real dual-unit scan pattern is unpublished, so
+        we model the representative worst case for skew."""
+        t0 = time.perf_counter()
+        s = self._sector
+        lo, hi = s * self._sector_n, (s + 1) * self._sector_n
+        R = np.empty(9)
+        mujoco.mju_quat2Mat(R, self.d.qpos[3:7])
+        R = R.reshape(3, 3)
+        origin = self.d.qpos[0:3] + R @ np.array([0.0, 0.0, LIDAR_OFFSET])
+        dirs = self._ray_dirs[lo:hi]
+        vecs = (dirs @ R.T).reshape(-1)
+        geomid = self._ray_geomid[lo:hi]
+        dist = self._ray_dist[lo:hi]
+        mujoco.mj_multiRay(self.m, self.d, origin.astype(np.float64), vecs,
+                           LIDAR_GEOMGROUP, True, -1, geomid, dist,
+                           None, self._sector_n, LIDAR_MAX)
+        d_ = dist.copy()
+        valid = (d_ > LIDAR_BLIND) & (d_ < LIDAR_MAX) & (geomid >= 0)
+        # range noise, then distance-dependent dropout (absorption / grazing losses)
+        d_[valid] += self._rng.normal(0.0, RANGE_SIGMA, int(valid.sum()))
+        drop = self._rng.random(self._sector_n) < (DROP_BASE + DROP_SLOPE * d_ / LIDAR_MAX)
+        if WEATHER == "dust":
+            drop |= (d_ > 8.0) & (self._rng.random(self._sector_n) < DUST_FAR_DROP)
+        valid &= ~drop
+        inten = self._geom_refl[np.clip(geomid, 0, None)] * (1.0 - 0.5 * d_ / LIDAR_MAX)
+        if WEATHER == "dust":
+            # phantom near-range "dust wall" returns on a fraction of ALL rays
+            ph = self._rng.random(self._sector_n) < DUST_PHANTOM_P
+            d_[ph] = self._rng.uniform(1.0, 3.0, int(ph.sum()))
+            inten[ph] = 12.0
+            valid |= ph
+        n = int(valid.sum())
+        chunk = np.zeros(n, self._CLOUD_DTYPE)
+        pts = (dirs[valid] * d_[valid, None]).astype(np.float32)
+        chunk["x"], chunk["y"], chunk["z"] = pts[:, 0], pts[:, 1], pts[:, 2]
+        chunk["intensity"] = np.clip(inten[valid] + self._rng.normal(0, 5.0, n), 1, 255)
+        chunk["ring"] = self._ray_ring[lo:hi][valid]
+        chunk["timestamp"] = now.sec + now.nanosec * 1e-9   # sector capture time
+        self._sweep.append(chunk)
+        if time.perf_counter() - t0 > 0.002:
+            self._slow_scans += 1
+            if self._slow_scans in (1, 10, 100):
+                self.get_logger().warn(f"LiDAR sector cast >2ms (#{self._slow_scans})")
+        self._sector += 1
+        if self._sector == LIDAR_SECTORS:
+            self._publish_sweep(now)
+            self._sector = 0
+            self._sweep = []
+
+    def _publish_sweep(self, now):
+        """Assemble the 20 sector chunks into one XYZIRT PointCloud2 (rslidar field
+        layout, 32-byte points) on /LIDAR/POINTS. Header stamp = sweep END (freshest
+        TF for the projection node; per-point timestamps carry true capture times)."""
+        data = np.concatenate(self._sweep)
+        msg = PointCloud2()
+        msg.header.stamp = now
+        msg.header.frame_id = "lidar_link"
+        msg.height = 1
+        msg.width = int(data.shape[0])
+        msg.fields = [
+            PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
+            PointField(name="intensity", offset=12, datatype=PointField.FLOAT32, count=1),
+            PointField(name="ring", offset=16, datatype=PointField.UINT16, count=1),
+            PointField(name="timestamp", offset=24, datatype=PointField.FLOAT64, count=1)]
+        msg.is_bigendian = False
+        msg.point_step = 32
+        msg.row_step = 32 * msg.width
+        msg.is_dense = True
+        msg.data = data.tobytes()
+        self.cloud_pub.publish(msg)
 
     def _publish_cloud(self, now):
         """Cast the hemispherical ray pattern and publish /LIDAR/POINTS (PointCloud2,

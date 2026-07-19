@@ -21,21 +21,78 @@ controller_server:
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.4
-      movement_time_allowance: 15.0
+      # 40 s (was 15): SimpleProgressChecker only measures POSITION, and our
+      # rotate-to-heading for a ~180 deg goal takes ~15-20 s of in-place rotation
+      # (zero position change). At 15 s the checker aborted FollowPath mid-rotation
+      # forever (root cause of the 2026-07-17 0/10 batch — see TEST_PLAN).
+      movement_time_allowance: 40.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.35
+      # 0.45 (was 0.35): with realistic sensor noise the pose estimate jitters at the
+      # tolerance boundary and runs "arrive but never declare" (measured: timeouts at
+      # 0.41-0.86 m true error, 2026-07-15 batches). The L3.2 TRUE-error gate
+      # (<0.8 m mean vs ground truth) stays the honest accuracy check — this knob
+      # only lets Nav2 declare what it already achieved.
+      xy_goal_tolerance: 0.45
       yaw_goal_tolerance: 0.5
       stateful: True
+    # CONTROLLER SWAP (2026-07-18): RPP 1.1.20 emitted sign-flapping ~±0.2 rad/s
+    # rotate commands (vx pinned 0) for ANY goal direction despite verified-good
+    # plan/localization/chain — 6 probes deep, root cause inside the plugin.
+    # DWB is the equally-stock alternative; RPP investigation filed in TEST_PLAN.
     FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      min_vel_x: 0.0
+      max_vel_x: 0.4
+      max_vel_theta: 0.7
+      min_speed_xy: 0.0
+      max_speed_xy: 0.4
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_theta: 4.0
+      decel_lim_x: -1.5
+      decel_lim_theta: -4.0
+      vx_samples: 12
+      vtheta_samples: 20
+      sim_time: 1.5
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      transform_tolerance: 0.3
+      xy_goal_tolerance: 0.45
+      trans_stopped_velocity: 0.05
+      short_circuit_trajectory_evaluation: True
+      stateful: True
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      BaseObstacle.scale: 0.02
+      PathAlign.scale: 32.0
+      PathAlign.forward_point_distance: 0.325
+      GoalAlign.scale: 24.0
+      GoalAlign.forward_point_distance: 0.325
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 32.0
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
+    FollowPathRPP_disabled:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      # 0.3 s (default 0.1): slam_toolbox's map->odom lags real time by ~50-150 ms on
+      # this box; at 0.1 the controller threw "extrapolation into the future" on many
+      # ticks, each emitting a ZERO command that reset the angular ramp -> rotation
+      # never exceeded ~0.19 rad/s (measured 2026-07-17; the final rotate-to-heading
+      # deadlock layer after the cascade fix).
+      transform_tolerance: 0.3
       desired_linear_vel: 0.4
       lookahead_dist: 0.7
       min_lookahead_dist: 0.4
       max_lookahead_dist: 1.0
       rotate_to_heading_angular_vel: 0.7
       use_velocity_scaled_lookahead_dist: true
-      max_angular_accel: 1.5
+      # 4.0 (was 1.5): RPP ramps rotation from the MEASURED angular rate, +accel*dt
+      # per tick. Skid-steer scrub stiction ignores commands below ~0.3 rad/s, so at
+      # 1.5 the command ceiling locked at measured+0.075 ~= 0.19 rad/s — a quantitative
+      # deadlock (observed 2026-07-17). 4.0 lets the command punch through the dead
+      # zone in ~2 ticks; wheels+yaw-rate loop handle the step fine.
+      max_angular_accel: 4.0
       use_rotate_to_heading: true          # turn in place first (anti-tip, validated)
       rotate_to_heading_min_angle: 0.5
       allow_reversing: false
@@ -69,7 +126,7 @@ behavior_server:
     simulate_ahead_time: 2.0
     max_rotational_vel: 0.7
     min_rotational_vel: 0.2
-    rotational_acc_lim: 1.5
+    rotational_acc_lim: 4.0   # match FollowPath.max_angular_accel (stiction dead zone)
 
 velocity_smoother:
   ros__parameters:
@@ -78,8 +135,8 @@ velocity_smoother:
     feedback: "OPEN_LOOP"
     max_velocity: [0.4, 0.0, 0.7]
     min_velocity: [-0.2, 0.0, -0.7]
-    max_accel: [1.0, 0.0, 1.5]
-    max_decel: [-1.5, 0.0, -1.5]
+    max_accel: [1.0, 0.0, 4.0]   # angular matches FollowPath (stiction punch-through)
+    max_decel: [-1.5, 0.0, -4.0]
     odom_topic: "/odom"
     odom_duration: 0.1
 
@@ -90,6 +147,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
+      transform_tolerance: 0.5    # slam map->odom lags ~0.1s on this box (see FollowPath)
       robot_radius: 0.45
       resolution: 0.1
       # Rolling 40x40 window centered on the robot so goals in not-yet-mapped ground
@@ -125,6 +183,7 @@ local_costmap:
       publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: base_link
+      transform_tolerance: 0.3
       rolling_window: true
       width: 6
       height: 6

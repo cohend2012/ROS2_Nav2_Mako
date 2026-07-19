@@ -14,6 +14,8 @@ Phase-0 stub: the VendorSDK class is a placeholder. Replace its methods with rea
 Deep Robotics SDK calls once OQ-3 (SDK surface: topics/UDP API, gait switching)
 is resolved. Keep ALL vendor calls inside VendorSDK so the swap is one file.
 """
+import math
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
@@ -45,13 +47,23 @@ _WHEELS = (3, 7, 11, 15)
 _LEFT = (3, 11)          # FL, HL wheels
 _RIGHT = (7, 15)         # FR, HR wheels
 
+# TODO: Build a system that can connect to the real robot and the sim and switch between them.
+
+# TODO: Build a way to make the robot walk in a gait. I think we need to add a gait request topic to the bridge node.
+
 
 class SimVendorSDK:
     """Sim 'vendor' backend: drives the MuJoCo sim over the drdds joint interface
     (ADR-015). Holds the standing stance on the legs and skid-steers the wheels from
     the /cmd_vel the bridge forwards. This is the sim analog of the real VendorSDK."""
 
-    def __init__(self, node, wheel_radius=0.10, track=0.40):
+    # wheel_radius: CALIBRATED effective rolling radius (0.072 m, measured from test
+    # drives — matches ODOM_R in mujoco_sim.py and R in estimator.py). The nominal
+    # 0.10 m under-commands wheel speed ~28%: forward runs slow, and pivot falls below
+    # the skid-scrub stiction threshold entirely (root cause of the 2026-07-17
+    # rotate-to-heading deadlock: Nav2 flapping reset the yaw integral faster than it
+    # could wind up the missing 39% of wheel speed).
+    def __init__(self, node, wheel_radius=0.072, track=0.40):
         from drdds.msg import JointsDataCmd, ImuData   # lazy: only when sim backend chosen
         self._Cmd = JointsDataCmd
         self.node = node
@@ -59,9 +71,18 @@ class SimVendorSDK:
         node.create_subscription(ImuData, "/IMU_DATA", self._on_imu, 10)
         self.R, self.B = wheel_radius, track
         # Closed-loop yaw rate: open-loop skid-steer understeers (slip), so trim the
-        # wheel differential by the measured yaw-rate error. Gains tuned in sim.
+        # wheel differential by the measured yaw-rate error.
+        # CASCADE RULE (learned 2026-07-17): this inner loop sits UNDER Nav2's 20 Hz
+        # heading controller. A strong integrator here (Ki=0.8) added phase lag and
+        # overshoot (body hit -0.59 rad/s on a -0.44 command) -> limit-cycle wiggle
+        # with the outer loop: the robot oscillated instead of rotating (root cause
+        # of the rotate-to-heading deadlock; measured via /cmd_vel_nav vs /cmd_vel vs
+        # omega_z probe). Inner loop must be fast and overshoot-free: feedforward +
+        # strong P, integrator reduced to a slow trim. Constant-setpoint teleop worked
+        # with the old gains, which is why every direct drive test passed while Nav2
+        # failed — test with a reactive outer loop, not just constant commands.
         self._omega = 0.0; self._yint = 0.0; self._last_t = None
-        self.Kp, self.Ki = 2.0, 0.8
+        self.Kp, self.Ki = 3.0, 0.1
 
     def _on_imu(self, msg) -> None:
         self._omega = float(msg.data.omega_z)         # measured body yaw rate
@@ -75,12 +96,28 @@ class SimVendorSDK:
     def send_velocity(self, vx: float, vy: float, wz: float) -> None:
         # +vx = forward, +wz = CCW. Trim wz by the yaw-rate error so the body actually
         # turns at wz despite skid-steer slip. In this model +wheel-vel drives -x (vx negated).
+
+        #TODO: Remove magic numbers and make the gains configurable.
         now = self.node.get_clock().now().nanoseconds * 1e-9
         dt = (now - self._last_t) if self._last_t else 0.05
         self._last_t = now
         yerr = wz - self._omega
         self._yint = max(-2.0, min(2.0, self._yint + yerr * dt))
         w_cmd = max(-5.0, min(5.0, wz + self.Kp * yerr + self.Ki * self._yint))
+        # Skid-scrub dead-zone compensation: pivoting needs |w| >= ~0.5 rad/s of wheel
+        # differential to break lateral scrub stiction — commands below that produce
+        # ~no rotation (measured 2026-07-17: wz=0.44 held for 100 s yielded 24 deg).
+        # Nav2's accel-limited ramps (which ramp FROM MEASURED rate) can never cross a
+        # dead zone wider than accel*dt on their own, so the bridge linearizes the
+        # plant: clear rotation intent (|wz|>=0.15) is boosted to the breakout rate.
+        # The real M20's vendor controller does its own low-level compensation; this
+        # stays in the sim SDK path only.
+        # ONLY for pivot intent (|vx| ~ 0): during forward driving, wheel rolling
+        # breaks the scrub stiction and small wz steering corrections work fine —
+        # boosting those to 0.5 causes bang-bang swerving (broke straight-line nav
+        # when first tried without the vx guard).
+        if abs(vx) < 0.05 and abs(wz) >= 0.15 and abs(w_cmd) < 0.5:
+            w_cmd = math.copysign(0.5, w_cmd if w_cmd != 0.0 else wz)
         vl = (-vx + w_cmd * self.B / 2.0) / self.R    # rad/s, left wheels
         vr = (-vx - w_cmd * self.B / 2.0) / self.R    # rad/s, right wheels
         self._publish(vl, vr)
@@ -106,7 +143,11 @@ class SimVendorSDK:
 class LocomotionBridge(Node):
     def __init__(self):
         super().__init__("m20_locomotion_bridge")
-        self.declare_parameter("cmd_timeout_s", 0.5)
+        # 1.0 s (was 0.5): Nav2's BT has natural /cmd_vel gaps of 0.5-0.8 s between
+        # FollowPath attempts and recovery transitions; at 0.5 s the watchdog halted
+        # (and reset the yaw integral) on every transition, starving in-place rotation
+        # of authority. Still a real failsafe — a dead Nav2 halts the robot in 1 s.
+        self.declare_parameter("cmd_timeout_s", 1.0)
         self.timeout = self.get_parameter("cmd_timeout_s").value
         # Backend: "stub" (default; real-robot placeholder + unit tests) or "sim"
         # (drives the MuJoCo sim over drdds). Keeps drdds out of the ROS-free tests.

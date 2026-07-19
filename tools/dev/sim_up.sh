@@ -9,7 +9,7 @@ set -e
 C=docker-commander-1
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 MODEL="$HOME/m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description"
-SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42"
+SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 ROS_DISCOVERY_SERVER=127.0.0.1:11811 ROS_SUPER_CLIENT=TRUE"
 
 # GUI: live MuJoCo viewer window via WSLg (default ON). M20_GUI=0 for headless.
 GUI="${M20_GUI:-1}"
@@ -39,8 +39,8 @@ docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml" $C:/cfg
 
 if [ "$GUI" = "1" ]; then
   echo "[sim_up] starting MuJoCo sim (oil_gas_field) WITH LIVE VIEWER — a window will open..."
-  docker run -d --rm --name m20_sim_run --network host --ipc host \
-    -e ROS_DOMAIN_ID=42 -e M20_SIM_GUI=1 \
+  docker run -d --name m20_sim_run --network host --ipc host \
+    -e ROS_DOMAIN_ID=42 -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=1 \
     -e DISPLAY="${DISPLAY:-:0}" -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
     -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
     -v /tmp/.X11-unix:/tmp/.X11-unix -v /mnt/wslg:/mnt/wslg \
@@ -49,8 +49,8 @@ if [ "$GUI" = "1" ]; then
     m20_sim:latest python3 /mujoco_sim.py >/dev/null
 else
   echo "[sim_up] starting MuJoCo sim (oil_gas_field, headless — M20_GUI=0)..."
-  docker run -d --rm --name m20_sim_run --network host --ipc host \
-    -e ROS_DOMAIN_ID=42 -e M20_SIM_GUI=0 \
+  docker run -d --name m20_sim_run --network host --ipc host \
+    -e ROS_DOMAIN_ID=42 -e ROS_DISCOVERY_SERVER=127.0.0.1:11811 -e M20_SIM_GUI=0 \
     -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
     -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
     m20_sim:latest python3 /mujoco_sim.py >/dev/null
@@ -61,6 +61,10 @@ if ! docker ps --format '{{.Names}}' | grep -q '^m20_sim_run$'; then
   exit 1
 fi
 
+# static lidar TF published commander-local (cross-container transient_local latching
+# proved unreliable after WSL reboots). 0.10 m = LIDAR_OFFSET in tools/mujoco_sim.py.
+docker exec -d $C bash -lc "$SRC; ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 0.10 --frame-id base_link --child-frame-id lidar_link"
+sleep 1
 echo "[sim_up] starting pointcloud_to_laserscan (/LIDAR/POINTS -> /scan, real interface)..."
 docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node --ros-args -r cloud_in:=/LIDAR/POINTS -r scan:=/scan --params-file /cfg/pointcloud_to_laserscan.yaml"
 sleep 2
