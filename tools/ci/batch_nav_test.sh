@@ -44,8 +44,9 @@ teardown() {
     PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}");
     [ -n "$PIDS" ] && kill -9 $PIDS 2>/dev/null; true' >/dev/null 2>&1
   docker rm -f m20_sim_run >/dev/null 2>&1
-  docker restart docker-discovery-1 >/dev/null 2>&1
-  sleep 3
+  # NOTE: do NOT restart the discovery server here — bouncing it orphans the
+  # long-lived commander client (batch #11 run 1: robot disarmed, never moved).
+  # Graceful SIGINT unregistration above keeps the registry clean instead.
 }
 
 true_pose() {  # echo "x y" of ground truth
