@@ -30,8 +30,13 @@ teardown() {
   docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan|static_transform_publisher";
     PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}");
     [ -n "$PIDS" ] && kill -2 $PIDS 2>/dev/null; sleep 2;
-    PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}");
-    [ -n "$PIDS" ] && kill -9 $PIDS 2>/dev/null; true' >/dev/null 2>&1
+    # WAIT until actually dead — a fire-and-forget teardown let dying Nav2 nodes
+    # collide with the next run bringup (batch #13: alternating green/51s-abort).
+    for _ in 1 2 3 4 5 6 7 8; do
+      PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}");
+      [ -z "$PIDS" ] && break
+      kill -9 $PIDS 2>/dev/null; sleep 2
+    done; true' >/dev/null 2>&1
   docker rm -f m20_sim_run >/dev/null 2>&1
 }
 
