@@ -34,9 +34,18 @@ stage() {  # copy current configs/tools into the container once
 }
 
 teardown() {
+  # SIGINT first so DDS participants UNREGISTER from the discovery server —
+  # kill -9 leaves stale registrations that poison matching for later runs
+  # (batch #10: run 1 green, runs 2-10 never-moved). Then force-kill leftovers
+  # and bounce the discovery server for a clean registry each run.
   docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan|static_transform_publisher";
-    PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}"); kill -9 $PIDS 2>/dev/null; true' >/dev/null 2>&1
+    PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}");
+    [ -n "$PIDS" ] && kill -2 $PIDS 2>/dev/null; sleep 2;
+    PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}");
+    [ -n "$PIDS" ] && kill -9 $PIDS 2>/dev/null; true' >/dev/null 2>&1
   docker rm -f m20_sim_run >/dev/null 2>&1
+  docker restart docker-discovery-1 >/dev/null 2>&1
+  sleep 3
 }
 
 true_pose() {  # echo "x y" of ground truth
