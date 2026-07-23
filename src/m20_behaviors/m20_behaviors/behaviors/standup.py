@@ -46,7 +46,10 @@ class Standup(Behavior):
         for i in range(16):
             j = m.data.joints_data[i]
             if i in WHEELS:
-                j.kp, j.kd, j.velocity = 0.0, 1.0, 0.0      # wheels locked/damped
+                # FIRM wheel lock: kd=1 let the wheels roll ~0.84 rad (~8 cm creep)
+                # during the rise (measured 2026-07-20 joints.csv). Feet must not
+                # roll while the legs push the body up.
+                j.kp, j.kd, j.velocity = 0.0, 6.0, 0.0
             else:
                 j.kp, j.kd = 200.0, 4.0
                 j.position = FOLDED[i] + s * (STAND[i] - FOLDED[i])

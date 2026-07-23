@@ -50,7 +50,13 @@ class Logger(Node):
     def on_true(self, m):
         q = m.pose.pose.orientation
         yaw = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
-        self.true.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y, yaw))
+        # z + roll/pitch let the replay render place the body at the TRUE physics
+        # height (the kinematic ground-settle guess made the standup look floaty)
+        sinp = 2*(q.w*q.y - q.z*q.x)
+        pitch = math.copysign(math.pi/2, sinp) if abs(sinp) >= 1 else math.asin(sinp)
+        roll = math.atan2(2*(q.w*q.x+q.y*q.z), 1-2*(q.x*q.x+q.y*q.y))
+        self.true.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y,
+                          yaw, m.pose.pose.position.z, roll, pitch))
     def on_drift(self, m):
         self.drift.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y))
     def on_joints(self, m):
@@ -83,7 +89,7 @@ def main():
     JHDR = ["t"] + [f"j{i}" for i in range(16)]
 
     def dump_all():
-        dump("traj_true.csv", n.true, ["t", "x", "y", "yaw"])
+        dump("traj_true.csv", n.true, ["t", "x", "y", "yaw", "z", "roll", "pitch"])
         dump("traj_drift.csv", n.drift, ["t", "x", "y"])
         dump("traj_est.csv", n.est, ["t", "x", "y"])
         dump("gps.csv", n.gps, ["t", "x", "y"])
