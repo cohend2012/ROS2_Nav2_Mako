@@ -86,6 +86,15 @@ STANCE = np.array([
     0.0,  0.7, -1.4, 0.0])  # HR
 MJCF = os.environ["M20_MJCF"]
 GUI = os.environ.get("M20_SIM_GUI", "1") == "1"
+# M20_START_POSE=folded spawns in the low resting crouch so the commander-driven
+# standup behavior is REAL (rises on camera), not a robot that spawned standing.
+# Values mirror m20_behaviors/behaviors/standup.py FOLDED — keep in sync.
+START_POSE = os.environ.get("M20_START_POSE", "stand")
+FOLDED = np.array([
+    0.0, -1.0,  2.3, 0.0,   # FL
+    0.0, -1.0,  2.3, 0.0,   # FR
+    0.0,  1.0, -2.3, 0.0,   # HL
+    0.0,  1.0, -2.3, 0.0])  # HR
 SIM_HZ = 500.0
 PUB_HZ = 200.0
 
@@ -109,21 +118,23 @@ class Sim(Node):
         for w in WHEELS:
             self.m.dof_armature[6 + w] = 0.03
         self.d = mujoco.MjData(self.m)
-        # Spawn at the vendor standing stance, auto-dropped so the lowest geom rests ~on
-        # the ground (avoids a hard fall on start). qpos: [xyz, quat(wxyz), 16 joints].
+        # Spawn pose (stand default; folded for the standup-behavior path), auto-dropped
+        # so the lowest geom rests ~on the ground. qpos: [xyz, quat(wxyz), 16 joints].
+        spawn = FOLDED if START_POSE == "folded" else STANCE
         self.d.qpos[:] = 0.0
         self.d.qpos[3] = 1.0                      # unit quaternion (w=1)
-        self.d.qpos[7:7 + NJ] = STANCE
+        self.d.qpos[7:7 + NJ] = spawn
         self.d.qpos[2] = 1.0                      # lift high, then measure
         mujoco.mj_forward(self.m, self.d)
         self.d.qpos[2] = 1.0 - float(self.d.geom_xpos[:, 2].min()) + 0.03
         mujoco.mj_forward(self.m, self.d)
         self.lo = self.m.actuator_ctrlrange[:, 0].copy()
         self.hi = self.m.actuator_ctrlrange[:, 1].copy()
-        # default command = hold the standing stance (legs stiff PD, wheels free).
+        # default command = hold the SPAWN pose (legs stiff PD, wheels free) until the
+        # first /JOINTS_CMD arrives — a folded robot must rest folded, not self-stand.
         self.kp = np.full(NJ, 200.0)
         self.kd = np.full(NJ, 4.0)
-        self.pos = STANCE.copy()
+        self.pos = spawn.copy()
         self.vel = np.zeros(NJ)
         self.tau = np.zeros(NJ)
         for w in WHEELS:

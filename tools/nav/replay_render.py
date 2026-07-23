@@ -24,6 +24,23 @@ with open(f"{OUTDIR}/traj_true.csv") as f:
         if len(a) >= 4:
             rows.append((float(a[0]), float(a[1]), float(a[2]), float(a[3])))
 t0 = rows[0][0]; dur = rows[-1][0] - t0
+
+# optional logged joints (t + 16 positions): lets the video replay the REAL
+# commander-driven standup (and true wheel spin) instead of a fixed stand pose
+jrows = []
+try:
+    with open(f"{OUTDIR}/joints.csv") as f:
+        r = csv.reader(f); next(r)
+        for a in r:
+            if len(a) >= 17:
+                jrows.append((float(a[0]), np.array([float(v) for v in a[1:17]])))
+except FileNotFoundError:
+    pass
+def sample_joints(tt):
+    if not jrows:
+        return None
+    i = min(range(len(jrows)), key=lambda k: abs((jrows[k][0]-t0)-tt))
+    return jrows[i][1]
 # resample to real-time FPS by timestamp
 frames_t = np.arange(0, dur, 1.0/FPS)
 def sample(tt):
@@ -44,13 +61,21 @@ rend = mujoco.Renderer(m, H, W)
 cam = mujoco.MjvCamera()
 cam.distance = 8.5; cam.azimuth = 120; cam.elevation = -28
 
-def set_pose(x, y, yaw, wheel_ang):
+def set_pose(x, y, yaw, wheel_ang, joints=None):
     d.qpos[:] = 0
-    d.qpos[0], d.qpos[1], d.qpos[2] = x, y, z_stand
     d.qpos[3] = math.cos(yaw/2); d.qpos[6] = math.sin(yaw/2)  # quat w,z
-    d.qpos[7:23] = STAND
-    for w in WHEELS:
-        d.qpos[7+w] = wheel_ang
+    if joints is not None:
+        # replay the real logged joint state; settle body z so the feet/wheels
+        # rest on the ground at THIS leg pose (crouch sits low, stand sits high)
+        d.qpos[7:23] = joints
+        d.qpos[0], d.qpos[1], d.qpos[2] = x, y, 1.0
+        mujoco.mj_forward(m, d)
+        d.qpos[2] = 1.0 - float(d.geom_xpos[:, 2].min()) + 0.02
+    else:
+        d.qpos[0], d.qpos[1], d.qpos[2] = x, y, z_stand
+        d.qpos[7:23] = STAND
+        for w in WHEELS:
+            d.qpos[7+w] = wheel_ang
     mujoco.mj_forward(m, d)
 
 def add_goal_marker():
@@ -72,7 +97,7 @@ for tt in frames_t:
         dxy = math.hypot(x-prev[0], y-prev[1])
         wheel_ang -= dxy / 0.10           # spin wheels by distance/rolling-radius
     prev = (x, y)
-    set_pose(x, y, yaw, wheel_ang)
+    set_pose(x, y, yaw, wheel_ang, joints=sample_joints(tt))
     cam.lookat = np.array([x, y, 0.3])
     rend.update_scene(d, cam)
     add_goal_marker()
