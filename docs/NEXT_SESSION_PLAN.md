@@ -1,64 +1,87 @@
-# Next Session Plan (written 2026-07-19, post checkpoint-04)
+# Next Session Plan (written 2026-07-20, post CycloneDDS — TWO-TRACK edition)
 
-State inherited: `master` @ `checkpoint-04-sensor-realism` (gate 9/10 @ 0.63 m, DWB,
-realistic sensors). Open: observer split-brain / phantom-success DDS class blocks
-trustworthy logging → blocks the two owed videos. Full ledger: TEST_PLAN.md session 4.
+State inherited: `master` @ tag `checkpoint-04-sensor-realism`. Gate 9/10 @ 0.63 m
+(DWB, realistic sensors, CycloneDDS). Observers trusted (observer_trust.sh PASS 2/2).
+Estimator exonerated. Videos delivered. Prior plan's Blocks 0–2 DONE (`7e41bf2`,
+`b3aeb62`). Full ledger: TEST_PLAN.md session 5; SECOND_BRAIN rev 38–39.
+
+DECISION (2026-07-20, user): run TWO parallel working branches and see where each
+goes. Rationale: the remaining failure classes split cleanly in two —
+- systematic ~0.5 m localization offset  → attacked by GPS anchoring (Track 1)
+- corridor declines + blind-start behavior → attacked by a PRE-BUILT MAP (Track 2)
+For real oil & gas inspection, "map the site once, then localize against it" is the
+standard deployment pattern anyway — Track 2 is not a shortcut, it's the product shape.
+
+Answers to the standing "why does it look wrong" questions (don't re-debug):
+- Slow to get ready/moving = **DWB slow-align phase**. Known + logged, not a regression.
+- Hesitating behind a box = **eastern pipe-corridor abort** (DWB scoring vs corridor
+  width). Costmap sees the pipes; robot never touches them. Track 2's static map is
+  the first credible attack on this.
 
 Standing rules (hard-learned): one experiment = one self-contained wsl session ·
-quiet box before any batch (`uptime`) · evidence commit per result · no fake footage ·
-one implementation per function (bringup/teardown are single-sourced — keep it that way).
+quiet box before any batch (`uptime`) · sleep disabled (`powercfg` check) · evidence
+commit per result · no fake footage · one implementation per function (bringup/teardown
+stay single-sourced through `bringup_plan_a.sh` / `kill_stack.sh`).
 
-## Block 0 — Preflight (10 min)
-- [ ] `git status` clean on master; `uptime` load < 0.5; confirm sleep still disabled.
-- [ ] Disk audit: `df -h /` in WSL + `docker system df` (Block 1 needs image-build room;
-      `docker image prune` dangling layers if tight — do NOT prune tagged images).
+## Block 0 — Preflight (10 min, once, before either track)
+- [ ] `git status` clean on master; `uptime` load < 0.5; sleep still disabled.
+- [ ] Disk audit: `df -h /` + `docker system df` (prune dangling only, never tagged).
+- [ ] One fresh bringup → L1.1 green → observer_trust.sh 1× (cheap regression check).
 
-## Block 1 — Durable DDS: migrate RMW to CycloneDDS (60–90 min) — THE blocker
-Why: discovery-server fixed multicast flakiness but fails under participant churn
-(ghost registrations → logger blind, 2× phantom SUCCEEDED). CycloneDDS is the
-standard robust choice for single-host ROS 2.
-1. Add `ros-humble-rmw-cyclonedds-cpp` to `docker/Dockerfile` AND the sim image
-   recipe; rebuild both (interim cheap trial allowed: runtime install into the
-   commander via container_deps + a derived sim image tag `m20_sim:cyclone`).
-2. Export `RMW_IMPLEMENTATION=rmw_cyclonedds_cpp` in compose + every script env
-   (`SRC`/`S` strings, sim `docker run` lines, m20sh). REMOVE
-   `ROS_DISCOVERY_SERVER`/`ROS_SUPER_CLIENT` and the compose `discovery` service
-   (keep the service definition commented for rollback).
-3. If lo multicast is still unreliable under WSL2 for cyclone: pin unicast via
-   `CYCLONEDDS_URI` (peers list 127.0.0.1) — one XML, committed to docker/.
-4. **Verification ladder (each step gates the next):**
-   a. L1.1 topics + rates from a fresh bringup.
-   b. OBSERVER-TRUST TEST ×2: one nav run each; PASS = nav_logger's true-trajectory
-      x-range, a live end-of-run probe, and the action result all AGREE (travel
-      really happened & was recorded). This is the test tonight's bus failed.
-   c. Single goal green; then estimator A/B (M20_EKF=1) — retest the phantom link
-      under the new RMW before blaming the estimator for anything.
-Fallback if image rebuild is blocked (disk): stay on discovery server; restart
-discovery+commander before every CAPTURE run; make nav_logger short-lived (start
-at goal-send, not bringup). Bridge measure only — note it as debt.
+---
 
-## Block 2 — The two owed videos (45 min; unblocked by Block 1b)
-1. Checkpoint-04 progress video: one instrumented green run (−6,−0.5) →
-   `tools/ci/make_progress_video.sh` → `docs/media/checkpoint-04.mp4`.
-2. Integrated video (the user's spec): same-format two-panel — MuJoCo replay +
-   GPS estimate-race panel (`render_gps_video.py`). EKF trace from the live
-   estimator if the A/B cleared it, else computed offline from logged /gps +
-   /odom with the estimator's exact math, labeled as such.
-3. Commit media; refresh the architecture artifact's status row (batch #14 result,
-   checkpoint-04, videos linked).
+## Track 1 — branch `phase-a-ekf`: GPS fusion (robot_localization)
+Target: the systematic ~0.5 m residual offset seen in every batch.
+1. **Design note FIRST** (`docs/design/phase_a_ekf.md`): fusion topology — EKF fuses
+   wheel odom twist + IMU + /gps pose → map-frame estimate. THE decision to write
+   down: who owns `map→odom` (candidate: EKF owns it, slam_toolbox demoted to
+   mapping-only). Document choice + rollback. 2D mode; GPS noise ±0.8 m @ 5 Hz.
+2. Implement: `ekf.yaml` in `src/m20_perception/config/` + bringup step guarded by
+   `M20_RL_EKF=1` (master behavior unchanged until gate pass).
+3. Ladder: (a) TF tree clean — ONE publisher per edge (classic failure: TF fight
+   with slam_toolbox); (b) single goal green + overlay EKF vs /odom_true vs raw;
+   (c) EKF RMSE < 0.3 m; (d) 10-run gate.
+4. **Accept: ≥9/10 AND mean <0.4 m AND RMSE <0.3 m** → merge, tag.
+Fallback: if TF-ownership swap destabilizes SLAM, run EKF odom-frame-only
+(smoothed source), document as debt. Never ship a two-parent TF tree.
 
-## Block 3 — Phase A branch: GPS fusion with robot_localization (rest of day)
-1. `git checkout -b phase-a-ekf` from master.
-2. Design note first (30 min, in-branch doc): fusion topology for this stack —
-   robot_localization EKF fusing wheel odom (/odom twist) + IMU + /gps pose,
-   publishing the map-frame estimate; decide interplay with slam_toolbox TF
-   (candidate: EKF owns map→odom, slam demoted to mapping-only; document the
-   choice + rollback). Acceptance (TEST_PLAN): ≥9/10 & mean <0.4 m, EKF RMSE <0.3 m.
-3. Implement ekf.yaml + bringup step; single green run; then 10-run gate
-   (background, quiet box). Merge only on gate pass, tag checkpoint-05.
+## Track 2 — branch `phase-map-loc`: known map + localization mode
+Premise (user decision): we MAY assume the area can be pre-mapped. Map once,
+navigate against the saved map thereafter.
+1. **Mapping run** (one-time artifact): bringup in mapping mode, drive coverage
+   (teleop or scripted loop past tanks/skids/corridor), then save BOTH formats:
+   - `ros2 run nav2_map_server map_saver_cli` → `maps/oil_gas_field.pgm/.yaml`
+   - slam_toolbox serialize → `maps/oil_gas_field.posegraph` (+ .data)
+   Quality gate = L2.1: tanks/skids/pipes present, no smearing. Commit the map
+   as an artifact (it's small; it IS the deliverable of this step).
+2. **Localization mode, smallest delta first**: slam_toolbox `mode: localization`
+   loading the posegraph (same node we already run — no new stack member), still
+   publishing `map→odom`. Fallback if relocalization is weak: classic
+   map_server + AMCL (bigger change, keep as plan B inside the branch).
+3. **Costmap switch**: global costmap rolling→static. `static_layer` from the map
+   + obstacle layer on live /scan + inflation. The planner now sees the WHOLE
+   field at t=0 — no more unknown=free gambles.
+4. Bringup guarded by `M20_STATIC_MAP=maps/oil_gas_field` (empty = today's SLAM
+   path; one bringup script, one flag — no forked bringup copies).
+5. Ladder: (a) localization sanity — spawn robot, confirm map→base pose matches
+   /odom_true within 0.3 m without driving; (b) single goal green; (c) 10-run gate;
+   (d) STRETCH: the parked eastern corridor goal (7.5, 4.0) — first credible shot,
+   since corridor geometry is now known a priori (may still need DWB critic tuning;
+   if so, measure and file, don't rabbit-hole).
+6. **Accept: ≥9/10 AND mean <0.5 m** (must beat live-SLAM 0.63 m to justify
+   existence) → merge, tag.
 
-## Parked (do not start unless blocked on all above)
-- Eastern pipe-corridor tuning (goal 7.5,4.0 declines the tight gap — DWB scoring
-  vs corridor width; revisit with Phase B or after A).
-- Camera simulation (#11) + progress-video automation (#12) — queued behind A.
-- RPP root-cause writeup for upstream Nav2 (we have full probe data).
+## Convergence (after both gate — the real goal)
+The production inspection stack is BOTH: known map + localization + GPS-anchored
+EKF (+ GPS gives AMCL/slam-loc its initial pose for free). Order of merge = order
+of gate pass; second branch rebases onto the first and RE-GATES before merging.
+Converged config gates → `checkpoint-06` candidate. Neither branch touches master
+until its gate passes (standing rule).
+
+## Owed small items (fold into whichever session has slack)
+- [ ] L1.6 tip-over bench test (scripted flip → FS_TIPOVER → ESTOP; owed since 07-15).
+- [ ] SECOND_BRAIN changelog entry per result (it just went 5 days stale unnoticed).
+
+## Parked (unchanged)
+- DWB slow-align tuning (measure align time first; also the main batch wall-clock cost).
+- Camera sim (#11), progress-video automation (#12), RPP upstream writeup.
