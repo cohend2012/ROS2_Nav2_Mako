@@ -57,7 +57,7 @@ class Logger(Node):
         now = time.time()
         if now - self._last_joints >= 0.05:
             self._last_joints = now
-            self.joints.append((now, *[m.joints_data[i].position for i in range(16)]))
+            self.joints.append((now, *[m.data.joints_data[i].position for i in range(16)]))
     def on_plan(self, m):
         self.plan = [(p.pose.position.x, p.pose.position.y) for p in m.poses]
     def on_map(self, m):
