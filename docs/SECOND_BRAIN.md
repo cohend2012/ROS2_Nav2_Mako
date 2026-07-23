@@ -5,7 +5,7 @@
 > Update the changelog at the bottom whenever you edit.
 
 **Project codename:** `m20_autonomy`
-**Last updated:** 2026-07-20 (rev 39)
+**Last updated:** 2026-07-20 (rev 40)
 **Status (2026-07-20, honest):** `master` @ `checkpoint-04-sensor-realism`, tree clean.
 **Navigation is gate-proven on realistic sensors:** L3.2 = **9/10, mean 0.63 m** (batch
 #14, best in project history) with the real M20 sensor contract (`/LIDAR/POINTS` XYZIRT
@@ -472,6 +472,22 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-20 (rev 40, branch phase-map-loc) — SITE MAP + first known-map nav +
+  commander-driven standup on camera.** Two-track plan started (user decision:
+  Track 1 = phase-a-ekf GPS fusion, Track 2 = phase-map-loc known map; whichever
+  gates first merges first). Track 2 today: (1) map artifact built + committed
+  (maps/oil_gas_field.*, 5-goal coverage, quality gate PASS); (2) bringup gains
+  flag-guarded M20_STATIC_MAP (slam_toolbox LOCALIZATION mode on the posegraph +
+  static-layer full-field global costmap) and M20_STANDUP (folded sim spawn →
+  commander ASSISTED → behavior-engine standup → bridge → AUTONOMOUS — the
+  behavior engine's first real use); (3) VERIFIED run: standup SUCCEEDED + goal
+  (-6,-0.5) SUCCEEDED, true error 0.63 m, ~61 s motion; video
+  docs/media/maploc-standup-first-run.mp4 (replay of logged joints+trajectory).
+  Fixed en route: engine PYTHONPATH clobber; engine /m20/mode QoS mismatch
+  (latched pub vs volatile sub — standup denied while armed); nav_logger drdds
+  field path; slam/nav2/logger/engine stdout now captured to /cfg/out/*.log.
+  NEXT: 10-run gate on this config (≥9/10, mean <0.5 m), then eastern-corridor
+  stretch goal. Estimator offset (~0.5–0.6 m) unchanged — still Track 1's job.
 - **2026-07-19 (rev 39) — CycloneDDS migration; observers trusted again; owed videos
   DELIVERED; estimator exonerated.** RMW switched to CycloneDDS via derived images
   (~300 MB), discovery server retired (compose service kept commented for rollback).

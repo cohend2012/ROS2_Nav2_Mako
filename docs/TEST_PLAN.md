@@ -252,6 +252,26 @@ SESSION 4 (2026-07-18/19) — CHECKPOINT-04 MERGED; observability crisis blocks 
     gap, declines; corridor-width vs DWB scoring tuning item (robot did NOT touch
     the pipes — costmap sees them).
 
+SESSION 6 (2026-07-20) — phase-map-loc: MAP BUILT + FIRST KNOWN-MAP NAV + COMMANDER STANDUP:
+  * Site map artifact committed: maps/oil_gas_field.{posegraph,data,pgm,yaml}
+    (5-goal coverage loop, 706x534 @0.05 m). Quality gate PASS: tanks/skids/pipes
+    crisp, no smearing (preview: maps/oil_gas_field_preview.png).
+  * FIRST full-sequence run VERIFIED (action result + in-run logger agree):
+    folded spawn -> commander ASSISTED -> behavior-engine standup SUCCEEDED ->
+    bridge -> AUTONOMOUS -> slam_toolbox LOCALIZATION mode (posegraph) +
+    static-layer global costmap -> NavigateToPose (-6,-0.5) SUCCEEDED,
+    true error 0.63 m, motion complete in ~61 s. Video (replay of logged
+    joints+trajectory): docs/media/maploc-standup-first-run.mp4.
+  * Bugs found & fixed en route (all would have bitten Phase C behavior use):
+    (1) PYTHONPATH=/cfg clobbered ROS's dist-packages -> engine ImportError
+        (fix: prepend); (2) /m20/mode is LATCHED + on-change but the engine
+        subscribed VOLATILE -> standup denied with commander armed (fix: engine
+        subscribes transient_local); (3) nav_logger used m.joints_data instead
+        of m.data.joints_data -> logger died on first /JOINTS_DATA (fix + logs
+        now captured for slam/nav2/logger/engine per the 2026-07-17 lesson).
+  * NEXT: L3.2 10-run gate on the static-map config (accept >=9/10, mean <0.5 m);
+    then the parked eastern corridor goal (7.5,4.0) stretch test.
+
 SESSION 5 (2026-07-19) — Block 1+2 COMPLETE:
   * CycloneDDS migration done (derived images, ~300 MB; discovery server retired).
   * observer_trust.sh PASS 2/2 (new standing check after any transport change).

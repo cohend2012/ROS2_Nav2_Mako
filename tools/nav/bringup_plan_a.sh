@@ -74,7 +74,7 @@ print("patched global costmap -> static layer (full known field)")
 PYEOF
 fi
 
-echo "[2/7] starting MuJoCo sim (oil_gas_field, headless, start=${M20_START_POSE:-stand})"
+echo "[2/7] starting MuJoCo sim (oil_gas_field, headless, start=$([ "${M20_STANDUP:-0}" = 1 ] && echo folded || echo stand))"
 docker rm -f m20_sim_run 2>/dev/null || true
 docker run -d --name m20_sim_run --network host --ipc host \
   -e ROS_DOMAIN_ID=$DOM -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
@@ -111,10 +111,10 @@ if [ "${M20_STANDUP:-0}" = "1" ]; then
   # the image-baked copy burned us once already); m20_msgs/drdds come from /ws
   docker exec $C bash -lc "rm -rf /cfg/m20_behaviors"
   docker cp "$REPO/src/m20_behaviors/m20_behaviors" $C:/cfg/m20_behaviors
-  docker exec -d $C bash -lc "$SRC; PYTHONPATH=/cfg python3 -c 'from m20_behaviors.engine import main; main()'"
+  docker exec -d $C bash -lc "$SRC; PYTHONPATH=/cfg:\$PYTHONPATH python3 -c 'from m20_behaviors.engine import main; main()' >/cfg/out/engine.log 2>&1"
   sleep 3
   # logger starts BEFORE the standup so joints.csv captures the rise
-  docker exec -d $C bash -lc "$SRC; RUN_SECS=${RUN_SECS:-300} python3 /cfg/nav_logger.py"
+  docker exec -d $C bash -lc "$SRC; RUN_SECS=${RUN_SECS:-300} python3 /cfg/nav_logger.py >/cfg/out/logger.log 2>&1"
   sleep 2
   # request + wait in ONE node (no pub/echo race): subscribe status, wait for the
   # engine to match, publish the request, then wait for a terminal state.
@@ -149,20 +149,20 @@ fi
 
 if [ -n "${M20_STATIC_MAP:-}" ]; then
   echo "[4/7] starting slam_toolbox in LOCALIZATION mode (pre-built posegraph)"
-  docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox localization_slam_toolbox_node --ros-args --params-file /cfg/localization_params.yaml"
+  docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox localization_slam_toolbox_node --ros-args --params-file /cfg/localization_params.yaml >/cfg/out/slam.log 2>&1"
 else
   echo "[4/7] starting slam_toolbox (mapping)"
-  docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox async_slam_toolbox_node --ros-args --params-file /cfg/mapper_params.yaml"
+  docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox async_slam_toolbox_node --ros-args --params-file /cfg/mapper_params.yaml >/cfg/out/slam.log 2>&1"
 fi
 sleep 6
 
-echo "[5/7] starting Nav2"
-docker exec -d $C bash -lc "$SRC; ros2 launch nav2_bringup navigation_launch.py params_file:=/cfg/nav2_params.yaml use_sim_time:=false"
+echo "[5/7] starting Nav2 (logs -> /cfg/out/nav2.log; the 2026-07-17 lesson)"
+docker exec -d $C bash -lc "$SRC; ros2 launch nav2_bringup navigation_launch.py params_file:=/cfg/nav2_params.yaml use_sim_time:=false >/cfg/out/nav2.log 2>&1"
 sleep 14
 
 if [ "${M20_STANDUP:-0}" != "1" ]; then
   echo "[6a/7] starting logger (standup path started it earlier)"
-  docker exec -d $C bash -lc "$SRC; RUN_SECS=${RUN_SECS:-300} python3 /cfg/nav_logger.py"
+  docker exec -d $C bash -lc "$SRC; RUN_SECS=${RUN_SECS:-300} python3 /cfg/nav_logger.py >/cfg/out/logger.log 2>&1"
   sleep 2
 fi
 if [ "${M20_NO_GOAL:-0}" = "1" ]; then
