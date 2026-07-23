@@ -5,7 +5,7 @@
 > Update the changelog at the bottom whenever you edit.
 
 **Project codename:** `m20_autonomy`
-**Last updated:** 2026-07-20 (rev 40)
+**Last updated:** 2026-07-20 (rev 41)
 **Status (2026-07-20, honest):** `master` @ `checkpoint-04-sensor-realism`, tree clean.
 **Navigation is gate-proven on realistic sensors:** L3.2 = **9/10, mean 0.63 m** (batch
 #14, best in project history) with the real M20 sensor contract (`/LIDAR/POINTS` XYZIRT
@@ -472,6 +472,19 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-20 (rev 41, branch phase-map-loc) — GATE: 10/10 on the known map —
+  first perfect batch in project history.** L3.2 batch #16 (clean box, load
+  0.35): **10/10 SUCCESS, mean 0.59 m, p95 0.80 m, zero mid-course stalls.**
+  Batch #15 was discarded as contaminated (load 4.84; VM reboot; stray behavior
+  engine from teardown-PAT drift — batch PAT now synced to kill_stack.sh; one
+  64 s phantom-SUCCESS observed under that contention). Honest scoring vs the
+  branch bar (≥9/10 AND mean <0.5 m): success EXCEEDED, accuracy missed by
+  0.09 m — the residual is the estimator offset, which a map cannot fix.
+  NOT merged (merge-on-gate-pass). Plan: land phase-a-ekf, re-gate combined
+  (expect <0.4 m), merge both as checkpoint-05. Standup fix landed en route:
+  wheel lock kd 1→6 (creep 0.84→0.64 rad, position-hold filed as debt);
+  nav_logger logs true z/roll/pitch and the replay uses them (user caught the
+  floating-base render artifact).
 - **2026-07-20 (rev 40, branch phase-map-loc) — SITE MAP + first known-map nav +
   commander-driven standup on camera.** Two-track plan started (user decision:
   Track 1 = phase-a-ekf GPS fusion, Track 2 = phase-map-loc known map; whichever

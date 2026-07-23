@@ -269,8 +269,22 @@ SESSION 6 (2026-07-20) — phase-map-loc: MAP BUILT + FIRST KNOWN-MAP NAV + COMM
         subscribes transient_local); (3) nav_logger used m.joints_data instead
         of m.data.joints_data -> logger died on first /JOINTS_DATA (fix + logs
         now captured for slam/nav2/logger/engine per the 2026-07-17 lesson).
-  * NEXT: L3.2 10-run gate on the static-map config (accept >=9/10, mean <0.5 m);
-    then the parked eastern corridor goal (7.5,4.0) stretch test.
+  * L3.2 GATE ON STATIC-MAP CONFIG (2026-07-20 late):
+    - Batch #15 CONTAMINATED (load 4.84 at start — the guard fired; VM had
+      rebooted; a stray behavior engine survived every teardown because the
+      batch's inline kill PAT had drifted from kill_stack.sh — now synced).
+      Included one 64 s phantom SUCCESS at the origin. Discarded per the
+      host-sleep precedent.
+    - Batch #16 CLEAN (load 0.35): **10/10 SUCCESS — first perfect batch in
+      project history. mean 0.59 m, p95 0.80 m, no stalls.** Script gate PASS.
+    - Against the branch's own bar (>=9/10 AND mean <0.5 m): success EXCEEDED,
+      accuracy MISSED by 0.09 m. The residual is the known estimator offset —
+      the map cannot fix estimator bias; that is Track 1's job. DECISION:
+      per merge-on-gate-pass discipline, phase-map-loc is NOT merged yet.
+      Plan: land phase-a-ekf (GPS fusion), re-gate the COMBINED config
+      (expect mean <0.4 m), merge both as checkpoint-05.
+  * NEXT: Track 1 (phase-a-ekf), then combined gate; eastern corridor (7.5,4.0)
+    stretch test after.
 
 SESSION 5 (2026-07-19) — Block 1+2 COMPLETE:
   * CycloneDDS migration done (derived images, ~300 MB; discovery server retired).
