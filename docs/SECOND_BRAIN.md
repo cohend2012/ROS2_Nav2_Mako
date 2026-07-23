@@ -5,27 +5,29 @@
 > Update the changelog at the bottom whenever you edit.
 
 **Project codename:** `m20_autonomy`
-**Last updated:** 2026-07-07 (rev 6)
-**Status (2026-07-11, honest):** Phase 1 DONE + heavily polished in MuJoCo sim (stand,
-drive, turn/circle/fig-8, watchdog, armature + yaw-rate feedback — all benchmarked/videoed).
-Phase 2 PARTIAL: a *custom* lightweight EKF (wheel+IMU+GPS) live-verified at 0.48 m — NOT
-yet robot_localization, and nav doesn't yet run on it. **Phase 3 PLAN A WORKING + HONEST
-(rev 36):** the PRODUCTION stack — **Nav2** (Regulated Pure Pursuit + rotate-to-heading +
-NavFn/A*, rolling costmaps) + **slam_toolbox** — autonomously navigated the oil & gas field
-to a NavigateToPose goal, threading between skid1/skid2 (real costmap obstacle avoidance,
-live 10 m LiDAR), SLAM map built live. **Localization is HONEST: no ground-truth TF** — the
-sim feeds dead-reckoned wheel+gyro odometry that DRIFTS, slam_toolbox corrects it via
-scan-matching, and the robot reaches the TRUE goal within 0.82 m (raw uncorrected odom
-alone ends ~5 m off). Nothing consumes perfect info. Config:
-`src/m20_navigation/config/nav2_params.yaml`; repro: `tools/nav/bringup_plan_a.sh`;
-proof: `docs/media/nav2_plan_a_result.png` + `nav2_plan_a_run.gif`. Next honesty/accuracy
-step: fuse GPS (robot_localization EKF) to bound residual SLAM error outdoors.
-Plan B (3D perception/traversability) deferred.
-Phase 1.5 (Foxglove) skipped (used rendered videos). Behavior engine + standup exist early.
-Vendor SDK reality mapped from public GitHub (rev 6). **First integration run done
-(rev 7):** full stack builds and runs green in docker compose on a dev box (WSL2) —
-all 5 services up, 4 healthy + station bridge serving Foxglove/rosbridge. Still no
-hardware/sim-robot integration.
+**Last updated:** 2026-07-20 (rev 39)
+**Status (2026-07-20, honest):** `master` @ `checkpoint-04-sensor-realism`, tree clean.
+**Navigation is gate-proven on realistic sensors:** L3.2 = **9/10, mean 0.63 m** (batch
+#14, best in project history) with the real M20 sensor contract (`/LIDAR/POINTS` XYZIRT
++ noise/dropout/skew; `/scan` derived by the production `pointcloud_to_laserscan` node)
+and the **DWB controller** (RPP retired after the rotate-to-wrong-heading dither,
+session 3c). Transport is **CycloneDDS** — discovery server retired; the
+ghost-registration / phantom-SUCCESS class is closed, and `tools/ci/observer_trust.sh`
+(PASS 2/2) is a standing check after any transport change. The estimator was
+**EXONERATED**: the "blind logger" was nav_logger's end-only writes + 120 s window
+expiring inside DWB's slow-align phase (fixed: incremental 10 s dumps, RUN_SECS=300).
+Both owed checkpoint-04 videos delivered from ONE fully-verified run (SUCCEEDED, all
+observers agree, 0.54 m true error): `docs/media/checkpoint-04-autonomous-run.mp4` +
+`checkpoint-04-integrated-gps.mp4` (dead-reckoning drifts to 3.20 m; GPS-fused EKF ends
+0.07 m from truth). **NEXT: Phase A** — branch `phase-a-ekf` (not yet created):
+robot_localization GPS fusion, design note FIRST; accept ≥9/10, mean <0.4 m, EKF RMSE
+<0.3 m (targets the systematic ~0.5 m residual localization offset seen in every batch).
+Known + parked: eastern pipe-corridor goals (7.5, 4.0) abort — DWB scoring vs corridor
+width; costmap sees the pipes, robot never touches them. Slow start-of-run = DWB
+slow-align phase (known + logged, not a regression). L1.6 tip-over bench test still
+owed; camera (#11) queued behind Phase A. Phase 1 DONE (stand/drive/turn
+benchmarked+videoed); Phase 1.5 (Foxglove) skipped in favor of rendered videos; Plan B
+(3D traversability) deferred. Still no hardware/sim-robot integration.
 
 ---
 
@@ -470,6 +472,33 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-19 (rev 39) — CycloneDDS migration; observers trusted again; owed videos
+  DELIVERED; estimator exonerated.** RMW switched to CycloneDDS via derived images
+  (~300 MB), discovery server retired (compose service kept commented for rollback).
+  New standing check `tools/ci/observer_trust.sh`: PASS iff the action result, the
+  in-run nav_logger trajectory, and a live end-of-run probe all AGREE — PASS 2/2.
+  Root cause of the "blind logger"/phantom-link found and it was NOT the estimator:
+  nav_logger wrote CSVs only at window end and its 120 s window expired during DWB's
+  slow-align phase → fixed with incremental 10 s dumps + RUN_SECS=300. **Estimator
+  EXONERATED.** Both owed videos rendered from ONE fully-verified run (SUCCEEDED, all
+  observers agree, 0.54 m true error): `docs/media/checkpoint-04-autonomous-run.mp4`
+  + `checkpoint-04-integrated-gps.mp4` (dead-reckon 3.20 m vs GPS-fused EKF 0.07 m at
+  end — the walking advertisement for Phase A). Commits `7e41bf2`, `b3aeb62`.
+  **Next: Block 3 — `phase-a-ekf` branch, robot_localization design note first.**
+- **2026-07-18 (rev 38) — CHECKPOINT-04: SENSOR REALISM + DWB, gate 9/10 @ 0.63 m.**
+  Branch `sensor-realism` merged to master, tag `checkpoint-04-sensor-realism`.
+  L1.8 LiDAR realism PASS 7/7 (XYZIRT 32-byte points, ~100 ms progressive sector
+  cast with real motion skew, σ≈1.5 cm noise, ground dropout, weather hooks).
+  Controller swapped **RPP → DWB** after session-3c forensics (RPP rotated to a
+  carrot heading ~165° off the goal and dithered forever; full probe data kept for
+  an upstream writeup). Batch discipline hardened: ONE bringup code path (every run
+  calls `bringup_plan_a.sh`), wait-until-dead teardown (`kill_stack.sh` SIGINT-first
+  — a zombie bt_navigator had produced PHANTOM SUCCESS). **L3.2 batch #14: 9/10,
+  mean 0.63 m — first 9/10 in project history**; 9 distinct endpoints confirm real
+  travel. Filed open: (a) phantom-SUCCESS / observer split-brain under
+  discovery-server participant churn (ghost registrations; fix = CycloneDDS, rev 39);
+  (b) eastern pipe-corridor goals (7.5, 4.0) abort — DWB scoring vs corridor width,
+  costmap sees the pipes (parked). Commits `b007408`→`cd65c64`.
 - **2026-07-15 (rev 37) — CHECKPOINT-03: REAL LiDAR INTERFACE, phase D closed.**
   The sim now speaks the real M20 sensor contract: **`/LIDAR/POINTS`** (hemispherical
   reduced-beam PointCloud2, 0.5 m blind, body frame — per the verified vendor configs)
