@@ -27,7 +27,9 @@ teardown() {
   # (kill -9 leaves stale registrations that poison later matching); then
   # force-kill leftovers. Do NOT bounce the discovery server (orphans the
   # long-lived commander client).
-  docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan|static_transform_publisher";
+  # keep PAT in sync with tools/nav/kill_stack.sh (2026-07-20: a stray behavior
+  # engine survived a full 10-run batch because this copy lacked m20_behaviors)
+  docker exec $C bash -lc 'PAT="navigation_launch|nav2_|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan|static_transform_publisher|m20_behaviors|estimator.py";
     PIDS=$(ps -eo pid,args | grep -E "$PAT" | grep -v grep | awk "{print \$1}");
     [ -n "$PIDS" ] && kill -2 $PIDS 2>/dev/null; sleep 2;
     # WAIT until actually dead — a fire-and-forget teardown let dying Nav2 nodes
