@@ -25,7 +25,17 @@ class Logger(Node):
     def __init__(self):
         super().__init__("nav_logger")
         self.true = []; self.drift = []; self.est = []; self.gps = []; self.ekf = []
+        self.joints = []
         self.plan = None; self.map = None
+        # joint positions (for replay-rendering the standup segment), decimated
+        # 200 Hz -> 20 Hz; drdds is only in the container image, so keep the
+        # logger runnable without it
+        self._last_joints = 0.0
+        try:
+            from drdds.msg import JointsData
+            self.create_subscription(JointsData, "/JOINTS_DATA", self.on_joints, 10)
+        except ImportError:
+            pass
         self.create_subscription(Odometry, "/odom_true", self.on_true, 10)
         self.create_subscription(Odometry, "/odom", self.on_drift, 10)
         self.create_subscription(Odometry, "/gps",
@@ -43,6 +53,11 @@ class Logger(Node):
         self.true.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y, yaw))
     def on_drift(self, m):
         self.drift.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y))
+    def on_joints(self, m):
+        now = time.time()
+        if now - self._last_joints >= 0.05:
+            self._last_joints = now
+            self.joints.append((now, *[m.joints_data[i].position for i in range(16)]))
     def on_plan(self, m):
         self.plan = [(p.pose.position.x, p.pose.position.y) for p in m.poses]
     def on_map(self, m):
@@ -65,12 +80,15 @@ def main():
         with open(f"{OUT}/{name}", "w", newline="") as f:
             w = csv.writer(f); w.writerow(hdr); w.writerows(rows)
 
+    JHDR = ["t"] + [f"j{i}" for i in range(16)]
+
     def dump_all():
         dump("traj_true.csv", n.true, ["t", "x", "y", "yaw"])
         dump("traj_drift.csv", n.drift, ["t", "x", "y"])
         dump("traj_est.csv", n.est, ["t", "x", "y"])
         dump("gps.csv", n.gps, ["t", "x", "y"])
         dump("traj_ekf.csv", n.ekf, ["t", "x", "y"])
+        dump("joints.csv", n.joints, JHDR)
 
     while rclpy.ok() and time.time() - t0 < RUN_SECS:
         rclpy.spin_once(n, timeout_sec=0.05)
@@ -80,18 +98,14 @@ def main():
         # every mid-run copy read the PREVIOUS run (the "blind logger" of session 4)
         if time.time() - last_dump > 10.0:
             dump_all(); last_dump = time.time()
-    dump("traj_true.csv", n.true, ["t", "x", "y", "yaw"])
-    dump("traj_drift.csv", n.drift, ["t", "x", "y"])
-    dump("traj_est.csv", n.est, ["t", "x", "y"])
-    dump("gps.csv", n.gps, ["t", "x", "y"])
-    dump("traj_ekf.csv", n.ekf, ["t", "x", "y"])
+    dump_all()
     if n.plan:
         dump("plan.csv", n.plan, ["x", "y"])
     if n.map is not None:
         res, wdt, hgt, ox, oy, grid = n.map
         np.savez(f"{OUT}/map.npz", res=res, width=wdt, height=hgt, ox=ox, oy=oy, grid=grid)
     print(f"true={len(n.true)} drift={len(n.drift)} est={len(n.est)} "
-          f"gps={len(n.gps)} ekf={len(n.ekf)} "
+          f"gps={len(n.gps)} ekf={len(n.ekf)} joints={len(n.joints)} "
           f"plan={len(n.plan) if n.plan else 0} map={'y' if n.map is not None else 'n'}")
     n.destroy_node(); rclpy.shutdown()
 

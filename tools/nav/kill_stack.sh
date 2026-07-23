@@ -6,7 +6,7 @@
 # zombie bt_navigator answered a goal with SUCCEEDED while the robot sat parked).
 # SIGINT first so DDS participants unregister from the discovery server cleanly.
 C=docker-commander-1
-PAT="navigation_launch|nav2_smoother|nav2_planner|nav2_behaviors|nav2_bt_navigator|nav2_waypoint|nav2_velocity|nav2_lifecycle|nav2_controller|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan|static_transform_publisher|estimator.py"
+PAT="navigation_launch|nav2_smoother|nav2_planner|nav2_behaviors|nav2_bt_navigator|nav2_waypoint|nav2_velocity|nav2_lifecycle|nav2_controller|component_container|slam_toolbox|bridge_node|nav_logger|pointcloud_to_laserscan|static_transform_publisher|estimator.py|m20_behaviors"
 docker exec $C bash -c "
   PIDS=\$(ps -eo pid,args | grep -E '$PAT' | grep -v grep | awk '{print \$1}')
   [ -n \"\$PIDS\" ] && kill -2 \$PIDS 2>/dev/null
