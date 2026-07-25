@@ -97,6 +97,7 @@ FOLDED = np.array([
     0.0,  1.0, -2.3, 0.0])  # HR
 SIM_HZ = 500.0
 PUB_HZ = 200.0
+CAM_W, CAM_H, CAM_HZ = 320, 240, 5.0   # M20_CAMERA=1 (monitoring-grade, OQ-14)
 
 
 def quat_to_rpy(w, x, y, z):
@@ -198,6 +199,28 @@ class Sim(Node):
         self._tick = 0
         self._rng = np.random.default_rng(0)
         self.create_subscription(JointsDataCmd, "/JOINTS_CMD", self.on_cmd, 10)
+        # M20_CAMERA=1: forward-looking body camera (#11). No vendor-model edit —
+        # a free camera is posed from the true base pose each frame (eye ~0.15 m
+        # above base, looking along heading). Offscreen EGL render, 320x240 @5 Hz,
+        # monitoring-grade (OQ-14 owns the low-latency teleop path). Opt-in flag:
+        # rendering costs CPU and this box is contention-sensitive (gate batches
+        # run without it).
+        self.cam_on = os.environ.get("M20_CAMERA", "0") == "1"
+        if self.cam_on:
+            # render OFF the tick thread: software-GL frames cost ~250 ms and
+            # inline rendering starved the sim to 81 Hz (measured 2026-07-20) —
+            # the exact slow-robot class from the 07-17 forensics. GL contexts are
+            # THREAD-AFFINE, so the Renderer must be constructed inside the render
+            # thread too (constructing it here published zero frames, silently).
+            # Snapshot via unlocked mj_copyData: a torn frame is cosmetic
+            # (monitoring-grade only, OQ-14).
+            from sensor_msgs.msg import Image
+            self._ImageMsg = Image
+            self.cam_pub = self.create_publisher(Image, "/camera/image_raw", 3)
+            self._cam_snap = mujoco.MjData(self.m)
+            import threading
+            threading.Thread(target=self._camera_loop, daemon=True).start()
+            self.get_logger().info(f"camera thread starting: /camera/image_raw {CAM_W}x{CAM_H} @{CAM_HZ} Hz")
         self.viewer = None
         if GUI:
             from mujoco import viewer as mj_viewer   # 'from' avoids shadowing `mujoco`
@@ -206,6 +229,43 @@ class Sim(Node):
         self.create_timer(1.0 / PUB_HZ, self.tick)
         self.get_logger().info(
             f"M20 MuJoCo sim up (GUI={GUI}, nq={self.m.nq}, substeps={self.substeps})")
+
+    def _camera_loop(self):
+        period = 1.0 / CAM_HZ
+        try:
+            renderer = mujoco.Renderer(self.m, CAM_H, CAM_W)   # GL context lives HERE
+            cam = mujoco.MjvCamera()
+        except Exception as e:  # noqa: BLE001 — camera is optional; sim must not die
+            self.get_logger().warn(f"camera disabled (offscreen GL unavailable: {e})")
+            return
+        errs = 0
+        while rclpy.ok():
+            t0 = time.time()
+            try:
+                mujoco.mj_copyData(self._cam_snap, self.m, self.d)
+                s = self._cam_snap
+                x, y, z = s.qpos[0], s.qpos[1], s.qpos[2]
+                _, _, yaw = quat_to_rpy(*s.qpos[3:7])
+                cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+                cam.lookat[:] = [x + 2.0 * math.cos(yaw), y + 2.0 * math.sin(yaw), z]
+                cam.distance = 2.0
+                cam.azimuth = math.degrees(yaw) + 180.0  # behind the lookat = at the robot
+                cam.elevation = -8.0
+                renderer.update_scene(s, camera=cam)
+                rgb = renderer.render()
+                msg = self._ImageMsg()
+                msg.header.stamp = self.get_clock().now().to_msg()
+                msg.header.frame_id = "base_link"
+                msg.height, msg.width = rgb.shape[0], rgb.shape[1]
+                msg.encoding = "rgb8"
+                msg.step = rgb.shape[1] * 3
+                msg.data = rgb.tobytes()
+                self.cam_pub.publish(msg)
+            except Exception as e:  # noqa: BLE001 — log the first few, never die
+                errs += 1
+                if errs <= 3:
+                    self.get_logger().warn(f"camera frame failed: {e}")
+            time.sleep(max(0.0, period - (time.time() - t0)))
 
     def on_cmd(self, msg: JointsDataCmd):
         for i in range(NJ):
