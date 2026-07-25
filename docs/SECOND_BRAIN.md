@@ -5,7 +5,7 @@
 > Update the changelog at the bottom whenever you edit.
 
 **Project codename:** `m20_autonomy`
-**Last updated:** 2026-07-20 (rev 41)
+**Last updated:** 2026-07-20 (rev 42)
 **Status (2026-07-20, honest):** `master` @ `checkpoint-04-sensor-realism`, tree clean.
 **Navigation is gate-proven on realistic sensors:** L3.2 = **9/10, mean 0.63 m** (batch
 #14, best in project history) with the real M20 sensor contract (`/LIDAR/POINTS` XYZIRT
@@ -472,6 +472,24 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-20 (rev 42, branch phase-map-loc) — USABILITY NIGHT + the map-warp
+  root cause.** (1) **Operator station LIVE** (Phase 1.5 closed, ADR-013):
+  foxglove_bridge + rosbridge in bringup by default, ports verified from
+  Windows, layout + docs/STATION.md committed. (2) **Mission action server
+  REAL** (Phase C opener): m20_msgs/action/RunMission, mission_server.py
+  (Nav2 client, commander veto, cancel, ETA feedback), CLI tools/dev/m20;
+  verified live 2-waypoint patrol success=2/2. (3) **Camera #11 in sim**:
+  /camera/image_raw 320x240 chase cam, threaded render (inline starved physics
+  to 81 Hz; GL context is thread-affine — both documented in code), verified
+  3.4 Hz frames @ 190 Hz physics. (4) **Goal tolerance 0.45→0.20** (was the
+  live-SLAM-noise setting; dominant term in batch "error"). (5) **THE FINDING:
+  the committed map is WARPED** — landmark fits vs true geometry: tank1 +0.27,
+  tank2 −0.19, wellhead −0.61 m, region-dependent frozen drift from the
+  mapping run. Runtime localization is locally precise; true-world error = the
+  local warp. Phase A rescoped to **GPS-anchored mapping** (feed slam a
+  GPS-EKF odom during map-building; landmark fit is now the map quality gate)
+  — see docs/design/phase_a_ekf.md. Combined re-gate deferred to after the map
+  rebuild; branch stays unmerged (its own accuracy bar needs the new map).
 - **2026-07-20 (rev 41, branch phase-map-loc) — GATE: 10/10 on the known map —
   first perfect batch in project history.** L3.2 batch #16 (clean box, load
   0.35): **10/10 SUCCESS, mean 0.59 m, p95 0.80 m, zero mid-course stalls.**

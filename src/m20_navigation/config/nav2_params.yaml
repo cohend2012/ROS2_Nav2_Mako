@@ -28,12 +28,15 @@ controller_server:
       movement_time_allowance: 40.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      # 0.45 (was 0.35): with realistic sensor noise the pose estimate jitters at the
-      # tolerance boundary and runs "arrive but never declare" (measured: timeouts at
-      # 0.41-0.86 m true error, 2026-07-15 batches). The L3.2 TRUE-error gate
-      # (<0.8 m mean vs ground truth) stays the honest accuracy check — this knob
-      # only lets Nav2 declare what it already achieved.
-      xy_goal_tolerance: 0.45
+      # HISTORY: 0.35 -> 0.45 (2026-07-15) because live-SLAM noise jittered the
+      # estimate at the boundary ("arrive but never declare" timeouts).
+      # 0.45 -> 0.20 (2026-07-20, phase-map-loc): localization against the known
+      # map measures 0.007 m bias / 0.065 m std vs truth (3554 samples) — the
+      # jitter rationale is gone, and 0.45 was THE dominant term in the batch
+      # "error" (mean 0.59 = tolerance + stopping dynamics, not estimation).
+      # 0.20 keeps 3 sigma of margin. If live-SLAM mode (no M20_STATIC_MAP)
+      # regresses to arrive-never-declare, this knob is why.
+      xy_goal_tolerance: 0.20
       yaw_goal_tolerance: 0.5
       stateful: True
     # CONTROLLER SWAP (2026-07-18): RPP 1.1.20 emitted sign-flapping ~±0.2 rad/s
@@ -58,7 +61,7 @@ controller_server:
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.3
-      xy_goal_tolerance: 0.45
+      xy_goal_tolerance: 0.20    # match goal_checker (see history note above)
       trans_stopped_velocity: 0.05
       short_circuit_trajectory_evaluation: True
       stateful: True
