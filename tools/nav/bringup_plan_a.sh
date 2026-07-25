@@ -47,6 +47,7 @@ docker cp "$REPO/tools/slam/mapper_params.yaml"                                 
 docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml"          $C:/cfg/pointcloud_to_laserscan.yaml
 docker cp "$REPO/tools/nav/nav_logger.py"                                         $C:/cfg/nav_logger.py
 docker cp "$REPO/tools/estimator.py"                                              $C:/cfg/estimator.py
+docker cp "$REPO/src/m20_missions/m20_missions/mission_server.py"                 $C:/cfg/mission_server.py
 
 if [ -n "${M20_STATIC_MAP:-}" ]; then
   echo "[1.5/7] static-map mode: staging pre-built map + localization config"
@@ -79,6 +80,7 @@ docker rm -f m20_sim_run 2>/dev/null || true
 docker run -d --name m20_sim_run --network host --ipc host \
   -e ROS_DOMAIN_ID=$DOM -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
   -e M20_START_POSE=${M20_STANDUP:+folded} \
+  -e M20_CAMERA=${M20_CAMERA:-0} -e MUJOCO_GL=egl \
   -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py
@@ -97,6 +99,11 @@ sleep 2
 if [ "${M20_EKF:-0}" = "1" ]; then
   echo "[2.6/7] starting GPS-fused EKF estimator (wheel+IMU+GPS -> /odom_filtered)"
   docker exec -d $C bash -lc "$SRC; python3 /cfg/estimator.py"
+fi
+
+if [ "${M20_STATION:-1}" = "1" ]; then
+  echo "[2.7/7] starting operator station (Foxglove ws://localhost:8765, rosbridge :9090)"
+  docker exec -d $C bash -lc "$SRC; ros2 launch m20_station station_bridge.launch.py >/cfg/out/station.log 2>&1"
 fi
 
 if [ "${M20_STANDUP:-0}" = "1" ]; then
@@ -159,6 +166,9 @@ sleep 6
 echo "[5/7] starting Nav2 (logs -> /cfg/out/nav2.log; the 2026-07-17 lesson)"
 docker exec -d $C bash -lc "$SRC; ros2 launch nav2_bringup navigation_launch.py params_file:=/cfg/nav2_params.yaml use_sim_time:=false >/cfg/out/nav2.log 2>&1"
 sleep 14
+
+echo "[5.5/7] starting mission server (/m20/mission/run — tools/dev/m20 goto|mission)"
+docker exec -d $C bash -lc "$SRC; python3 /cfg/mission_server.py >/cfg/out/mission.log 2>&1"
 
 if [ "${M20_STANDUP:-0}" != "1" ]; then
   echo "[6a/7] starting logger (standup path started it earlier)"
