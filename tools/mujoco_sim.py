@@ -90,6 +90,7 @@ GUI = os.environ.get("M20_SIM_GUI", "1") == "1"
 # standup behavior is REAL (rises on camera), not a robot that spawned standing.
 # Values mirror m20_behaviors/behaviors/standup.py FOLDED — keep in sync.
 START_POSE = os.environ.get("M20_START_POSE", "stand")
+NO_ODOM_TF = os.environ.get("M20_NO_ODOM_TF", "0") == "1"
 FOLDED = np.array([
     0.0, -1.0,  2.3, 0.0,   # FL
     0.0, -1.0,  2.3, 0.0,   # FR
@@ -337,16 +338,19 @@ class Sim(Node):
         od.twist.twist.linear.x = float(vx)
         od.twist.twist.angular.z = float(wz)
         self.odom_pub.publish(od)
-        # odom->base_link TF from the DRIFTING wheel odom; slam_toolbox adds map->odom to fix it
-        tf = TransformStamped()
-        tf.header.stamp = now
-        tf.header.frame_id = "odom"
-        tf.child_frame_id = "base_link"
-        tf.transform.translation.x = self.odom_x
-        tf.transform.translation.y = self.odom_y
-        tf.transform.rotation.z = oq_z
-        tf.transform.rotation.w = oq_w
-        self.tf_bc.sendTransform(tf)
+        # odom->base_link TF from the DRIFTING wheel odom; slam_toolbox adds map->odom
+        # to fix it. M20_NO_ODOM_TF=1 hands this edge to an external estimator (the
+        # GPS-EKF during map-building) — ONE publisher per TF edge, never two.
+        if not NO_ODOM_TF:
+            tf = TransformStamped()
+            tf.header.stamp = now
+            tf.header.frame_id = "odom"
+            tf.child_frame_id = "base_link"
+            tf.transform.translation.x = self.odom_x
+            tf.transform.translation.y = self.odom_y
+            tf.transform.rotation.z = oq_z
+            tf.transform.rotation.w = oq_w
+            self.tf_bc.sendTransform(tf)
         # ground-truth pose on /odom_true — EVAL ONLY (never consumed by SLAM/Nav2)
         tpx, tpy, tpz = self.d.qpos[0:3]
         tw, tx_, ty_, tz = self.d.qpos[3:7]

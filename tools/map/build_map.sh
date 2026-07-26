@@ -22,9 +22,9 @@ C=docker-commander-1
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
 
-echo "=== build_map: fresh mapping stack ==="
+echo "=== build_map: fresh mapping stack (GPS-ANCHORED: EKF owns odom->base_link) ==="
 bash "$REPO/tools/nav/kill_stack.sh" >/dev/null 2>&1 || true
-M20_NO_GOAL=1 RUN_SECS=900 bash "$REPO/tools/nav/bringup_plan_a.sh"
+M20_EKF=1 M20_EKF_TF=1 M20_NO_GOAL=1 RUN_SECS=900 bash "$REPO/tools/nav/bringup_plan_a.sh"
 
 GOALS="-6.0,-0.5 -7.0,2.0 2.0,4.0 4.0,-3.0 0.5,-1.0"
 i=0
@@ -42,13 +42,24 @@ docker exec $C bash -lc "$SRC; ros2 service call /slam_toolbox/serialize_map sla
 docker exec $C bash -lc "$SRC; timeout 30 ros2 run nav2_map_server map_saver_cli -f /cfg/maps/oil_gas_field" | tail -2 \
   || echo "    map_saver_cli failed (pgm is for eyeballs only; posegraph is the artifact)"
 
-mkdir -p "$REPO/maps"
+# stage to a CANDIDATE dir first — the committed map is only replaced if the
+# landmark gate passes (tools/map/check_map_landmarks.py)
+CAND="$REPO/maps/candidate"
+mkdir -p "$CAND"
 for f in oil_gas_field.posegraph oil_gas_field.data oil_gas_field.pgm oil_gas_field.yaml; do
-  docker cp "$C:/cfg/maps/$f" "$REPO/maps/$f" 2>/dev/null || true
+  docker cp "$C:/cfg/maps/$f" "$CAND/$f" 2>/dev/null || true
 done
-ls -la "$REPO/maps/"
-[ -f "$REPO/maps/oil_gas_field.posegraph" ] || { echo "ERROR: serialize produced no posegraph"; exit 1; }
+[ -f "$CAND/oil_gas_field.posegraph" ] || { echo "ERROR: serialize produced no posegraph"; exit 1; }
 
 echo "=== build_map: teardown ==="
 bash "$REPO/tools/nav/kill_stack.sh" >/dev/null 2>&1 || true
-echo "=== build_map: DONE — inspect maps/oil_gas_field.pgm, then commit maps/ ==="
+
+echo "=== build_map: LANDMARK QUALITY GATE ==="
+if python3 "$REPO/tools/map/check_map_landmarks.py" "$CAND/oil_gas_field.pgm" "$CAND/oil_gas_field.yaml"; then
+  mv -f "$CAND"/oil_gas_field.* "$REPO/maps/"
+  rmdir "$CAND" 2>/dev/null || true
+  echo "=== build_map: DONE — gate PASS, maps/ replaced; commit maps/ ==="
+else
+  echo "=== build_map: gate FAIL — candidate kept in maps/candidate/, committed map UNTOUCHED ==="
+  exit 1
+fi
