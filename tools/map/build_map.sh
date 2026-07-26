@@ -26,11 +26,16 @@ echo "=== build_map: fresh mapping stack (GPS-ANCHORED: EKF owns odom->base_link
 bash "$REPO/tools/nav/kill_stack.sh" >/dev/null 2>&1 || true
 M20_EKF=1 M20_EKF_TF=1 M20_NO_GOAL=1 RUN_SECS=900 bash "$REPO/tools/nav/bringup_plan_a.sh"
 
-GOALS="-6.0,-0.5 -7.0,2.0 2.0,4.0 4.0,-3.0 0.5,-1.0"
+# (4,-3) and (0.5,-1) ABORTED in both prior builds (SE approach blocked) -> the
+# wellhead region got only ~54 occupied cells. Replaced with a reachable east
+# vantage (3.5,-1.5) + an explicit RETURN LEG to the origin so the graph gets a
+# loop closure (pulls accumulated drift out of the whole map).
+GOALS="-6.0,-0.5 -7.0,2.0 2.0,4.0 3.5,-1.5 0.0,0.5"
+N_GOALS=5
 i=0
 for g in $GOALS; do
   i=$((i+1)); X="${g%,*}"; Y="${g#*,}"
-  echo "=== build_map: coverage goal $i/5 ($X, $Y) ==="
+  echo "=== build_map: coverage goal $i/$N_GOALS ($X, $Y) ==="
   docker exec $C bash -lc "$SRC; timeout 150 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
     '{pose: {header: {frame_id: map}, pose: {position: {x: $X, y: $Y}, orientation: {z: 1.0, w: 0.0}}}}'" | tail -2 \
     || echo "    goal $i did not complete (skipping — coverage still counts)"
