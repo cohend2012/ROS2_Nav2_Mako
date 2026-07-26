@@ -40,6 +40,7 @@ class Estimator(Node):
         super().__init__("m20_estimator")
         self.x = np.zeros(3)
         self.tf_state = np.zeros(3)   # smoothed pose for the TF (see step())
+        self.gps_anchor = None        # last course-aid anchor fix (see on_gps())
         self.P = np.eye(3) * 0.5
         # Process noise: middle ground. Too small (0.02) over-trusts odometry -> drifts
         # ~2.8 m; too large (0.6) chases noisy GPS -> jittery. ~0.2 trusts the smooth
@@ -72,6 +73,28 @@ class Estimator(Node):
         K = self.P @ H.T @ np.linalg.inv(S)
         self.x = self.x + K @ yk
         self.P = (np.eye(3) - K @ H) @ self.P
+        # COURSE-OVER-GROUND yaw aid (2026-07-25): GPS position can't observe yaw,
+        # so gyro-bias heading drift slowly ROTATES the odom frame — iteration-3
+        # map came out rotated ~3° (landmark y-offset linear in x). For a robot
+        # driving forward, the direction of GPS displacement IS the heading:
+        # once we've moved >0.8 m from the anchor fix while rolling forward,
+        # apply a yaw measurement (sigma 0.35 rad — noisy, but it BOUNDS drift).
+        if self.gps_anchor is None:
+            self.gps_anchor = z
+            return
+        d = z - self.gps_anchor
+        if float(np.hypot(*d)) > 0.8 and self.vx > 0.15:
+            course = math.atan2(d[1], d[0])
+            r_yaw = 0.35 ** 2
+            innov = wrap(course - self.x[2])
+            s = self.P[2, 2] + r_yaw
+            k = self.P[:, 2] / s
+            self.x = self.x + k * innov
+            self.x[2] = wrap(self.x[2])
+            self.P = self.P - np.outer(k, self.P[2, :])
+            self.gps_anchor = z
+        elif float(np.hypot(*d)) > 0.8:
+            self.gps_anchor = z                      # pivoting/reversing: re-anchor only
 
     def step(self):
         now = self.get_clock().now().nanoseconds * 1e-9
