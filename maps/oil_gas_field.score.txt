@@ -1,0 +1,5 @@
+=== build_map: LANDMARK QUALITY GATE ===
+tank1: true (-5.00,+4.00)  map (-5.10,+4.21)  offset 0.23 m  n=240  ok
+tank2: true (-1.00,+4.50)  map (-0.87,+4.41)  offset 0.16 m  n=303  ok
+wellhead: true (+6.00,-1.00)  map (+6.02,-1.22)  offset 0.22 m  n=483  ok
+LANDMARK GATE: PASS (tol 0.3 m)
