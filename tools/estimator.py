@@ -25,6 +25,8 @@ WHEELS = (3, 7, 11, 15)
 # slam_toolbox's odom prior stays GPS-bounded instead of accumulating dead-reckoning
 # drift, so the built map doesn't freeze that drift in (measured warp up to 0.65 m).
 EKF_TF = os.environ.get("M20_EKF_TF", "0") == "1"
+CORR_RATE = 0.05      # m/s   max rate the GPS correction may bend the TF
+CORR_RATE_YAW = 0.02  # rad/s (smooth prior for the scan matcher, bounded drift)
 R = 0.072   # CALIBRATED effective rolling radius (measured from test drives) — the
             # nominal 0.10 over-reads distance ~38%; must match ODOM_R in mujoco_sim.py
 GPS_SIGMA = 0.8
@@ -37,6 +39,7 @@ class Estimator(Node):
     def __init__(self):
         super().__init__("m20_estimator")
         self.x = np.zeros(3)
+        self.tf_state = np.zeros(3)   # smoothed pose for the TF (see step())
         self.P = np.eye(3) * 0.5
         # Process noise: middle ground. Too small (0.02) over-trusts odometry -> drifts
         # ~2.8 m; too large (0.6) chases noisy GPS -> jittery. ~0.2 trusts the smooth
@@ -95,14 +98,29 @@ class Estimator(Node):
         o.pose.pose.orientation.w = math.cos(self.x[2] / 2)
         self.pub.publish(o)
         if self.tf_bc is not None:
+            # SMOOTHED TF (2026-07-25 lesson): publishing the raw EKF as the odom
+            # prior injected 5 Hz GPS jitter into every scan registration and made
+            # the map WORSE (tank1 0.27→0.95 m). Scan matchers need a smooth,
+            # locally-consistent prior. So the TF integrates the same wheel+IMU
+            # prediction, and the GPS-derived correction LEAKS in rate-limited
+            # (≤ CORR_RATE m/s) — drift stays bounded, no jumps ever.
+            th_s = self.tf_state[2]
+            self.tf_state[0] += self.vx * math.cos(th_s) * dt
+            self.tf_state[1] += self.vx * math.sin(th_s) * dt
+            self.tf_state[2] = wrap(th_s + self.gyro * dt)
+            err = self.x - self.tf_state
+            err[2] = wrap(err[2])
+            lim = np.array([CORR_RATE * dt, CORR_RATE * dt, CORR_RATE_YAW * dt])
+            self.tf_state += np.clip(err * 0.5, -lim, lim)
+            self.tf_state[2] = wrap(self.tf_state[2])
             tf = TransformStamped()
             tf.header.stamp = o.header.stamp
             tf.header.frame_id = "odom"
             tf.child_frame_id = "base_link"
-            tf.transform.translation.x = float(self.x[0])
-            tf.transform.translation.y = float(self.x[1])
-            tf.transform.rotation.z = o.pose.pose.orientation.z
-            tf.transform.rotation.w = o.pose.pose.orientation.w
+            tf.transform.translation.x = float(self.tf_state[0])
+            tf.transform.translation.y = float(self.tf_state[1])
+            tf.transform.rotation.z = math.sin(self.tf_state[2] / 2)
+            tf.transform.rotation.w = math.cos(self.tf_state[2] / 2)
             self.tf_bc.sendTransform(tf)
 
 
