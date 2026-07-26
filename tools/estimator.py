@@ -25,7 +25,9 @@ WHEELS = (3, 7, 11, 15)
 # slam_toolbox's odom prior stays GPS-bounded instead of accumulating dead-reckoning
 # drift, so the built map doesn't freeze that drift in (measured warp up to 0.65 m).
 EKF_TF = os.environ.get("M20_EKF_TF", "0") == "1"
-CORR_RATE = 0.05      # m/s   max rate the GPS correction may bend the TF
+CORR_RATE = 0.08      # m/s   max rate the GPS correction may bend the TF
+                      # (0.05 pre-yaw-aid; with yaw observed, position can
+                      # correct faster without fighting the scan matcher)
 CORR_RATE_YAW = 0.02  # rad/s (smooth prior for the scan matcher, bounded drift)
 R = 0.072   # CALIBRATED effective rolling radius (measured from test drives) — the
             # nominal 0.10 over-reads distance ~38%; must match ODOM_R in mujoco_sim.py

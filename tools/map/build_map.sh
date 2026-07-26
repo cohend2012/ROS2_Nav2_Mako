@@ -30,8 +30,15 @@ M20_EKF=1 M20_EKF_TF=1 M20_NO_GOAL=1 RUN_SECS=900 bash "$REPO/tools/nav/bringup_
 # wellhead region got only ~54 occupied cells. Replaced with a reachable east
 # vantage (3.5,-1.5) + an explicit RETURN LEG to the origin so the graph gets a
 # loop closure (pulls accumulated drift out of the whole map).
-GOALS="-6.0,-0.5 -7.0,2.0 2.0,4.0 3.5,-1.5 0.0,0.5"
-N_GOALS=5
+# East field is only reachable AROUND the north end of the ground pipe (the
+# (2,4) goal succeeds every build; direct SE approaches abort). So: north lane
+# first, then two east-field goals reached via that route, then home for the
+# loop closure.
+# (6.3,0.9) = wellhead orbit leg: multi-side scan constraints on the map's
+# far-east extremity (it4: wellhead was the only failing landmark, 0.68 m,
+# scanned mostly from one side).
+GOALS="-6.0,-0.5 -7.0,2.0 2.0,4.0 4.5,1.5 5.5,0.3 6.3,0.9 0.0,0.5"
+N_GOALS=7
 i=0
 for g in $GOALS; do
   i=$((i+1)); X="${g%,*}"; Y="${g#*,}"
