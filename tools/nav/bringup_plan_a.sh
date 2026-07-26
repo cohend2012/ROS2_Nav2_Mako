@@ -81,6 +81,7 @@ docker run -d --name m20_sim_run --network host --ipc host \
   -e ROS_DOMAIN_ID=$DOM -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
   -e M20_START_POSE=${M20_STANDUP:+folded} \
   -e M20_CAMERA=${M20_CAMERA:-0} -e MUJOCO_GL=egl \
+  -e M20_NO_ODOM_TF=${M20_EKF_TF:-0} \
   -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py
@@ -97,8 +98,8 @@ docker exec -d $C bash -lc "$SRC; ros2 run pointcloud_to_laserscan pointcloud_to
 sleep 2
 
 if [ "${M20_EKF:-0}" = "1" ]; then
-  echo "[2.6/7] starting GPS-fused EKF estimator (wheel+IMU+GPS -> /odom_filtered)"
-  docker exec -d $C bash -lc "$SRC; python3 /cfg/estimator.py"
+  echo "[2.6/7] starting GPS-fused EKF estimator (tf=${M20_EKF_TF:-0} — 1 = GPS-anchored mapping)"
+  docker exec -d $C bash -lc "$SRC; export M20_EKF_TF=${M20_EKF_TF:-0}; python3 /cfg/estimator.py >/cfg/out/estimator.log 2>&1"
 fi
 
 if [ "${M20_STATION:-1}" = "1" ]; then
