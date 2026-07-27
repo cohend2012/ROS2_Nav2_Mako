@@ -74,6 +74,10 @@ for i in $(seq 1 "$N"); do
   SECS=$(( $(date +%s) - T0 ))
   echo "run $i: $G  true=($TX,$TY)  err=${ERR}m  ${SECS}s"
   echo "$i,$G,$TX,$TY,$ERR,$SECS" >> "$RES"
+  # archive per-run logs — an anomalous run (e.g. the 2026-07-26 run-9 1.84 m
+  # localization excursion) is un-forensicable without them
+  rm -rf "$OUT/run_$i"
+  docker cp $C:/cfg/out "$OUT/run_$i" >/dev/null 2>&1 || true
 done
 teardown
 
