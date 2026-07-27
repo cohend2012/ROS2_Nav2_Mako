@@ -1,0 +1,14 @@
+# Version: 0.1
+# Execute an ordered mission (m20_missions is the only server; ADR-014 makes it
+# the sole fleet integration point). Commander veto still preempts everything:
+# the server aborts if the robot leaves an armed autonomous-capable mode.
+MissionItem[] items
+---
+uint32 completed          # items fully executed
+bool success              # true iff every item completed
+string detail             # human-readable outcome ("aborted at wp_2: ...", "ok")
+---
+uint32 current_index      # item being executed (0-based)
+string current_label      # its label ("wp_1", "inspect_tank2", ...)
+string status             # navigating | waiting | reached | recovering
+float32 eta_seconds       # crude remaining-distance/cruise-speed estimate, -1 unknown

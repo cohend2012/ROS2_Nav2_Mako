@@ -16,6 +16,8 @@ import pkgutil
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import (QoSProfile, DurabilityPolicy, ReliabilityPolicy,
+                       HistoryPolicy)
 
 from m20_msgs.msg import (BehaviorRequest, BehaviorStatus, RobotMode,
                           FailsafeStatus, HealthReport, ControlAuthority)
@@ -37,7 +39,13 @@ class BehaviorEngine(Node):
         self.failsafe_clear = True
 
         self.create_subscription(BehaviorRequest, "/m20/behavior/request", self.on_request, 10)
-        self.create_subscription(RobotMode, "/m20/mode", self.on_mode, 10)
+        # /m20/mode is LATCHED (transient_local) and published on change — a volatile
+        # subscriber that starts after the last mode change never learns the mode.
+        # (Bit us 2026-07-20: standup denied with the commander armed in ASSISTED.)
+        latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                             reliability=ReliabilityPolicy.RELIABLE,
+                             history=HistoryPolicy.KEEP_LAST)
+        self.create_subscription(RobotMode, "/m20/mode", self.on_mode, latched)
         self.create_subscription(FailsafeStatus, "/m20/failsafe", self.on_failsafe, 10)
         self.status_pub = self.create_publisher(BehaviorStatus, "/m20/behavior/status", 10)
         self.health_pub = self.create_publisher(HealthReport, "/m20/health", 10)

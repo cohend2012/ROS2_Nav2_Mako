@@ -252,6 +252,40 @@ SESSION 4 (2026-07-18/19) — CHECKPOINT-04 MERGED; observability crisis blocks 
     gap, declines; corridor-width vs DWB scoring tuning item (robot did NOT touch
     the pipes — costmap sees them).
 
+SESSION 6 (2026-07-20) — phase-map-loc: MAP BUILT + FIRST KNOWN-MAP NAV + COMMANDER STANDUP:
+  * Site map artifact committed: maps/oil_gas_field.{posegraph,data,pgm,yaml}
+    (5-goal coverage loop, 706x534 @0.05 m). Quality gate PASS: tanks/skids/pipes
+    crisp, no smearing (preview: maps/oil_gas_field_preview.png).
+  * FIRST full-sequence run VERIFIED (action result + in-run logger agree):
+    folded spawn -> commander ASSISTED -> behavior-engine standup SUCCEEDED ->
+    bridge -> AUTONOMOUS -> slam_toolbox LOCALIZATION mode (posegraph) +
+    static-layer global costmap -> NavigateToPose (-6,-0.5) SUCCEEDED,
+    true error 0.63 m, motion complete in ~61 s. Video (replay of logged
+    joints+trajectory): docs/media/maploc-standup-first-run.mp4.
+  * Bugs found & fixed en route (all would have bitten Phase C behavior use):
+    (1) PYTHONPATH=/cfg clobbered ROS's dist-packages -> engine ImportError
+        (fix: prepend); (2) /m20/mode is LATCHED + on-change but the engine
+        subscribed VOLATILE -> standup denied with commander armed (fix: engine
+        subscribes transient_local); (3) nav_logger used m.joints_data instead
+        of m.data.joints_data -> logger died on first /JOINTS_DATA (fix + logs
+        now captured for slam/nav2/logger/engine per the 2026-07-17 lesson).
+  * L3.2 GATE ON STATIC-MAP CONFIG (2026-07-20 late):
+    - Batch #15 CONTAMINATED (load 4.84 at start — the guard fired; VM had
+      rebooted; a stray behavior engine survived every teardown because the
+      batch's inline kill PAT had drifted from kill_stack.sh — now synced).
+      Included one 64 s phantom SUCCESS at the origin. Discarded per the
+      host-sleep precedent.
+    - Batch #16 CLEAN (load 0.35): **10/10 SUCCESS — first perfect batch in
+      project history. mean 0.59 m, p95 0.80 m, no stalls.** Script gate PASS.
+    - Against the branch's own bar (>=9/10 AND mean <0.5 m): success EXCEEDED,
+      accuracy MISSED by 0.09 m. The residual is the known estimator offset —
+      the map cannot fix estimator bias; that is Track 1's job. DECISION:
+      per merge-on-gate-pass discipline, phase-map-loc is NOT merged yet.
+      Plan: land phase-a-ekf (GPS fusion), re-gate the COMBINED config
+      (expect mean <0.4 m), merge both as checkpoint-05.
+  * NEXT: Track 1 (phase-a-ekf), then combined gate; eastern corridor (7.5,4.0)
+    stretch test after.
+
 SESSION 5 (2026-07-19) — Block 1+2 COMPLETE:
   * CycloneDDS migration done (derived images, ~300 MB; discovery server retired).
   * observer_trust.sh PASS 2/2 (new standing check after any transport change).

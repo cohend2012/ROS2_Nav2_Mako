@@ -16,14 +16,35 @@ M = Path.home()/"m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description/m20_mjcf/
 STAND = np.array([0,-0.7,1.4,0, 0,-0.7,1.4,0, 0,0.7,-1.4,0, 0,0.7,-1.4,0], float)
 WHEELS = (3, 7, 11, 15)
 
-# load true pose log: t,x,y,yaw
+# load true pose log: t,x,y,yaw[,z,roll,pitch]  (z/roll/pitch: logger >= 2026-07-20;
+# with them the body is placed at the TRUE physics pose — no ground-settle guessing)
 rows = []
 with open(f"{OUTDIR}/traj_true.csv") as f:
     r = csv.reader(f); next(r)
     for a in r:
-        if len(a) >= 4:
-            rows.append((float(a[0]), float(a[1]), float(a[2]), float(a[3])))
+        if len(a) >= 7:
+            rows.append(tuple(float(v) for v in a[:7]))
+        elif len(a) >= 4:
+            rows.append((float(a[0]), float(a[1]), float(a[2]), float(a[3]),
+                         None, 0.0, 0.0))
 t0 = rows[0][0]; dur = rows[-1][0] - t0
+
+# optional logged joints (t + 16 positions): lets the video replay the REAL
+# commander-driven standup (and true wheel spin) instead of a fixed stand pose
+jrows = []
+try:
+    with open(f"{OUTDIR}/joints.csv") as f:
+        r = csv.reader(f); next(r)
+        for a in r:
+            if len(a) >= 17:
+                jrows.append((float(a[0]), np.array([float(v) for v in a[1:17]])))
+except FileNotFoundError:
+    pass
+def sample_joints(tt):
+    if not jrows:
+        return None
+    i = min(range(len(jrows)), key=lambda k: abs((jrows[k][0]-t0)-tt))
+    return jrows[i][1]
 # resample to real-time FPS by timestamp
 frames_t = np.arange(0, dur, 1.0/FPS)
 def sample(tt):
@@ -44,13 +65,32 @@ rend = mujoco.Renderer(m, H, W)
 cam = mujoco.MjvCamera()
 cam.distance = 8.5; cam.azimuth = 120; cam.elevation = -28
 
-def set_pose(x, y, yaw, wheel_ang):
+def euler_to_quat(roll, pitch, yaw):
+    cr, sr = math.cos(roll/2), math.sin(roll/2)
+    cp, sp = math.cos(pitch/2), math.sin(pitch/2)
+    cy, sy = math.cos(yaw/2), math.sin(yaw/2)
+    return (cr*cp*cy + sr*sp*sy, sr*cp*cy - cr*sp*sy,
+            cr*sp*cy + sr*cp*sy, cr*cp*sy - sr*sp*cy)
+
+def set_pose(x, y, yaw, wheel_ang, joints=None, z=None, roll=0.0, pitch=0.0):
     d.qpos[:] = 0
-    d.qpos[0], d.qpos[1], d.qpos[2] = x, y, z_stand
-    d.qpos[3] = math.cos(yaw/2); d.qpos[6] = math.sin(yaw/2)  # quat w,z
-    d.qpos[7:23] = STAND
-    for w in WHEELS:
-        d.qpos[7+w] = wheel_ang
+    d.qpos[3:7] = euler_to_quat(roll, pitch, yaw)
+    if joints is not None:
+        d.qpos[7:23] = joints
+        if z is not None:
+            # TRUE logged physics pose — the honest placement
+            d.qpos[0], d.qpos[1], d.qpos[2] = x, y, z
+        else:
+            # old logs without z: settle the body so the lowest geom touches ground
+            # (kinematic guess — made the standup look floaty; kept for fallback)
+            d.qpos[0], d.qpos[1], d.qpos[2] = x, y, 1.0
+            mujoco.mj_forward(m, d)
+            d.qpos[2] = 1.0 - float(d.geom_xpos[:, 2].min()) + 0.02
+    else:
+        d.qpos[0], d.qpos[1], d.qpos[2] = x, y, z if z is not None else z_stand
+        d.qpos[7:23] = STAND
+        for w in WHEELS:
+            d.qpos[7+w] = wheel_ang
     mujoco.mj_forward(m, d)
 
 def add_goal_marker():
@@ -67,12 +107,12 @@ def add_goal_marker():
 frames = []
 wheel_ang = 0.0; prev = None
 for tt in frames_t:
-    _, x, y, yaw = sample(tt)
+    _, x, y, yaw, z, roll, pitch = sample(tt)
     if prev is not None:
         dxy = math.hypot(x-prev[0], y-prev[1])
         wheel_ang -= dxy / 0.10           # spin wheels by distance/rolling-radius
     prev = (x, y)
-    set_pose(x, y, yaw, wheel_ang)
+    set_pose(x, y, yaw, wheel_ang, joints=sample_joints(tt), z=z, roll=roll, pitch=pitch)
     cam.lookat = np.array([x, y, 0.3])
     rend.update_scene(d, cam)
     add_goal_marker()
