@@ -5,7 +5,7 @@
 > Update the changelog at the bottom whenever you edit.
 
 **Project codename:** `m20_autonomy`
-**Last updated:** 2026-07-20 (rev 39)
+**Last updated:** 2026-07-26 (rev 43)
 **Status (2026-07-20, honest):** `master` @ `checkpoint-04-sensor-realism`, tree clean.
 **Navigation is gate-proven on realistic sensors:** L3.2 = **9/10, mean 0.63 m** (batch
 #14, best in project history) with the real M20 sensor contract (`/LIDAR/POINTS` XYZIRT
@@ -472,6 +472,69 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-26 (rev 43) — CHECKPOINT-05: anchored map ships, GATE 10/10 @ 0.33 m,
+  phase-map-loc MERGED.** The map-warp debt is fully paid: GPS-anchored mapping
+  (EKF smooth prior at CORR_RATE 0.05 + course-over-ground yaw aid) + best-of-3
+  selection shipped a map with worst-landmark 0.23 m (was 0.61-1.06); score
+  committed in maps/oil_gas_field.score.txt. Six iterations of measured lessons
+  in the git log (raw GPS prior poisons scan matching; GPS can't observe yaw —
+  the map ROTATES; 0.08 correction rate destabilizes; residuals are random per
+  build → select best-of-N). Batch archives per-run logs now; that forensics
+  found the last failure class: the accurate map narrowed the skid1 gap and DWB
+  declined it ('No valid trajectories' ×96) → inflation 0.6→0.5.
+  **Final gate: 10/10, mean 0.33 m, p95 0.50, runs 86-130 s — both the script
+  bar and the stricter branch bar (≥9/10 AND <0.5 m) cleared.** Merged to
+  master, tag checkpoint-05-anchored-map. NEXT: camera_scan behavior (Phase
+  5.5), eastern corridor stretch, L1.6 bench test, Phase-7 opener = cloud-VLM
+  language missions over the mission server (NaVILA filed as OQ — no local GPU:
+  Iris Xe only; Jetson Orin NX onboard is the eventual VLA target).
+- **2026-07-20 (rev 42, branch phase-map-loc) — USABILITY NIGHT + the map-warp
+  root cause.** (1) **Operator station LIVE** (Phase 1.5 closed, ADR-013):
+  foxglove_bridge + rosbridge in bringup by default, ports verified from
+  Windows, layout + docs/STATION.md committed. (2) **Mission action server
+  REAL** (Phase C opener): m20_msgs/action/RunMission, mission_server.py
+  (Nav2 client, commander veto, cancel, ETA feedback), CLI tools/dev/m20;
+  verified live 2-waypoint patrol success=2/2. (3) **Camera #11 in sim**:
+  /camera/image_raw 320x240 chase cam, threaded render (inline starved physics
+  to 81 Hz; GL context is thread-affine — both documented in code), verified
+  3.4 Hz frames @ 190 Hz physics. (4) **Goal tolerance 0.45→0.20** (was the
+  live-SLAM-noise setting; dominant term in batch "error"). (5) **THE FINDING:
+  the committed map is WARPED** — landmark fits vs true geometry: tank1 +0.27,
+  tank2 −0.19, wellhead −0.61 m, region-dependent frozen drift from the
+  mapping run. Runtime localization is locally precise; true-world error = the
+  local warp. Phase A rescoped to **GPS-anchored mapping** (feed slam a
+  GPS-EKF odom during map-building; landmark fit is now the map quality gate)
+  — see docs/design/phase_a_ekf.md. Combined re-gate deferred to after the map
+  rebuild; branch stays unmerged (its own accuracy bar needs the new map).
+- **2026-07-20 (rev 41, branch phase-map-loc) — GATE: 10/10 on the known map —
+  first perfect batch in project history.** L3.2 batch #16 (clean box, load
+  0.35): **10/10 SUCCESS, mean 0.59 m, p95 0.80 m, zero mid-course stalls.**
+  Batch #15 was discarded as contaminated (load 4.84; VM reboot; stray behavior
+  engine from teardown-PAT drift — batch PAT now synced to kill_stack.sh; one
+  64 s phantom-SUCCESS observed under that contention). Honest scoring vs the
+  branch bar (≥9/10 AND mean <0.5 m): success EXCEEDED, accuracy missed by
+  0.09 m — the residual is the estimator offset, which a map cannot fix.
+  NOT merged (merge-on-gate-pass). Plan: land phase-a-ekf, re-gate combined
+  (expect <0.4 m), merge both as checkpoint-05. Standup fix landed en route:
+  wheel lock kd 1→6 (creep 0.84→0.64 rad, position-hold filed as debt);
+  nav_logger logs true z/roll/pitch and the replay uses them (user caught the
+  floating-base render artifact).
+- **2026-07-20 (rev 40, branch phase-map-loc) — SITE MAP + first known-map nav +
+  commander-driven standup on camera.** Two-track plan started (user decision:
+  Track 1 = phase-a-ekf GPS fusion, Track 2 = phase-map-loc known map; whichever
+  gates first merges first). Track 2 today: (1) map artifact built + committed
+  (maps/oil_gas_field.*, 5-goal coverage, quality gate PASS); (2) bringup gains
+  flag-guarded M20_STATIC_MAP (slam_toolbox LOCALIZATION mode on the posegraph +
+  static-layer full-field global costmap) and M20_STANDUP (folded sim spawn →
+  commander ASSISTED → behavior-engine standup → bridge → AUTONOMOUS — the
+  behavior engine's first real use); (3) VERIFIED run: standup SUCCEEDED + goal
+  (-6,-0.5) SUCCEEDED, true error 0.63 m, ~61 s motion; video
+  docs/media/maploc-standup-first-run.mp4 (replay of logged joints+trajectory).
+  Fixed en route: engine PYTHONPATH clobber; engine /m20/mode QoS mismatch
+  (latched pub vs volatile sub — standup denied while armed); nav_logger drdds
+  field path; slam/nav2/logger/engine stdout now captured to /cfg/out/*.log.
+  NEXT: 10-run gate on this config (≥9/10, mean <0.5 m), then eastern-corridor
+  stretch goal. Estimator offset (~0.5–0.6 m) unchanged — still Track 1's job.
 - **2026-07-19 (rev 39) — CycloneDDS migration; observers trusted again; owed videos
   DELIVERED; estimator exonerated.** RMW switched to CycloneDDS via derived images
   (~300 MB), discovery server retired (compose service kept commented for rollback).

@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# ============================================================================
+# m20 — operator CLI for the mission server (usability layer over RunMission).
+#
+#   tools/dev/m20 goto X Y                  one goal, via the mission server
+#   tools/dev/m20 mission "X,Y" "X,Y" ...   ordered patrol of waypoints
+#   tools/dev/m20 status                    mode / failsafe / behavior snapshot
+#
+# Everything runs inside the commander container; goals are map-frame meters.
+# The mission server rejects missions unless the commander is armed in
+# ASSISTED/AUTONOMOUS (ADR-005) — arm first via bringup or set_mode.
+# ============================================================================
+set -e
+C=docker-commander-1
+SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=42 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+CMD="${1:-help}"; shift || true
+
+case "$CMD" in
+  goto)
+    [ $# -eq 2 ] || { echo "usage: m20 goto X Y"; exit 1; }
+    exec "$0" mission "$1,$2"
+    ;;
+  mission)
+    [ $# -ge 1 ] || { echo "usage: m20 mission \"X,Y\" [\"X,Y\" ...]"; exit 1; }
+    WPS="$*"
+    docker exec -i $C bash -lc "$SRC; python3 - $WPS <<'PYEOF'
+import sys, math, time
+import rclpy
+from rclpy.action import ActionClient
+from m20_msgs.action import RunMission
+from m20_msgs.msg import MissionItem
+
+rclpy.init()
+n = rclpy.create_node('m20_cli')
+cli = ActionClient(n, RunMission, '/m20/mission/run')
+if not cli.wait_for_server(timeout_sec=5.0):
+    print('ERROR: mission server not running'); sys.exit(1)
+
+goal = RunMission.Goal()
+for i, arg in enumerate(sys.argv[1:]):
+    x, y = (float(v) for v in arg.split(','))
+    it = MissionItem(); it.type = MissionItem.TYPE_GOTO; it.label = f'wp_{i}'
+    it.goal.header.frame_id = 'map'
+    it.goal.pose.position.x = x; it.goal.pose.position.y = y
+    it.goal.pose.orientation.w = 1.0
+    goal.items.append(it)
+
+def fb(msg):
+    f = msg.feedback
+    eta = f'{f.eta_seconds:.0f}s' if f.eta_seconds >= 0 else '?'
+    print(f'  [{f.current_index}] {f.current_label}: {f.status} (eta {eta})', flush=True)
+
+send = cli.send_goal_async(goal, feedback_callback=fb)
+rclpy.spin_until_future_complete(n, send)
+gh = send.result()
+if not gh.accepted:
+    print('REJECTED (armed? ASSISTED/AUTONOMOUS?)'); sys.exit(1)
+print(f'mission accepted: {len(goal.items)} item(s)')
+res = gh.get_result_async()
+rclpy.spin_until_future_complete(n, res)
+r = res.result().result
+print(f'mission result: success={r.success} completed={r.completed}/{len(goal.items)} — {r.detail}')
+sys.exit(0 if r.success else 2)
+PYEOF"
+    ;;
+  status)
+    docker exec $C bash -lc "$SRC; echo '--- mode ---'; timeout 3 ros2 topic echo /m20/mode --once 2>/dev/null | grep -E 'mode:|armed:' || echo '(no mode published)'; echo '--- failsafe ---'; timeout 3 ros2 topic echo /m20/failsafe --once 2>/dev/null | grep -E 'active:|severity:' || echo '(none)'; echo '--- behavior ---'; timeout 2 ros2 topic echo /m20/behavior/status --once 2>/dev/null | grep -E 'behavior_name:|state:' || echo '(none)'"
+    ;;
+  *)
+    grep '^#   tools/dev/m20' "$0" | sed 's/^#  //'
+    ;;
+esac

@@ -1,0 +1,75 @@
+{
+  "configById": {
+    "3D!m20main": {
+      "cameraState": {
+        "distance": 22,
+        "perspective": true,
+        "phi": 55,
+        "target": [0, 0, 0],
+        "thetaOffset": 45
+      },
+      "followMode": "follow-pose",
+      "followTf": "base_link",
+      "scene": { "transforms": { "showLabel": false } },
+      "topics": {
+        "/map": { "visible": true, "colorMode": "map" },
+        "/global_costmap/costmap": { "visible": true, "alpha": 0.35 },
+        "/local_costmap/costmap": { "visible": true, "alpha": 0.35 },
+        "/scan": { "visible": true, "colorField": "intensity", "pointSize": 4 },
+        "/LIDAR/POINTS": { "visible": false },
+        "/plan": { "visible": true, "lineWidth": 2 },
+        "/camera/image_raw": { "visible": false }
+      },
+      "publish": {
+        "type": "pose",
+        "poseTopic": "/goal_pose"
+      }
+    },
+    "RawMessages!mode": { "topicPath": "/m20/mode" },
+    "RawMessages!failsafe": { "topicPath": "/m20/failsafe" },
+    "RawMessages!behavior": { "topicPath": "/m20/behavior/status" },
+    "Image!cam": { "cameraTopic": "/camera/image_raw" },
+    "Plot!health": {
+      "paths": [
+        { "value": "/m20/health.status", "enabled": true, "timestampMethod": "receiveTime" }
+      ]
+    },
+    "Teleop!cmdvel": {
+      "topic": "/cmd_vel",
+      "publishRate": 5,
+      "upButton": { "field": "linear-x", "value": 0.3 },
+      "downButton": { "field": "linear-x", "value": -0.3 },
+      "leftButton": { "field": "angular-z", "value": 0.5 },
+      "rightButton": { "field": "angular-z", "value": -0.5 }
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": { "speed": 1 },
+  "layout": {
+    "direction": "row",
+    "first": "3D!m20main",
+    "second": {
+      "direction": "column",
+      "first": {
+        "direction": "column",
+        "first": "Image!cam",
+        "second": "Teleop!cmdvel",
+        "splitPercentage": 60
+      },
+      "second": {
+        "direction": "column",
+        "first": "RawMessages!mode",
+        "second": {
+          "direction": "column",
+          "first": "RawMessages!failsafe",
+          "second": "RawMessages!behavior",
+          "splitPercentage": 50
+        },
+        "splitPercentage": 34
+      },
+      "splitPercentage": 45
+    },
+    "splitPercentage": 68
+  }
+}
