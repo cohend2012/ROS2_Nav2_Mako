@@ -1,0 +1,234 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-27-03-27-57-336196-DanCohen-8975
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [controller_server-1]: process started with pid [8976]
+[INFO] [smoother_server-2]: process started with pid [8978]
+[INFO] [planner_server-3]: process started with pid [8980]
+[INFO] [behavior_server-4]: process started with pid [8982]
+[INFO] [bt_navigator-5]: process started with pid [8984]
+[INFO] [waypoint_follower-6]: process started with pid [8986]
+[INFO] [velocity_smoother-7]: process started with pid [8988]
+[INFO] [lifecycle_manager-8]: process started with pid [8990]
+[controller_server-1] [INFO] [1785122877.513378342] [controller_server]: 
+[controller_server-1] 	controller_server lifecycle node launched. 
+[controller_server-1] 	Waiting on external lifecycle transitions to activate
+[controller_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[behavior_server-4] [INFO] [1785122877.525494933] [behavior_server]: 
+[behavior_server-4] 	behavior_server lifecycle node launched. 
+[behavior_server-4] 	Waiting on external lifecycle transitions to activate
+[behavior_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-1] [INFO] [1785122877.527297571] [controller_server]: Creating controller server
+[planner_server-3] [INFO] [1785122877.561259015] [planner_server]: 
+[planner_server-3] 	planner_server lifecycle node launched. 
+[planner_server-3] 	Waiting on external lifecycle transitions to activate
+[planner_server-3] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-6] [INFO] [1785122877.567904423] [waypoint_follower]: 
+[waypoint_follower-6] 	waypoint_follower lifecycle node launched. 
+[waypoint_follower-6] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-5] [INFO] [1785122877.567904450] [bt_navigator]: 
+[bt_navigator-5] 	bt_navigator lifecycle node launched. 
+[bt_navigator-5] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-5] [INFO] [1785122877.568446200] [bt_navigator]: Creating
+[waypoint_follower-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-1] [INFO] [1785122877.573206861] [local_costmap.local_costmap]: 
+[controller_server-1] 	local_costmap lifecycle node launched. 
+[controller_server-1] 	Waiting on external lifecycle transitions to activate
+[controller_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-6] [INFO] [1785122877.574466934] [waypoint_follower]: Creating
+[controller_server-1] [INFO] [1785122877.576965654] [local_costmap.local_costmap]: Creating Costmap
+[planner_server-3] [INFO] [1785122877.579743929] [planner_server]: Creating
+[smoother_server-2] [INFO] [1785122877.587060713] [smoother_server]: 
+[smoother_server-2] 	smoother_server lifecycle node launched. 
+[smoother_server-2] 	Waiting on external lifecycle transitions to activate
+[smoother_server-2] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-2] [INFO] [1785122877.594672221] [smoother_server]: Creating smoother server
+[velocity_smoother-7] [INFO] [1785122877.624971665] [velocity_smoother]: 
+[velocity_smoother-7] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-7] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785122877.644693468] [global_costmap.global_costmap]: 
+[planner_server-3] 	global_costmap lifecycle node launched. 
+[planner_server-3] 	Waiting on external lifecycle transitions to activate
+[planner_server-3] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785122877.645454835] [global_costmap.global_costmap]: Creating Costmap
+[lifecycle_manager-8] [INFO] [1785122877.656703265] [lifecycle_manager_navigation]: Creating
+[lifecycle_manager-8] [INFO] [1785122877.670607612] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[lifecycle_manager-8] [INFO] [1785122877.692493719] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-8] [INFO] [1785122877.692570967] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-1] [INFO] [1785122877.692930697] [controller_server]: Configuring controller interface
+[controller_server-1] [INFO] [1785122877.693709995] [controller_server]: getting goal checker plugins..
+[controller_server-1] [INFO] [1785122877.694248642] [controller_server]: Controller frequency set to 20.0000Hz
+[controller_server-1] [INFO] [1785122877.694604814] [local_costmap.local_costmap]: Configuring
+[controller_server-1] [INFO] [1785122877.699440501] [local_costmap.local_costmap]: Using plugin "obstacle_layer"
+[controller_server-1] [INFO] [1785122877.703903424] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[controller_server-1] [INFO] [1785122877.710157031] [local_costmap.local_costmap]: Initialized plugin "obstacle_layer"
+[controller_server-1] [INFO] [1785122877.710364301] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-1] [INFO] [1785122877.712194568] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[controller_server-1] [INFO] [1785122877.720522089] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker
+[controller_server-1] [INFO] [1785122877.721293353] [controller_server]: Created goal checker : goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-1] [INFO] [1785122877.721573646] [controller_server]: Controller Server has goal_checker  goal checkers available.
+[controller_server-1] [INFO] [1785122877.730607548] [controller_server]: Created controller : FollowPath of type dwb_core::DWBLocalPlanner
+[controller_server-1] [INFO] [1785122877.734097632] [controller_server]: Setting transform_tolerance to 0.300000
+[controller_server-1] [INFO] [1785122877.753362500] [controller_server]: Using critic "RotateToGoal" (dwb_critics::RotateToGoalCritic)
+[controller_server-1] [INFO] [1785122877.754697121] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122877.754978452] [controller_server]: Using critic "Oscillation" (dwb_critics::OscillationCritic)
+[controller_server-1] [INFO] [1785122877.756759829] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122877.757578140] [controller_server]: Using critic "BaseObstacle" (dwb_critics::BaseObstacleCritic)
+[controller_server-1] [INFO] [1785122877.758674589] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122877.759272749] [controller_server]: Using critic "GoalAlign" (dwb_critics::GoalAlignCritic)
+[controller_server-1] [INFO] [1785122877.760497141] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122877.761056738] [controller_server]: Using critic "PathAlign" (dwb_critics::PathAlignCritic)
+[controller_server-1] [INFO] [1785122877.762098411] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122877.762451570] [controller_server]: Using critic "PathDist" (dwb_critics::PathDistCritic)
+[controller_server-1] [INFO] [1785122877.763276455] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122877.763588452] [controller_server]: Using critic "GoalDist" (dwb_critics::GoalDistCritic)
+[controller_server-1] [INFO] [1785122877.764355491] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122877.764386194] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-8] [INFO] [1785122877.777221764] [lifecycle_manager_navigation]: [34m[1mConfiguring smoother_server[0m[0m
+[smoother_server-2] [INFO] [1785122877.778515577] [smoother_server]: Configuring smoother server
+[smoother_server-2] [INFO] [1785122877.789886807] [smoother_server]: Created smoother : simple_smoother of type nav2_smoother::SimpleSmoother
+[smoother_server-2] [INFO] [1785122877.793383808] [smoother_server]: Smoother Server has simple_smoother  smoothers available.
+[lifecycle_manager-8] [INFO] [1785122877.800761719] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-3] [INFO] [1785122877.801112029] [planner_server]: Configuring
+[planner_server-3] [INFO] [1785122877.801147425] [global_costmap.global_costmap]: Configuring
+[planner_server-3] [INFO] [1785122877.806846561] [global_costmap.global_costmap]: Using plugin "obstacle_layer"
+[planner_server-3] [INFO] [1785122877.811818598] [global_costmap.global_costmap]: Subscribed to Topics: scan
+[planner_server-3] [INFO] [1785122877.815361555] [global_costmap.global_costmap]: Initialized plugin "obstacle_layer"
+[planner_server-3] [INFO] [1785122877.815403231] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-3] [INFO] [1785122877.815985670] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-3] [INFO] [1785122877.823106428] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner
+[planner_server-3] [INFO] [1785122877.823183246] [planner_server]: Configuring plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785122877.824727352] [planner_server]: Planner Server has GridBased  planners available.
+[lifecycle_manager-8] [INFO] [1785122877.834972413] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-4] [INFO] [1785122877.835296941] [behavior_server]: Configuring
+[behavior_server-4] [INFO] [1785122877.846438838] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin
+[behavior_server-4] [INFO] [1785122877.847205402] [behavior_server]: Configuring spin
+[behavior_server-4] [INFO] [1785122877.856004662] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp
+[behavior_server-4] [INFO] [1785122877.857167008] [behavior_server]: Configuring backup
+[behavior_server-4] [INFO] [1785122877.863508561] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait
+[behavior_server-4] [INFO] [1785122877.864205366] [behavior_server]: Configuring wait
+[lifecycle_manager-8] [INFO] [1785122877.870843062] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-5] [INFO] [1785122877.871068859] [bt_navigator]: Configuring
+[lifecycle_manager-8] [INFO] [1785122877.952875176] [lifecycle_manager_navigation]: [34m[1mConfiguring waypoint_follower[0m[0m
+[waypoint_follower-6] [INFO] [1785122877.953151330] [waypoint_follower]: Configuring
+[waypoint_follower-6] [INFO] [1785122877.967725130] [waypoint_follower]: Created waypoint_task_executor : wait_at_waypoint of type nav2_waypoint_follower::WaitAtWaypoint
+[waypoint_follower-6] [INFO] [1785122877.968986686] [waypoint_follower]: Waypoint pause duration is set to zero, disabling task executor plugin.
+[lifecycle_manager-8] [INFO] [1785122877.970512735] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-7] [INFO] [1785122877.970998886] [velocity_smoother]: Configuring velocity smoother
+[lifecycle_manager-8] [INFO] [1785122877.981042655] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-1] [INFO] [1785122877.981281804] [controller_server]: Activating
+[controller_server-1] [INFO] [1785122877.981316861] [local_costmap.local_costmap]: Activating
+[controller_server-1] [INFO] [1785122877.981330677] [local_costmap.local_costmap]: Checking transform
+[controller_server-1] [INFO] [1785122877.981636942] [local_costmap.local_costmap]: start
+[controller_server-1] [INFO] [1785122878.182858072] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122878.293293103] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122878.293336711] [lifecycle_manager_navigation]: [34m[1mActivating smoother_server[0m[0m
+[smoother_server-2] [INFO] [1785122878.293582474] [smoother_server]: Activating
+[smoother_server-2] [INFO] [1785122878.293616281] [smoother_server]: Creating bond (smoother_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122878.398099227] [lifecycle_manager_navigation]: Server smoother_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122878.398149825] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-3] [INFO] [1785122878.399592789] [planner_server]: Activating
+[planner_server-3] [INFO] [1785122878.399654612] [global_costmap.global_costmap]: Activating
+[planner_server-3] [INFO] [1785122878.399670366] [global_costmap.global_costmap]: Checking transform
+[planner_server-3] [INFO] [1785122878.399818607] [global_costmap.global_costmap]: start
+[planner_server-3] [INFO] [1785122879.450370730] [planner_server]: Activating plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785122879.451525239] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122879.560526916] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122879.560613322] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-4] [INFO] [1785122879.560982929] [behavior_server]: Activating
+[behavior_server-4] [INFO] [1785122879.561028176] [behavior_server]: Activating spin
+[behavior_server-4] [INFO] [1785122879.561047699] [behavior_server]: Activating backup
+[behavior_server-4] [INFO] [1785122879.561061119] [behavior_server]: Activating wait
+[behavior_server-4] [INFO] [1785122879.561077642] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122879.667905918] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122879.667978339] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-5] [INFO] [1785122879.668680927] [bt_navigator]: Activating
+[bt_navigator-5] [INFO] [1785122879.728605060] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122879.833276540] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.
+[lifecycle_manager-8] [INFO] [1785122879.833352892] [lifecycle_manager_navigation]: [34m[1mActivating waypoint_follower[0m[0m
+[waypoint_follower-6] [INFO] [1785122879.833959030] [waypoint_follower]: Activating
+[waypoint_follower-6] [INFO] [1785122879.834010077] [waypoint_follower]: Creating bond (waypoint_follower) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122879.938726124] [lifecycle_manager_navigation]: Server waypoint_follower connected with bond.
+[lifecycle_manager-8] [INFO] [1785122879.938848594] [lifecycle_manager_navigation]: [34m[1mActivating velocity_smoother[0m[0m
+[velocity_smoother-7] [INFO] [1785122879.939350083] [velocity_smoother]: Activating
+[velocity_smoother-7] [INFO] [1785122879.939462721] [velocity_smoother]: Creating bond (velocity_smoother) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122880.048304466] [lifecycle_manager_navigation]: Server velocity_smoother connected with bond.
+[lifecycle_manager-8] [INFO] [1785122880.048629197] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-8] [INFO] [1785122880.048648417] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m
+[bt_navigator-5] [INFO] [1785122894.037031147] [bt_navigator]: Begin navigating from current location (0.09, -0.08) to (-6.00, -0.50)
+[controller_server-1] [INFO] [1785122894.058220003] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122894.058301567] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded goal_checker . This warning will appear once.
+[bt_navigator-5] [WARN] [1785122895.093252494] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose
+[bt_navigator-5] [WARN] [1785122895.100636676] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[planner_server-3] [INFO] [1785122895.107906814] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785122895.111343578] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122895.114543421] [bt_navigator_navigate_to_pose_rclcpp_node]: Node timed out while executing service call to global_costmap/clear_entirely_global_costmap.
+[bt_navigator-5] [ERROR] [1785122895.153985803] [bt_navigator_navigate_to_pose_rclcpp_node]: Failed to get result for follow_path in node halt!
+[controller_server-1] [INFO] [1785122895.155064478] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-3] [INFO] [1785122895.155711024] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785122895.157677027] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122895.165994912] [controller_server]: Goal was canceled. Stopping the robot.
+[controller_server-1] [INFO] [1785122895.166067378] [controller_server]: [follow_path] [ActionServer] Client requested to cancel the goal. Cancelling.
+[controller_server-1] [INFO] [1785122895.428802135] [controller_server]: Received a goal, begin computing control effort.
+[bt_navigator-5] [WARN] [1785122895.578262136] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122896.479689461] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122897.529702456] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122898.529683916] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122899.579681857] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122900.579697741] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122901.629676055] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122902.629682050] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122903.679698754] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122904.729721601] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122905.729860611] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122906.779690089] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122907.781756084] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122908.829679098] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122909.349673666] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122909.880067669] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122910.880222942] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122911.740831687] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122911.933747490] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122912.016709143] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122912.111427287] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785122912.131366578] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785122912.178924317] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785122912.221000807] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785122912.235596580] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785122912.980417060] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785122913.238673037] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122913.287514111] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122913.337061105] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122913.382765044] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785122913.981335813] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785122914.732990987] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785122915.029685613] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122916.079673514] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122916.690616984] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122917.079151752] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122917.079660577] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122917.129406521] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122917.171386611] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122917.531291966] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122917.532665041] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122917.573336883] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122917.648382905] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122918.129683004] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122919.129672069] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122920.179706783] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122921.229703493] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122922.229680997] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122922.352455321] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122923.279690097] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122923.981406105] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122924.279682292] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122924.369968383] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122924.387632967] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122924.446084278] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122924.463202090] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122924.499726111] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122924.554492120] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122925.020660012] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122925.172394526] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122925.233021945] [controller_server]: Reached the goal!
+[bt_navigator-5] [INFO] [1785122925.275284662] [bt_navigator]: Goal succeeded

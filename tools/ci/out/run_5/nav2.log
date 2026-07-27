@@ -1,0 +1,384 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-27-03-22-23-001992-DanCohen-5900
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [controller_server-1]: process started with pid [5916]
+[INFO] [smoother_server-2]: process started with pid [5918]
+[INFO] [planner_server-3]: process started with pid [5920]
+[INFO] [behavior_server-4]: process started with pid [5922]
+[INFO] [bt_navigator-5]: process started with pid [5924]
+[INFO] [waypoint_follower-6]: process started with pid [5926]
+[INFO] [velocity_smoother-7]: process started with pid [5939]
+[INFO] [lifecycle_manager-8]: process started with pid [5959]
+[smoother_server-2] [INFO] [1785122543.247148293] [smoother_server]: 
+[smoother_server-2] 	smoother_server lifecycle node launched. 
+[smoother_server-2] 	Waiting on external lifecycle transitions to activate
+[smoother_server-2] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-2] [INFO] [1785122543.251897663] [smoother_server]: Creating smoother server
+[planner_server-3] [INFO] [1785122543.263764766] [planner_server]: 
+[planner_server-3] 	planner_server lifecycle node launched. 
+[planner_server-3] 	Waiting on external lifecycle transitions to activate
+[planner_server-3] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785122543.266753314] [planner_server]: Creating
+[controller_server-1] [INFO] [1785122543.275344970] [controller_server]: 
+[controller_server-1] 	controller_server lifecycle node launched. 
+[controller_server-1] 	Waiting on external lifecycle transitions to activate
+[controller_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785122543.296769595] [global_costmap.global_costmap]: 
+[planner_server-3] 	global_costmap lifecycle node launched. 
+[planner_server-3] 	Waiting on external lifecycle transitions to activate
+[planner_server-3] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785122543.298305707] [global_costmap.global_costmap]: Creating Costmap
+[controller_server-1] [INFO] [1785122543.298440404] [controller_server]: Creating controller server
+[waypoint_follower-6] [INFO] [1785122543.300384030] [waypoint_follower]: 
+[waypoint_follower-6] 	waypoint_follower lifecycle node launched. 
+[waypoint_follower-6] 	Waiting on external lifecycle transitions to activate
+[waypoint_follower-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-6] [INFO] [1785122543.302857337] [waypoint_follower]: Creating
+[controller_server-1] [INFO] [1785122543.344505937] [local_costmap.local_costmap]: 
+[controller_server-1] 	local_costmap lifecycle node launched. 
+[controller_server-1] 	Waiting on external lifecycle transitions to activate
+[controller_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-1] [INFO] [1785122543.350258646] [local_costmap.local_costmap]: Creating Costmap
+[lifecycle_manager-8] [INFO] [1785122543.353360319] [lifecycle_manager_navigation]: Creating
+[bt_navigator-5] [INFO] [1785122543.365629372] [bt_navigator]: 
+[bt_navigator-5] 	bt_navigator lifecycle node launched. 
+[bt_navigator-5] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-5] [INFO] [1785122543.365760867] [bt_navigator]: Creating
+[velocity_smoother-7] [INFO] [1785122543.370135680] [velocity_smoother]: 
+[velocity_smoother-7] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-7] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[behavior_server-4] [INFO] [1785122543.371176883] [behavior_server]: 
+[behavior_server-4] 	behavior_server lifecycle node launched. 
+[behavior_server-4] 	Waiting on external lifecycle transitions to activate
+[behavior_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-8] [INFO] [1785122543.379596903] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[lifecycle_manager-8] [INFO] [1785122543.398490726] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-8] [INFO] [1785122543.398534224] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-1] [INFO] [1785122543.398963915] [controller_server]: Configuring controller interface
+[controller_server-1] [INFO] [1785122543.399143856] [controller_server]: getting goal checker plugins..
+[controller_server-1] [INFO] [1785122543.399841593] [controller_server]: Controller frequency set to 20.0000Hz
+[controller_server-1] [INFO] [1785122543.399881577] [local_costmap.local_costmap]: Configuring
+[controller_server-1] [INFO] [1785122543.406656307] [local_costmap.local_costmap]: Using plugin "obstacle_layer"
+[controller_server-1] [INFO] [1785122543.413548691] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[controller_server-1] [INFO] [1785122543.421772591] [local_costmap.local_costmap]: Initialized plugin "obstacle_layer"
+[controller_server-1] [INFO] [1785122543.421823737] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-1] [INFO] [1785122543.423682780] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[controller_server-1] [INFO] [1785122543.437502439] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker
+[controller_server-1] [INFO] [1785122543.439202548] [controller_server]: Created goal checker : goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-1] [INFO] [1785122543.440397858] [controller_server]: Controller Server has goal_checker  goal checkers available.
+[controller_server-1] [INFO] [1785122543.442005232] [controller_server]: Created controller : FollowPath of type dwb_core::DWBLocalPlanner
+[controller_server-1] [INFO] [1785122543.444926193] [controller_server]: Setting transform_tolerance to 0.300000
+[controller_server-1] [INFO] [1785122543.458134810] [controller_server]: Using critic "RotateToGoal" (dwb_critics::RotateToGoalCritic)
+[controller_server-1] [INFO] [1785122543.459403428] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122543.459759227] [controller_server]: Using critic "Oscillation" (dwb_critics::OscillationCritic)
+[controller_server-1] [INFO] [1785122543.460956001] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122543.461141064] [controller_server]: Using critic "BaseObstacle" (dwb_critics::BaseObstacleCritic)
+[controller_server-1] [INFO] [1785122543.461523004] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122543.461659220] [controller_server]: Using critic "GoalAlign" (dwb_critics::GoalAlignCritic)
+[controller_server-1] [INFO] [1785122543.462124021] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122543.462248516] [controller_server]: Using critic "PathAlign" (dwb_critics::PathAlignCritic)
+[controller_server-1] [INFO] [1785122543.462625896] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122543.462742693] [controller_server]: Using critic "PathDist" (dwb_critics::PathDistCritic)
+[controller_server-1] [INFO] [1785122543.463269270] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122543.463519419] [controller_server]: Using critic "GoalDist" (dwb_critics::GoalDistCritic)
+[controller_server-1] [INFO] [1785122543.464108963] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785122543.464141938] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-8] [INFO] [1785122543.471117358] [lifecycle_manager_navigation]: [34m[1mConfiguring smoother_server[0m[0m
+[smoother_server-2] [INFO] [1785122543.471379793] [smoother_server]: Configuring smoother server
+[smoother_server-2] [INFO] [1785122543.481766061] [smoother_server]: Created smoother : simple_smoother of type nav2_smoother::SimpleSmoother
+[smoother_server-2] [INFO] [1785122543.483594274] [smoother_server]: Smoother Server has simple_smoother  smoothers available.
+[lifecycle_manager-8] [INFO] [1785122543.489667075] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-3] [INFO] [1785122543.490046497] [planner_server]: Configuring
+[planner_server-3] [INFO] [1785122543.490095451] [global_costmap.global_costmap]: Configuring
+[planner_server-3] [INFO] [1785122543.495496306] [global_costmap.global_costmap]: Using plugin "obstacle_layer"
+[planner_server-3] [INFO] [1785122543.499257463] [global_costmap.global_costmap]: Subscribed to Topics: scan
+[planner_server-3] [INFO] [1785122543.504989544] [global_costmap.global_costmap]: Initialized plugin "obstacle_layer"
+[planner_server-3] [INFO] [1785122543.505040790] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-3] [INFO] [1785122543.506827840] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-3] [INFO] [1785122543.514403472] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner
+[planner_server-3] [INFO] [1785122543.514467138] [planner_server]: Configuring plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785122543.516617336] [planner_server]: Planner Server has GridBased  planners available.
+[lifecycle_manager-8] [INFO] [1785122543.528082373] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-4] [INFO] [1785122543.528574709] [behavior_server]: Configuring
+[behavior_server-4] [INFO] [1785122543.543238973] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin
+[behavior_server-4] [INFO] [1785122543.544183219] [behavior_server]: Configuring spin
+[behavior_server-4] [INFO] [1785122543.558364425] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp
+[behavior_server-4] [INFO] [1785122543.560000331] [behavior_server]: Configuring backup
+[behavior_server-4] [INFO] [1785122543.566525792] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait
+[behavior_server-4] [INFO] [1785122543.568147541] [behavior_server]: Configuring wait
+[lifecycle_manager-8] [INFO] [1785122543.577305067] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-5] [INFO] [1785122543.579068054] [bt_navigator]: Configuring
+[lifecycle_manager-8] [INFO] [1785122543.680809037] [lifecycle_manager_navigation]: [34m[1mConfiguring waypoint_follower[0m[0m
+[waypoint_follower-6] [INFO] [1785122543.681460392] [waypoint_follower]: Configuring
+[waypoint_follower-6] [INFO] [1785122543.705044917] [waypoint_follower]: Created waypoint_task_executor : wait_at_waypoint of type nav2_waypoint_follower::WaitAtWaypoint
+[waypoint_follower-6] [INFO] [1785122543.706163208] [waypoint_follower]: Waypoint pause duration is set to zero, disabling task executor plugin.
+[lifecycle_manager-8] [INFO] [1785122543.708830556] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-7] [INFO] [1785122543.709116786] [velocity_smoother]: Configuring velocity smoother
+[lifecycle_manager-8] [INFO] [1785122543.715923811] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-1] [INFO] [1785122543.716156564] [controller_server]: Activating
+[controller_server-1] [INFO] [1785122543.716191386] [local_costmap.local_costmap]: Activating
+[controller_server-1] [INFO] [1785122543.716202032] [local_costmap.local_costmap]: Checking transform
+[controller_server-1] [INFO] [1785122543.716339102] [local_costmap.local_costmap]: start
+[controller_server-1] [INFO] [1785122543.916836102] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122544.021054945] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122544.021149787] [lifecycle_manager_navigation]: [34m[1mActivating smoother_server[0m[0m
+[smoother_server-2] [INFO] [1785122544.021487157] [smoother_server]: Activating
+[smoother_server-2] [INFO] [1785122544.021522860] [smoother_server]: Creating bond (smoother_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122544.126734628] [lifecycle_manager_navigation]: Server smoother_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122544.126900465] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-3] [INFO] [1785122544.128067384] [planner_server]: Activating
+[planner_server-3] [INFO] [1785122544.128181194] [global_costmap.global_costmap]: Activating
+[planner_server-3] [INFO] [1785122544.128219757] [global_costmap.global_costmap]: Checking transform
+[planner_server-3] [INFO] [1785122544.129027357] [global_costmap.global_costmap]: start
+[planner_server-3] [INFO] [1785122545.131764065] [planner_server]: Activating plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785122545.135484848] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122545.243948389] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122545.244067255] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-4] [INFO] [1785122545.246704671] [behavior_server]: Activating
+[behavior_server-4] [INFO] [1785122545.246770473] [behavior_server]: Activating spin
+[behavior_server-4] [INFO] [1785122545.246797693] [behavior_server]: Activating backup
+[behavior_server-4] [INFO] [1785122545.246817791] [behavior_server]: Activating wait
+[behavior_server-4] [INFO] [1785122545.246842206] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122545.357483713] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785122545.357672202] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-5] [INFO] [1785122545.358420925] [bt_navigator]: Activating
+[bt_navigator-5] [INFO] [1785122545.428257900] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122545.532338987] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.
+[lifecycle_manager-8] [INFO] [1785122545.532518431] [lifecycle_manager_navigation]: [34m[1mActivating waypoint_follower[0m[0m
+[waypoint_follower-6] [INFO] [1785122545.533299989] [waypoint_follower]: Activating
+[waypoint_follower-6] [INFO] [1785122545.533389332] [waypoint_follower]: Creating bond (waypoint_follower) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122545.641569123] [lifecycle_manager_navigation]: Server waypoint_follower connected with bond.
+[lifecycle_manager-8] [INFO] [1785122545.641703400] [lifecycle_manager_navigation]: [34m[1mActivating velocity_smoother[0m[0m
+[velocity_smoother-7] [INFO] [1785122545.642563833] [velocity_smoother]: Activating
+[velocity_smoother-7] [INFO] [1785122545.642717068] [velocity_smoother]: Creating bond (velocity_smoother) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785122545.753201848] [lifecycle_manager_navigation]: Server velocity_smoother connected with bond.
+[lifecycle_manager-8] [INFO] [1785122545.753281730] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-8] [INFO] [1785122545.753305567] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m
+[bt_navigator-5] [INFO] [1785122560.085582152] [bt_navigator]: Begin navigating from current location (0.10, -0.09) to (-6.00, -0.50)
+[controller_server-1] [INFO] [1785122560.107265915] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122560.107436430] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded goal_checker . This warning will appear once.
+[controller_server-1] [INFO] [1785122561.157769799] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122562.157874196] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122563.207787002] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122563.747521689] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122564.216945015] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122564.262006714] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785122564.262449307] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122564.273365418] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122564.828953370] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122564.838342211] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122564.862755902] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785122565.308378893] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122566.357828644] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122567.407783515] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122568.407779039] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122569.457761232] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122570.507798713] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122571.557826188] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122572.607862431] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122573.607792693] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122574.657857839] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122575.707793917] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122576.757842211] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122577.758567029] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122578.807804015] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785122579.764080136] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122579.809920694] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785122579.857793420] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785122579.861054745] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122579.911795742] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785122580.907794082] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122581.958382678] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122582.957811975] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122584.007801461] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122585.058005085] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122586.107938651] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122587.107842853] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785122588.158207809] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785122588.462041820] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122588.513677160] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122588.563904689] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122588.617076104] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122588.663314038] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122588.714077984] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122588.714437659] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122588.714818102] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122588.726737367] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785122588.729602861] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122588.927801287] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122588.928097995] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785122588.934381888] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122588.988856923] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.051078119] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122589.051229241] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122589.051396171] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122589.066589700] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-3] [INFO] [1785122589.067232199] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-1] [INFO] [1785122589.148006757] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122589.151558140] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.204867037] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.254412917] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.302997406] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.353869558] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.403444849] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.452706616] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122589.452804227] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122589.452932912] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122589.466572076] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785122589.468438969] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122589.521329530] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.522151431] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785122589.526232785] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.572561723] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.623353920] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.673260102] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.723534290] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122589.774086739] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122589.774203316] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122589.775442235] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122589.787924343] [behavior_server]: Running spin
+[behavior_server-4] [INFO] [1785122589.788275051] [behavior_server]: Turning 1.57 for spin behavior.
+[behavior_server-4] [WARN] [1785122590.188848276] [behavior_server]: Collision Ahead - Exiting Spin
+[behavior_server-4] [WARN] [1785122590.188978486] [behavior_server]: spin failed
+[behavior_server-4] [WARN] [1785122590.189083219] [behavior_server]: [spin] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122590.217624288] [behavior_server]: Running wait
+[behavior_server-4] [INFO] [1785122595.218387691] [behavior_server]: wait completed successfully
+[controller_server-1] [INFO] [1785122595.266909781] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122595.271406584] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.325883791] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.370642306] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.421063525] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.470519424] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.525180647] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.570555899] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122595.570637820] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122595.570734268] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122595.586486073] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785122595.587645115] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122595.726090179] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.727493282] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785122595.740060419] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.795695867] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.849874605] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122595.904997033] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122595.905144793] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122595.905300414] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122595.917673926] [behavior_server]: Running backup
+[behavior_server-4] [INFO] [1785122595.918800119] [behavior_server]: DriveOnHeading: no acceleration or deceleration limits set
+[behavior_server-4] [WARN] [1785122595.919184061] [behavior_server]: Collision Ahead - Exiting DriveOnHeading
+[behavior_server-4] [WARN] [1785122595.919220506] [behavior_server]: backup failed
+[behavior_server-4] [WARN] [1785122595.919245604] [behavior_server]: [backup] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122595.946415789] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-3] [INFO] [1785122595.948204731] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-1] [INFO] [1785122596.146910664] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122596.152953270] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.204374855] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.252656928] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.302770966] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.353430556] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.401932836] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.451829005] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122596.451920887] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122596.452030281] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122596.466464498] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785122596.467359206] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122596.525070566] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.525262656] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785122596.530554921] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.571294646] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.624755395] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.671315555] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.724609535] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122596.772068415] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122596.772745014] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122596.772896531] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122596.791150555] [behavior_server]: Running spin
+[behavior_server-4] [INFO] [1785122596.791302697] [behavior_server]: Turning 1.57 for spin behavior.
+[bt_navigator-5] [WARN] [1785122596.842720265] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785122596.858174230] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[behavior_server-4] [WARN] [1785122596.891681232] [behavior_server]: Collision Ahead - Exiting Spin
+[behavior_server-4] [WARN] [1785122596.891741158] [behavior_server]: spin failed
+[behavior_server-4] [WARN] [1785122596.891752586] [behavior_server]: [spin] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122596.916637736] [behavior_server]: Running wait
+[behavior_server-4] [INFO] [1785122601.916984589] [behavior_server]: wait completed successfully
+[controller_server-1] [INFO] [1785122601.967103523] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122601.971011369] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.024778033] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.073350831] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.124396956] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.171483411] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.222266596] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.270562172] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122602.270663759] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122602.270788107] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122602.286693261] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785122602.287676703] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122602.320954949] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.341712996] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.390982292] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.442571242] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.493026577] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.543820368] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122602.591784347] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122602.591865023] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122602.591965081] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122602.606634162] [behavior_server]: Running backup
+[behavior_server-4] [WARN] [1785122602.606869936] [behavior_server]: Collision Ahead - Exiting DriveOnHeading
+[behavior_server-4] [WARN] [1785122602.606895363] [behavior_server]: backup failed
+[behavior_server-4] [WARN] [1785122602.606906559] [behavior_server]: [backup] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122602.636505176] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-3] [INFO] [1785122602.636998840] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[planner_server-3] [WARN] [1785122603.141049942] [planner_server]: Planner loop missed its desired rate of 2.0000 Hz. Current loop rate is 1.9884 Hz
+[controller_server-1] [INFO] [1785122603.156824713] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122603.161381503] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.210939566] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.261036489] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.310948781] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.361052618] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.410901857] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.460970283] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122603.461044665] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122603.461121800] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122603.476471238] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785122603.477376773] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122603.521386157] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.531398565] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.580832718] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.631712340] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.680976332] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.730544066] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122603.781185529] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122603.781279243] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122603.781419999] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122603.796717373] [behavior_server]: Running spin
+[behavior_server-4] [INFO] [1785122603.796876346] [behavior_server]: Turning 1.57 for spin behavior.
+[behavior_server-4] [WARN] [1785122603.897448908] [behavior_server]: Collision Ahead - Exiting Spin
+[behavior_server-4] [WARN] [1785122603.897583713] [behavior_server]: spin failed
+[behavior_server-4] [WARN] [1785122603.897601104] [behavior_server]: [spin] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785122603.926628851] [behavior_server]: Running wait
+[bt_navigator-5] [WARN] [1785122608.712594786] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[behavior_server-4] [INFO] [1785122608.926945353] [behavior_server]: wait completed successfully
+[controller_server-1] [INFO] [1785122608.976927636] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122608.980852527] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.034473023] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.080506656] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.130654630] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.181207880] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.231508526] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.280756635] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122609.280827426] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122609.281447163] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785122609.296555527] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785122609.299748217] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785122609.325728110] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.361650436] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.404790250] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.455229642] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.503649872] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.555016396] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785122609.604913693] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785122609.605021821] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785122609.605350873] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[bt_navigator-5] [WARN] [1785122609.626427507] [bt_navigator]: [navigate_to_pose] [ActionServer] Aborting handle.
+[bt_navigator-5] [ERROR] [1785122609.627177803] [bt_navigator]: Goal failed
