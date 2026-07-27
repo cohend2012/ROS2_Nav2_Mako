@@ -1,128 +1,94 @@
-[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-27-03-17-36-585738-DanCohen-3416
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-27-03-38-41-034203-DanCohen-2429
 [INFO] [launch]: Default logging verbosity is set to INFO
-[INFO] [foxglove_bridge-1]: process started with pid [3425]
-[INFO] [rosbridge_websocket-2]: process started with pid [3427]
-[foxglove_bridge-1] [INFO] [1785122256.925478862] [foxglove_bridge]: Starting foxglove_bridge (humble, 3.4.2@)
-[foxglove_bridge-1] [2026-07-27T03:17:36Z INFO  foxglove::websocket::server] Started server on 0.0.0.0:8765
-[foxglove_bridge-1] [INFO] [1785122256.932249974] [foxglove_bridge]: Server listening on port 8765
-[foxglove_bridge-1] [INFO] [1785122256.936605540] [foxglove_bridge]: Advertising new channel 2 for topic "/rosout"
-[foxglove_bridge-1] [INFO] [1785122256.939411885] [foxglove_bridge]: Advertising new channel 3 for topic "/odom_true"
-[foxglove_bridge-1] [INFO] [1785122256.939491176] [foxglove_bridge]: Advertising new channel 4 for topic "/odom"
-[foxglove_bridge-1] [INFO] [1785122256.941000758] [foxglove_bridge]: Advertising new channel 5 for topic "/m20/mode"
-[foxglove_bridge-1] [INFO] [1785122256.942529386] [foxglove_bridge]: Advertising new channel 6 for topic "/tf_static"
-[foxglove_bridge-1] [INFO] [1785122256.943044281] [foxglove_bridge]: Advertising new channel 7 for topic "/m20/health"
-[foxglove_bridge-1] [INFO] [1785122256.944138539] [foxglove_bridge]: Advertising new channel 8 for topic "/parameter_events"
-[foxglove_bridge-1] [INFO] [1785122256.944855188] [foxglove_bridge]: Advertising new channel 9 for topic "/m20/failsafe"
-[foxglove_bridge-1] [INFO] [1785122256.945960477] [foxglove_bridge]: Advertising new channel 10 for topic "/scan"
-[foxglove_bridge-1] [INFO] [1785122256.946392092] [foxglove_bridge]: Advertising new channel 11 for topic "/m20/control_authority"
-[foxglove_bridge-1] [INFO] [1785122256.949354235] [foxglove_bridge]: Advertising new channel 12 for topic "/cmd_vel"
-[foxglove_bridge-1] [INFO] [1785122256.950529136] [foxglove_bridge]: Advertising new channel 13 for topic "/LIDAR/POINTS"
-[foxglove_bridge-1] [INFO] [1785122256.952077651] [foxglove_bridge]: Advertising new channel 14 for topic "/JOINTS_DATA"
-[foxglove_bridge-1] [INFO] [1785122256.953168898] [foxglove_bridge]: Advertising new channel 15 for topic "/JOINTS_CMD"
-[foxglove_bridge-1] [INFO] [1785122256.953210933] [foxglove_bridge]: Advertising new channel 16 for topic "/tf"
-[foxglove_bridge-1] [INFO] [1785122256.953228047] [foxglove_bridge]: Advertising new channel 17 for topic "/gps"
-[foxglove_bridge-1] [INFO] [1785122256.953790307] [foxglove_bridge]: Advertising new channel 18 for topic "/IMU_DATA"
-[foxglove_bridge-1] [INFO] [1785122256.996748721] [foxglove_bridge]: Advertising new channel 19 for topic "/m20/gait_request"
-[rosbridge_websocket-2] [WARN] [1785122257.047099790] [rosbridge_websocket]: The 'default_call_service_timeout' parameter is currently set to 0.0, which means service calls will block indefinitely if no response is received. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to 5.0 seconds.
-[rosbridge_websocket-2] [WARN] [1785122257.047527675] [rosbridge_websocket]: The 'call_services_in_new_thread' parameter is currently set to False, which means service calls will block the main thread. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to True.
-[rosbridge_websocket-2] [WARN] [1785122257.047798526] [rosbridge_websocket]: The 'send_action_goals_in_new_thread' parameter is currently set to False, which means sending action goals will block the main thread. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to True.
-[rosbridge_websocket-2] [INFO] [1785122257.053463441] [rosbridge_websocket]: Rosbridge WebSocket server started on port 9090
-[foxglove_bridge-1] [INFO] [1785122257.499149528] [foxglove_bridge]: Advertising new channel 20 for topic "/connected_clients"
-[foxglove_bridge-1] [INFO] [1785122257.499729695] [foxglove_bridge]: Advertising new channel 21 for topic "/client_count"
-[foxglove_bridge-1] [INFO] [1785122262.485887587] [foxglove_bridge]: Advertising new channel 22 for topic "/slam_toolbox/update"
-[foxglove_bridge-1] [INFO] [1785122262.486162917] [foxglove_bridge]: Advertising new channel 23 for topic "/slam_toolbox/graph_visualization"
-[foxglove_bridge-1] [INFO] [1785122262.486384978] [foxglove_bridge]: Advertising new channel 24 for topic "/pose"
-[foxglove_bridge-1] [INFO] [1785122262.486404202] [foxglove_bridge]: Advertising new channel 25 for topic "/slam_toolbox/scan_visualization"
-[foxglove_bridge-1] [INFO] [1785122262.486552894] [foxglove_bridge]: Advertising new channel 26 for topic "/map_metadata"
-[foxglove_bridge-1] [INFO] [1785122262.486769970] [foxglove_bridge]: Advertising new channel 27 for topic "/map"
-[foxglove_bridge-1] [INFO] [1785122262.486928194] [foxglove_bridge]: Advertising new channel 28 for topic "/slam_toolbox/feedback"
-[foxglove_bridge-1] [INFO] [1785122262.486968196] [foxglove_bridge]: Advertising new channel 29 for topic "/initialpose"
-[foxglove_bridge-1] [INFO] [1785122268.456984268] [foxglove_bridge]: Advertising new channel 30 for topic "/smoother_server/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.011706684] [foxglove_bridge]: Advertising new channel 31 for topic "/speed_limit"
-[foxglove_bridge-1] [INFO] [1785122269.011877826] [foxglove_bridge]: Advertising new channel 32 for topic "/waypoint_follower/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.012983918] [foxglove_bridge]: Advertising new channel 33 for topic "/plan"
-[foxglove_bridge-1] [INFO] [1785122269.013097192] [foxglove_bridge]: Advertising new channel 34 for topic "/received_global_plan"
-[foxglove_bridge-1] [INFO] [1785122269.013125063] [foxglove_bridge]: Advertising new channel 35 for topic "/plan_smoothed"
-[foxglove_bridge-1] [INFO] [1785122269.013145848] [foxglove_bridge]: Advertising new channel 36 for topic "/transformed_global_plan"
-[foxglove_bridge-1] [INFO] [1785122269.014629400] [foxglove_bridge]: Advertising new channel 37 for topic "/local_costmap/published_footprint"
-[foxglove_bridge-1] [INFO] [1785122269.014697498] [foxglove_bridge]: Advertising new channel 38 for topic "/local_costmap/local_costmap/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.015535158] [foxglove_bridge]: Advertising new channel 39 for topic "/local_costmap/costmap_raw"
-[foxglove_bridge-1] [INFO] [1785122269.015677443] [foxglove_bridge]: Advertising new channel 40 for topic "/global_costmap/published_footprint"
-[foxglove_bridge-1] [INFO] [1785122269.015716554] [foxglove_bridge]: Advertising new channel 41 for topic "/global_costmap/global_costmap/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.015753114] [foxglove_bridge]: Advertising new channel 42 for topic "/local_plan"
-[foxglove_bridge-1] [INFO] [1785122269.016085983] [foxglove_bridge]: Advertising new channel 43 for topic "/goal_pose"
-[foxglove_bridge-1] [INFO] [1785122269.016578305] [foxglove_bridge]: Advertising new channel 44 for topic "/global_costmap/footprint"
-[foxglove_bridge-1] [INFO] [1785122269.019350834] [foxglove_bridge]: Advertising new channel 45 for topic "/global_costmap/costmap_updates"
-[foxglove_bridge-1] [INFO] [1785122269.019479013] [foxglove_bridge]: Advertising new channel 46 for topic "/velocity_smoother/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.019505167] [foxglove_bridge]: Advertising new channel 47 for topic "/global_costmap/costmap_raw"
-[foxglove_bridge-1] [INFO] [1785122269.019525097] [foxglove_bridge]: Advertising new channel 48 for topic "/local_costmap/footprint"
-[foxglove_bridge-1] [INFO] [1785122269.019545669] [foxglove_bridge]: Advertising new channel 49 for topic "/global_costmap/costmap"
-[foxglove_bridge-1] [INFO] [1785122269.019589289] [foxglove_bridge]: Advertising new channel 50 for topic "/local_costmap/costmap"
-[foxglove_bridge-1] [INFO] [1785122269.022261513] [foxglove_bridge]: Advertising new channel 51 for topic "/evaluation"
-[foxglove_bridge-1] [INFO] [1785122269.025702219] [foxglove_bridge]: Advertising new channel 52 for topic "/diagnostics"
-[foxglove_bridge-1] [INFO] [1785122269.025930046] [foxglove_bridge]: Advertising new channel 53 for topic "/planner_server/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.025980215] [foxglove_bridge]: Advertising new channel 54 for topic "/cost_cloud"
-[foxglove_bridge-1] [INFO] [1785122269.026190813] [foxglove_bridge]: Advertising new channel 55 for topic "/marker"
-[foxglove_bridge-1] [INFO] [1785122269.026320225] [foxglove_bridge]: Advertising new channel 56 for topic "/controller_server/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.026378672] [foxglove_bridge]: Advertising new channel 57 for topic "/cmd_vel_nav"
-[foxglove_bridge-1] [INFO] [1785122269.026402673] [foxglove_bridge]: Advertising new channel 58 for topic "/local_costmap/costmap_updates"
-[foxglove_bridge-1] [INFO] [1785122269.026584065] [foxglove_bridge]: Advertising new channel 59 for topic "/bt_navigator/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.026674092] [foxglove_bridge]: Advertising new channel 60 for topic "/behavior_server/transition_event"
-[foxglove_bridge-1] [INFO] [1785122269.669648349] [foxglove_bridge]: Advertising new channel 61 for topic "/bond"
-[foxglove_bridge-1] [INFO] [1785122270.982416522] [foxglove_bridge]: Advertising new channel 62 for topic "/behavior_tree_log"
-[foxglove_bridge-1] [INFO] [1785122282.947713992] [foxglove_bridge]: Advertising new channel 63 for topic "/odom_filtered"
-[foxglove_bridge-1] [2026-07-27T03:18:31Z INFO  foxglove::websocket::server] Registered client 127.0.0.1:33798
-[foxglove_bridge-1] [INFO] [1785122311.716590333] [foxglove_bridge]: received connection graph subscribe request
-[foxglove_bridge-1] [INFO] [1785122311.716723701] [foxglove_bridge]: received subscribe request for channel 16 from client 1
-[foxglove_bridge-1] [WARN] [1785122311.719376470] [foxglove_bridge]: Limiting history depth for topic '/tf' to 25 (was 300). You may want to increase the max_qos_depth parameter value.
-[foxglove_bridge-1] [INFO] [1785122311.725374824] [foxglove_bridge]: Created ROS subscription on /tf (tf2_msgs/msg/TFMessage) for channel 16
-[foxglove_bridge-1] [INFO] [1785122311.725500008] [foxglove_bridge]: received subscribe request for channel 6 from client 1
-[foxglove_bridge-1] [INFO] [1785122311.729571536] [foxglove_bridge]: Created ROS subscription on /tf_static (tf2_msgs/msg/TFMessage) for channel 6
-[foxglove_bridge-1] [INFO] [1785122311.729663171] [foxglove_bridge]: received subscribe request for channel 24 from client 1
-[foxglove_bridge-1] [INFO] [1785122311.734824454] [foxglove_bridge]: Created ROS subscription on /pose (geometry_msgs/msg/PoseWithCovarianceStamped) for channel 24
-[foxglove_bridge-1] [INFO] [1785122312.153021733] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [ERROR] [1785122316.804095793] [foxglove_bridge]: Failed to retrieve parameters from node '/bt_navigator_navigate_to_pose_rclcpp_node': Failed to retrieve parameter names for node '/bt_navigator_navigate_to_pose_rclcpp_node'
-[foxglove_bridge-1] [WARN] [1785122316.804179229] [foxglove_bridge]: Adding node /bt_navigator_navigate_to_pose_rclcpp_node to the ignore list to prevent repeated timeouts or failures in future parameter requests.
-[foxglove_bridge-1] [ERROR] [1785122316.831827464] [foxglove_bridge]: Failed to retrieve parameters from node '/bt_navigator_navigate_through_poses_rclcpp_node': Failed to retrieve parameter names for node '/bt_navigator_navigate_through_poses_rclcpp_node'
-[foxglove_bridge-1] [WARN] [1785122316.831940038] [foxglove_bridge]: Adding node /bt_navigator_navigate_through_poses_rclcpp_node to the ignore list to prevent repeated timeouts or failures in future parameter requests.
-[foxglove_bridge-1] [INFO] [1785122322.191352040] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122322.704760661] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122333.171179024] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122333.680719301] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122344.171657481] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122344.684012065] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122355.283895827] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122355.797918685] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122366.145480017] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122366.656040222] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [2026-07-27T03:19:27Z ERROR foxglove::websocket::connected_client::poller] Error receiving from client 127.0.0.1:33798: IO error: Connection reset by peer (os error 104)
-[foxglove_bridge-1] [2026-07-27T03:19:27Z INFO  foxglove::websocket::connected_client::poller] Connection closed by client 127.0.0.1:33798
-[foxglove_bridge-1] [INFO] [1785122367.699433834] [foxglove_bridge]: received connection graph subscribe request
-[foxglove_bridge-1] [INFO] [1785122367.699577116] [foxglove_bridge]: received unsubscribe request for channel 16 from client 1
-[foxglove_bridge-1] [INFO] [1785122367.699620191] [foxglove_bridge]: Cleaned up ROS subscription for channel 16 (no more subscribers)
-[foxglove_bridge-1] [INFO] [1785122367.699665262] [foxglove_bridge]: received unsubscribe request for channel 24 from client 1
-[foxglove_bridge-1] [INFO] [1785122367.699681276] [foxglove_bridge]: Cleaned up ROS subscription for channel 24 (no more subscribers)
-[foxglove_bridge-1] [INFO] [1785122367.700266571] [foxglove_bridge]: received unsubscribe request for channel 6 from client 1
-[foxglove_bridge-1] [INFO] [1785122367.700559819] [foxglove_bridge]: Cleaned up ROS subscription for channel 6 (no more subscribers)
-[foxglove_bridge-1] [2026-07-27T03:19:27Z INFO  foxglove::websocket::server] Unregistered client 127.0.0.1:33798
-[foxglove_bridge-1] [2026-07-27T03:19:31Z INFO  foxglove::websocket::server] Registered client 127.0.0.1:39266
-[foxglove_bridge-1] [INFO] [1785122371.695867436] [foxglove_bridge]: received connection graph subscribe request
-[foxglove_bridge-1] [INFO] [1785122371.696211367] [foxglove_bridge]: received subscribe request for channel 16 from client 2
-[foxglove_bridge-1] [WARN] [1785122371.696415162] [foxglove_bridge]: Limiting history depth for topic '/tf' to 25 (was 300). You may want to increase the max_qos_depth parameter value.
-[foxglove_bridge-1] [INFO] [1785122371.697329370] [foxglove_bridge]: Created ROS subscription on /tf (tf2_msgs/msg/TFMessage) for channel 16
-[foxglove_bridge-1] [INFO] [1785122371.700147158] [foxglove_bridge]: received subscribe request for channel 6 from client 2
-[foxglove_bridge-1] [INFO] [1785122371.702080968] [foxglove_bridge]: Created ROS subscription on /tf_static (tf2_msgs/msg/TFMessage) for channel 6
-[foxglove_bridge-1] [INFO] [1785122371.702165584] [foxglove_bridge]: received subscribe request for channel 24 from client 2
-[foxglove_bridge-1] [INFO] [1785122371.703809928] [foxglove_bridge]: Created ROS subscription on /pose (geometry_msgs/msg/PoseWithCovarianceStamped) for channel 24
-[foxglove_bridge-1] [INFO] [1785122371.714306314] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122372.222698341] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122372.731886273] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122377.122459226] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122377.631900876] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122388.134050268] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122388.648315677] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122396.941369525] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122397.451369865] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122398.203240593] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122398.718579570] [foxglove_bridge]: publishing connection graph
-[foxglove_bridge-1] [INFO] [1785122399.234762054] [foxglove_bridge]: publishing connection graph
+[INFO] [foxglove_bridge-1]: process started with pid [2438]
+[INFO] [rosbridge_websocket-2]: process started with pid [2440]
+[foxglove_bridge-1] [INFO] [1785123521.345716243] [foxglove_bridge]: Starting foxglove_bridge (humble, 3.4.2@)
+[foxglove_bridge-1] [2026-07-27T03:38:41Z INFO  foxglove::websocket::server] Started server on 0.0.0.0:8765
+[foxglove_bridge-1] [INFO] [1785123521.349335259] [foxglove_bridge]: Server listening on port 8765
+[foxglove_bridge-1] [INFO] [1785123521.351726914] [foxglove_bridge]: Advertising new channel 2 for topic "/tf_static"
+[foxglove_bridge-1] [INFO] [1785123521.351799248] [foxglove_bridge]: Advertising new channel 3 for topic "/tf"
+[foxglove_bridge-1] [INFO] [1785123521.352026292] [foxglove_bridge]: Advertising new channel 4 for topic "/scan"
+[foxglove_bridge-1] [INFO] [1785123521.352398294] [foxglove_bridge]: Advertising new channel 5 for topic "/parameter_events"
+[foxglove_bridge-1] [INFO] [1785123521.353253676] [foxglove_bridge]: Advertising new channel 6 for topic "/odom"
+[foxglove_bridge-1] [INFO] [1785123521.353526890] [foxglove_bridge]: Advertising new channel 7 for topic "/m20/gait_request"
+[foxglove_bridge-1] [INFO] [1785123521.353721601] [foxglove_bridge]: Advertising new channel 8 for topic "/m20/control_authority"
+[foxglove_bridge-1] [INFO] [1785123521.353742441] [foxglove_bridge]: Advertising new channel 9 for topic "/odom_true"
+[foxglove_bridge-1] [INFO] [1785123521.353929410] [foxglove_bridge]: Advertising new channel 10 for topic "/m20/mode"
+[foxglove_bridge-1] [INFO] [1785123521.353947740] [foxglove_bridge]: Advertising new channel 11 for topic "/gps"
+[foxglove_bridge-1] [INFO] [1785123521.354128155] [foxglove_bridge]: Advertising new channel 12 for topic "/cmd_vel"
+[foxglove_bridge-1] [INFO] [1785123521.354345767] [foxglove_bridge]: Advertising new channel 13 for topic "/m20/health"
+[foxglove_bridge-1] [INFO] [1785123521.354517070] [foxglove_bridge]: Advertising new channel 14 for topic "/m20/failsafe"
+[foxglove_bridge-1] [INFO] [1785123521.354897644] [foxglove_bridge]: Advertising new channel 15 for topic "/LIDAR/POINTS"
+[foxglove_bridge-1] [INFO] [1785123521.356744868] [foxglove_bridge]: Advertising new channel 16 for topic "/JOINTS_DATA"
+[foxglove_bridge-1] [INFO] [1785123521.358268307] [foxglove_bridge]: Advertising new channel 17 for topic "/JOINTS_CMD"
+[foxglove_bridge-1] [INFO] [1785123521.358603888] [foxglove_bridge]: Advertising new channel 18 for topic "/rosout"
+[foxglove_bridge-1] [INFO] [1785123521.359083880] [foxglove_bridge]: Advertising new channel 19 for topic "/IMU_DATA"
+[foxglove_bridge-1] [INFO] [1785123521.391881732] [foxglove_bridge]: Advertising new channel 20 for topic "/connected_clients"
+[foxglove_bridge-1] [INFO] [1785123521.392062233] [foxglove_bridge]: Advertising new channel 21 for topic "/client_count"
+[rosbridge_websocket-2] [WARN] [1785123521.411930130] [rosbridge_websocket]: The 'default_call_service_timeout' parameter is currently set to 0.0, which means service calls will block indefinitely if no response is received. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to 5.0 seconds.
+[rosbridge_websocket-2] [WARN] [1785123521.412378724] [rosbridge_websocket]: The 'call_services_in_new_thread' parameter is currently set to False, which means service calls will block the main thread. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to True.
+[rosbridge_websocket-2] [WARN] [1785123521.412689479] [rosbridge_websocket]: The 'send_action_goals_in_new_thread' parameter is currently set to False, which means sending action goals will block the main thread. Please note that in the Jazzy and later releases, the default value for this parameter will be updated to True.
+[rosbridge_websocket-2] [INFO] [1785123521.415233897] [rosbridge_websocket]: Rosbridge WebSocket server started on port 9090
+[foxglove_bridge-1] [INFO] [1785123527.187580092] [foxglove_bridge]: Advertising new channel 22 for topic "/slam_toolbox/update"
+[foxglove_bridge-1] [INFO] [1785123527.188350128] [foxglove_bridge]: Advertising new channel 23 for topic "/slam_toolbox/graph_visualization"
+[foxglove_bridge-1] [INFO] [1785123527.189153979] [foxglove_bridge]: Advertising new channel 24 for topic "/pose"
+[foxglove_bridge-1] [INFO] [1785123527.189232795] [foxglove_bridge]: Advertising new channel 25 for topic "/slam_toolbox/scan_visualization"
+[foxglove_bridge-1] [INFO] [1785123527.189737592] [foxglove_bridge]: Advertising new channel 26 for topic "/map_metadata"
+[foxglove_bridge-1] [INFO] [1785123527.190394706] [foxglove_bridge]: Advertising new channel 27 for topic "/map"
+[foxglove_bridge-1] [INFO] [1785123527.191009678] [foxglove_bridge]: Advertising new channel 28 for topic "/slam_toolbox/feedback"
+[foxglove_bridge-1] [INFO] [1785123527.191072711] [foxglove_bridge]: Advertising new channel 29 for topic "/initialpose"
+[foxglove_bridge-1] [INFO] [1785123533.794460893] [foxglove_bridge]: Advertising new channel 30 for topic "/speed_limit"
+[foxglove_bridge-1] [INFO] [1785123533.796814841] [foxglove_bridge]: Advertising new channel 31 for topic "/waypoint_follower/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.797403056] [foxglove_bridge]: Advertising new channel 32 for topic "/plan"
+[foxglove_bridge-1] [INFO] [1785123533.797489063] [foxglove_bridge]: Advertising new channel 33 for topic "/received_global_plan"
+[foxglove_bridge-1] [INFO] [1785123533.797515995] [foxglove_bridge]: Advertising new channel 34 for topic "/plan_smoothed"
+[foxglove_bridge-1] [INFO] [1785123533.797530036] [foxglove_bridge]: Advertising new channel 35 for topic "/transformed_global_plan"
+[foxglove_bridge-1] [INFO] [1785123533.798102038] [foxglove_bridge]: Advertising new channel 36 for topic "/local_costmap/published_footprint"
+[foxglove_bridge-1] [INFO] [1785123533.798167184] [foxglove_bridge]: Advertising new channel 37 for topic "/local_costmap/local_costmap/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.798670552] [foxglove_bridge]: Advertising new channel 38 for topic "/local_costmap/costmap_raw"
+[foxglove_bridge-1] [INFO] [1785123533.798771365] [foxglove_bridge]: Advertising new channel 39 for topic "/global_costmap/published_footprint"
+[foxglove_bridge-1] [INFO] [1785123533.798787926] [foxglove_bridge]: Advertising new channel 40 for topic "/global_costmap/global_costmap/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.798800668] [foxglove_bridge]: Advertising new channel 41 for topic "/local_plan"
+[foxglove_bridge-1] [INFO] [1785123533.799066485] [foxglove_bridge]: Advertising new channel 42 for topic "/goal_pose"
+[foxglove_bridge-1] [INFO] [1785123533.799257620] [foxglove_bridge]: Advertising new channel 43 for topic "/global_costmap/footprint"
+[foxglove_bridge-1] [INFO] [1785123533.799275203] [foxglove_bridge]: Advertising new channel 44 for topic "/smoother_server/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.799451156] [foxglove_bridge]: Advertising new channel 45 for topic "/global_costmap/costmap_updates"
+[foxglove_bridge-1] [INFO] [1785123533.799467281] [foxglove_bridge]: Advertising new channel 46 for topic "/velocity_smoother/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.799484643] [foxglove_bridge]: Advertising new channel 47 for topic "/global_costmap/costmap_raw"
+[foxglove_bridge-1] [INFO] [1785123533.799496755] [foxglove_bridge]: Advertising new channel 48 for topic "/local_costmap/footprint"
+[foxglove_bridge-1] [INFO] [1785123533.799582215] [foxglove_bridge]: Advertising new channel 49 for topic "/global_costmap/costmap"
+[foxglove_bridge-1] [INFO] [1785123533.799613961] [foxglove_bridge]: Advertising new channel 50 for topic "/local_costmap/costmap"
+[foxglove_bridge-1] [INFO] [1785123533.800733773] [foxglove_bridge]: Advertising new channel 51 for topic "/evaluation"
+[foxglove_bridge-1] [INFO] [1785123533.801341525] [foxglove_bridge]: Advertising new channel 52 for topic "/diagnostics"
+[foxglove_bridge-1] [INFO] [1785123533.801407546] [foxglove_bridge]: Advertising new channel 53 for topic "/planner_server/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.801424028] [foxglove_bridge]: Advertising new channel 54 for topic "/cost_cloud"
+[foxglove_bridge-1] [INFO] [1785123533.801445105] [foxglove_bridge]: Advertising new channel 55 for topic "/marker"
+[foxglove_bridge-1] [INFO] [1785123533.801464068] [foxglove_bridge]: Advertising new channel 56 for topic "/controller_server/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.801492852] [foxglove_bridge]: Advertising new channel 57 for topic "/cmd_vel_nav"
+[foxglove_bridge-1] [INFO] [1785123533.801506107] [foxglove_bridge]: Advertising new channel 58 for topic "/local_costmap/costmap_updates"
+[foxglove_bridge-1] [INFO] [1785123533.801522532] [foxglove_bridge]: Advertising new channel 59 for topic "/bt_navigator/transition_event"
+[foxglove_bridge-1] [INFO] [1785123533.801679638] [foxglove_bridge]: Advertising new channel 60 for topic "/behavior_server/transition_event"
+[foxglove_bridge-1] [INFO] [1785123534.463324078] [foxglove_bridge]: Advertising new channel 61 for topic "/bond"
+[foxglove_bridge-1] [INFO] [1785123535.666118632] [foxglove_bridge]: Advertising new channel 62 for topic "/behavior_tree_log"
+[foxglove_bridge-1] [INFO] [1785123547.587323432] [foxglove_bridge]: Advertising new channel 63 for topic "/odom_filtered"
+[foxglove_bridge-1] [2026-07-27T03:39:31Z INFO  foxglove::websocket::server] Registered client 127.0.0.1:43900
+[foxglove_bridge-1] [INFO] [1785123571.716495191] [foxglove_bridge]: received connection graph subscribe request
+[foxglove_bridge-1] [INFO] [1785123571.716668002] [foxglove_bridge]: received subscribe request for channel 24 from client 1
+[foxglove_bridge-1] [INFO] [1785123571.720088469] [foxglove_bridge]: Created ROS subscription on /pose (geometry_msgs/msg/PoseWithCovarianceStamped) for channel 24
+[foxglove_bridge-1] [INFO] [1785123571.720461577] [foxglove_bridge]: received subscribe request for channel 3 from client 1
+[foxglove_bridge-1] [WARN] [1785123571.720683057] [foxglove_bridge]: Limiting history depth for topic '/tf' to 25 (was 300). You may want to increase the max_qos_depth parameter value.
+[foxglove_bridge-1] [INFO] [1785123571.722073282] [foxglove_bridge]: Created ROS subscription on /tf (tf2_msgs/msg/TFMessage) for channel 3
+[foxglove_bridge-1] [INFO] [1785123571.722176813] [foxglove_bridge]: received subscribe request for channel 2 from client 1
+[foxglove_bridge-1] [INFO] [1785123571.725492845] [foxglove_bridge]: Created ROS subscription on /tf_static (tf2_msgs/msg/TFMessage) for channel 2
+[foxglove_bridge-1] [INFO] [1785123572.202554276] [foxglove_bridge]: publishing connection graph
+[foxglove_bridge-1] [INFO] [1785123573.930290709] [foxglove_bridge]: publishing connection graph
+[foxglove_bridge-1] [INFO] [1785123574.443314159] [foxglove_bridge]: publishing connection graph
+[foxglove_bridge-1] [ERROR] [1785123576.867762035] [foxglove_bridge]: Failed to retrieve parameters from node '/bt_navigator_navigate_through_poses_rclcpp_node': Failed to retrieve parameter names for node '/bt_navigator_navigate_through_poses_rclcpp_node'
+[foxglove_bridge-1] [WARN] [1785123576.867886604] [foxglove_bridge]: Adding node /bt_navigator_navigate_through_poses_rclcpp_node to the ignore list to prevent repeated timeouts or failures in future parameter requests.
+[foxglove_bridge-1] [ERROR] [1785123576.868103712] [foxglove_bridge]: Failed to retrieve parameters from node '/bt_navigator_navigate_to_pose_rclcpp_node': Failed to retrieve parameter names for node '/bt_navigator_navigate_to_pose_rclcpp_node'
+[foxglove_bridge-1] [WARN] [1785123576.868138881] [foxglove_bridge]: Adding node /bt_navigator_navigate_to_pose_rclcpp_node to the ignore list to prevent repeated timeouts or failures in future parameter requests.
+[foxglove_bridge-1] [INFO] [1785123581.242146855] [foxglove_bridge]: publishing connection graph
+[foxglove_bridge-1] [INFO] [1785123581.750016202] [foxglove_bridge]: publishing connection graph
+[foxglove_bridge-1] [INFO] [1785123582.361287917] [foxglove_bridge]: publishing connection graph
+[foxglove_bridge-1] [INFO] [1785123582.874402195] [foxglove_bridge]: publishing connection graph
+[foxglove_bridge-1] [INFO] [1785123583.382976594] [foxglove_bridge]: publishing connection graph
