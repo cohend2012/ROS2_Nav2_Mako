@@ -5,7 +5,7 @@
 > Update the changelog at the bottom whenever you edit.
 
 **Project codename:** `m20_autonomy`
-**Last updated:** 2026-07-20 (rev 42)
+**Last updated:** 2026-07-26 (rev 43)
 **Status (2026-07-20, honest):** `master` @ `checkpoint-04-sensor-realism`, tree clean.
 **Navigation is gate-proven on realistic sensors:** L3.2 = **9/10, mean 0.63 m** (batch
 #14, best in project history) with the real M20 sensor contract (`/LIDAR/POINTS` XYZIRT
@@ -472,6 +472,22 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-26 (rev 43) — CHECKPOINT-05: anchored map ships, GATE 10/10 @ 0.33 m,
+  phase-map-loc MERGED.** The map-warp debt is fully paid: GPS-anchored mapping
+  (EKF smooth prior at CORR_RATE 0.05 + course-over-ground yaw aid) + best-of-3
+  selection shipped a map with worst-landmark 0.23 m (was 0.61-1.06); score
+  committed in maps/oil_gas_field.score.txt. Six iterations of measured lessons
+  in the git log (raw GPS prior poisons scan matching; GPS can't observe yaw —
+  the map ROTATES; 0.08 correction rate destabilizes; residuals are random per
+  build → select best-of-N). Batch archives per-run logs now; that forensics
+  found the last failure class: the accurate map narrowed the skid1 gap and DWB
+  declined it ('No valid trajectories' ×96) → inflation 0.6→0.5.
+  **Final gate: 10/10, mean 0.33 m, p95 0.50, runs 86-130 s — both the script
+  bar and the stricter branch bar (≥9/10 AND <0.5 m) cleared.** Merged to
+  master, tag checkpoint-05-anchored-map. NEXT: camera_scan behavior (Phase
+  5.5), eastern corridor stretch, L1.6 bench test, Phase-7 opener = cloud-VLM
+  language missions over the mission server (NaVILA filed as OQ — no local GPU:
+  Iris Xe only; Jetson Orin NX onboard is the eventual VLA target).
 - **2026-07-20 (rev 42, branch phase-map-loc) — USABILITY NIGHT + the map-warp
   root cause.** (1) **Operator station LIVE** (Phase 1.5 closed, ADR-013):
   foxglove_bridge + rosbridge in bringup by default, ports verified from

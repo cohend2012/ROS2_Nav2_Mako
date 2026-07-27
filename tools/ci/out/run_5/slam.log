@@ -1,6 +1,6 @@
-[INFO] [1785122537.289121811] [slam_toolbox]: Using solver plugin solver_plugins::CeresSolver
-[INFO] [1785122537.289640132] [slam_toolbox]: CeresSolver: Using SCHUR_JACOBI preconditioner.
-[WARN] [1785122537.296756375] [slam_toolbox]: LocalizationSlamToolbox: Starting localization at first node (dock) is correctly not supported.
+[INFO] [1785123726.460959608] [slam_toolbox]: Using solver plugin solver_plugins::CeresSolver
+[INFO] [1785123726.461448186] [slam_toolbox]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+[WARN] [1785123726.468793327] [slam_toolbox]: LocalizationSlamToolbox: Starting localization at first node (dock) is correctly not supported.
 Load From File /cfg/maps/oil_gas_field.posegraph 
 Mapper <- Module
 Mapper <- m_pSequentialScanMatcher
@@ -20,6 +20,6 @@ Dataset <- m_pDatasetInfo
 **Finished serializing Dataset**
 Registering sensor: [Custom Described Lidar]
 WARNING: Logging before InitGoogleLogging() is written to STDERR
-W0727 03:22:17.339568  5827 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 6.  Bounding to maximum number available.
-[WARN] [1785122537.370943983] [slam_toolbox]: minimum laser range setting (0.0 m) exceeds the capabilities of the used Lidar (0.5 m)
+W0727 03:42:06.509465  4513 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 6.  Bounding to maximum number available.
+[WARN] [1785123726.523535191] [slam_toolbox]: minimum laser range setting (0.0 m) exceeds the capabilities of the used Lidar (0.5 m)
 Registering sensor: [Custom Described Lidar]
