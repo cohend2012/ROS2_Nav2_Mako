@@ -259,7 +259,10 @@ class Sim(Node):
                 cam.lookat[:] = [eye_x + 0.5 * math.cos(yaw),
                                  eye_y + 0.5 * math.sin(yaw), z + 0.05]
                 cam.distance = 0.5
-                cam.azimuth = math.degrees(yaw) + 180.0  # camera sits at the eye point
+                # az = yaw (NOT +180): measured 2026-07-27 — with +180 the mask saw
+                # 0 wellhead pixels at yaw 0; the feed had only ever been verified
+                # by Hz, never by content. Verify cameras by what they SEE.
+                cam.azimuth = math.degrees(yaw)
                 cam.elevation = 0.0
                 renderer.update_scene(s, camera=cam)
                 rgb = renderer.render()
