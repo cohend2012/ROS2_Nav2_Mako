@@ -31,6 +31,13 @@
 #   M20_NO_GOAL=1  bring the stack up but send no goal (mapping / coverage runs).
 # ============================================================================
 set -e
+# FRAME CONTRACT GUARD (ship rule): M20_EKF_TF is a MAP-PRODUCTION tool only —
+# the smooth GPS-pulled prior may never own odom->base_link while navigating
+# against the shipped map. Runtime tree stays REP-105: sim dead-reckon owns
+# odom->base_link, slam localization owns map->odom. See SECOND_BRAIN §3.
+if [ "${M20_EKF_TF:-0}" = "1" ] && [ -n "${M20_STATIC_MAP:-}" ]; then
+  echo "ERROR: M20_EKF_TF=1 with M20_STATIC_MAP is forbidden (mapping-pipeline tool leaking into runtime frames)"; exit 1
+fi
 C=docker-commander-1
 DOM=42
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
