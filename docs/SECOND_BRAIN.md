@@ -5,7 +5,7 @@
 > Update the changelog at the bottom whenever you edit.
 
 **Project codename:** `m20_autonomy`
-**Last updated:** 2026-07-26 (rev 43)
+**Last updated:** 2026-07-27 (rev 44)
 **Status (2026-07-20, honest):** `master` @ `checkpoint-04-sensor-realism`, tree clean.
 **Navigation is gate-proven on realistic sensors:** L3.2 = **9/10, mean 0.63 m** (batch
 #14, best in project history) with the real M20 sensor contract (`/LIDAR/POINTS` XYZIRT
@@ -493,6 +493,22 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-07-27 (rev 44) — PHASE 5.5 EXIT TEST PASSED: camera_scan finds and
+  centers the wellhead, 1.9° from true bearing.** First perception-driven
+  behavior through the full engine pipeline (standup → camera_scan sequential,
+  commander-gated, TIER_VENDOR gaze via /cmd_vel; built-in red-oxide detector
+  on /camera/image_raw, swappable for an m20_perception node later). Ship-rule
+  work same day: REP-105 frame contract written into §3 and ENFORCED (bringup
+  refuses M20_EKF_TF with M20_STATIC_MAP — the map-pipeline prior can never
+  leak into runtime frames). TWO latent camera bugs caught ONLY by the exit
+  test's ground-truth yaw check: (1) chase cam kept the robot in frame and the
+  vendor model has one pure-red geom — the behavior centered the robot's own
+  body (SUCCEEDED at 177° error, twice); camera made first-person per the real
+  M20's front cameras. (2) The camera had faced BACKWARD since birth (azimuth
+  +180 convention error) — feed had only ever been verified by Hz, never
+  content; measured 0 wellhead pixels at yaw 0 before, 1578 after. RULE: verify
+  cameras by what they SEE. NEXT: cloud-VLM language missions (Phase-7 opener),
+  eastern corridor stretch, L1.6 bench test, camera-vs-control-loop A/B.
 - **2026-07-26 (rev 43) — CHECKPOINT-05: anchored map ships, GATE 10/10 @ 0.33 m,
   phase-map-loc MERGED.** The map-warp debt is fully paid: GPS-anchored mapping
   (EKF smooth prior at CORR_RATE 0.05 + course-over-ground yaw aid) + best-of-3
