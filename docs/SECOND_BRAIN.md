@@ -110,6 +110,27 @@ Two columns over one bus. Command path flows down; sensing path flows up.
                   M20 onboard motion control + sensors (Deep Robotics)
 ```
 
+### Frame contract (REP-105) — ship rule, enforced in bringup
+
+Runtime (missions, nav, anything a customer sees):
+- `map → odom` — owned by slam_toolbox localization (scan-match vs the shipped
+  posegraph). May correct discretely; that is its job.
+- `odom → base_link` — owned by the platform's dead-reckoned odometry (sim today,
+  vendor odom on hardware). CONTINUOUS, drifts, never jumps. No absolute
+  reference may touch this edge at runtime.
+- Missions/goals are expressed in `map`. GPS enters runtime ONLY via the Phase-A
+  map-frame estimator (robot_localization dual-EKF + navsat_transform on
+  hardware), never via the odom edge.
+
+Map-production pipeline (offline, build_map.sh only): a rate-limited GPS-pulled
+smooth prior (estimator.py M20_EKF_TF=1, sim TF suppressed) may own
+`odom→base_link` so the built map stays anchored (measured: warp 0.61–1.06 m
+without it, 0.23 m with). It is continuous by construction (≤0.05 m/s bend) but
+it is NOT the runtime frame layout — bringup hard-refuses M20_EKF_TF combined
+with M20_STATIC_MAP, so the pipeline tool cannot leak into runtime. If we adopt
+a graph SLAM with native GPS factors (e.g. LIO-SAM class, Phase B+/Jetson),
+this pipeline exception is retired.
+
 ### PX4 concept mapping
 
 | PX4 | This stack | Package |
