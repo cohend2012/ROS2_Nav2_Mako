@@ -247,11 +247,20 @@ class Sim(Node):
                 s = self._cam_snap
                 x, y, z = s.qpos[0], s.qpos[1], s.qpos[2]
                 _, _, yaw = quat_to_rpy(*s.qpos[3:7])
+                # FIRST-PERSON camera (2026-07-27): the earlier chase cam kept the
+                # robot in its own frame — and the vendor model has one pure-red
+                # geom, so camera_scan locked onto the robot's own body and
+                # "centered" it at any yaw (caught by the exit test's ground-truth
+                # yaw check). Eye at the body front looking forward, matching the
+                # real M20's front cameras; the robot is never in frame.
                 cam.type = mujoco.mjtCamera.mjCAMERA_FREE
-                cam.lookat[:] = [x + 2.0 * math.cos(yaw), y + 2.0 * math.sin(yaw), z]
-                cam.distance = 2.0
-                cam.azimuth = math.degrees(yaw) + 180.0  # behind the lookat = at the robot
-                cam.elevation = -8.0
+                eye_x = x + 0.30 * math.cos(yaw)
+                eye_y = y + 0.30 * math.sin(yaw)
+                cam.lookat[:] = [eye_x + 0.5 * math.cos(yaw),
+                                 eye_y + 0.5 * math.sin(yaw), z + 0.05]
+                cam.distance = 0.5
+                cam.azimuth = math.degrees(yaw) + 180.0  # camera sits at the eye point
+                cam.elevation = 0.0
                 renderer.update_scene(s, camera=cam)
                 rgb = renderer.render()
                 msg = self._ImageMsg()
