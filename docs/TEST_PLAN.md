@@ -23,7 +23,7 @@ concrete metric, a pass threshold, and a repeatable command. Order of build-out:
 | L1.3 | Honest odom | `tools/nav/odom_drift_check.py` | fwd odom vs true err; yaw err/turn | <0.1 m fwd; <5°/turn |
 | L1.4 | Bridge arming | set_mode + cmd_vel | moves only when armed; halts on veto | enforced |
 | L1.5 | Watchdog | stop cmd_vel | zero-velocity within `cmd_timeout_s` | halts |
-| L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander latches FS_TIPOVER >35° roll/pitch → ESTOP+disarm; auto-clears flag after 5 s upright (no auto re-arm) | BUILT 2026-07-15 (observed flip 2026-07-13 prompted it) — bench test pending |
+| L1.6 | Tip-over failsafe | drive into a ground pipe (teleop) | commander latches FS_TIPOVER >35° roll/pitch → ESTOP+disarm; auto-clears flag after 5 s upright (no auto re-arm) | PASS 2026-07-28: scripted flip (pitch -36) -> FS_TIPOVER 0x80 + ESTOP + disarm. First attempt EXPOSED that the image-baked commander PREDATED the failsafe (0 FS_TIPOVER refs installed; flipped robot stayed ARMED) - hot-patched via egg-link target + restart; IMAGE REBUILD OWED (ADR-011) |
 | L1.7 | Real LiDAR interface | stack up, probe /LIDAR/POINTS | ~10 Hz PointCloud2 in lidar_link; no returns <0.5 m standing; derived /scan (pointcloud_to_laserscan) ~10 Hz; ground pipes visible ahead | ✅ 2026-07-15: 9.8 Hz, rmin 0.79, /scan 10.0 Hz from projection node, pipe_cross seen at 1.85 m |
 | L1.8 | LiDAR realism | `tools/nav/lidar_realism_check.py` | XYZIRT contract (32-byte points, rslidar offsets); timestamps span ~100 ms, monotone; noise σ 0.5–3 cm; ground dropout 0.5–12%; skew: pipe line-fit RMS >2× parked and >3 cm at 1 rad/s | ✅ 2026-07-15 PASS 7/7: 98.6 ms / 20 steps, σ 1.49 cm, drop 3.3%, skew 3.6→22.7 cm (6.4×) |
 
