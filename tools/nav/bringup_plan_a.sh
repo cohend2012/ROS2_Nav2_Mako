@@ -45,6 +45,21 @@ MODEL="$HOME/m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description"
 GOAL_X="${GOAL_X:--6.0}"; GOAL_Y="${GOAL_Y:--0.5}"
 SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=$DOM RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
 
+# STALENESS ASSERTION (2026-07-28 lesson, L1.6): the image-baked commander
+# predated the tip-over failsafe — an inverted robot stayed armed. The
+# commander is PID 1 (not re-copyable like bridge/engine), so we ASSERT the
+# installed copy matches the repo and refuse to run stale safety code.
+# Override for deliberate old-image tests: M20_ALLOW_STALE=1.
+if [ "${M20_ALLOW_STALE:-0}" != "1" ]; then
+  REPO_MD5=$(md5sum "$REPO/src/m20_commander/m20_commander/commander_node.py" | cut -d" " -f1)
+  INST_MD5=$(docker exec $C bash -c 'md5sum $(find /ws/build/m20_commander /ws/install -name commander_node.py 2>/dev/null | head -1) 2>/dev/null' | cut -d" " -f1)
+  if [ -z "$INST_MD5" ] || [ "$REPO_MD5" != "$INST_MD5" ]; then
+    echo "ERROR: installed commander != repo (installed=$INST_MD5 repo=$REPO_MD5)."
+    echo "       Rebuild the image (make image + cyclone layer + recreate) or set M20_ALLOW_STALE=1."
+    exit 1
+  fi
+fi
+
 echo "[1/7] staging config + tools into $C:/cfg"
 bash "$REPO/tools/dev/container_deps.sh" || exit 1
 docker exec $C bash -lc "mkdir -p /cfg /cfg/out"
