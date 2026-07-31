@@ -12,3 +12,4 @@ __pycache__/
 .DS_Store
 
 MUJOCO_LOG.TXT
+tools/nav/out_demo/
