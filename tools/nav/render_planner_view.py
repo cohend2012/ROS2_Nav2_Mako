@@ -45,13 +45,27 @@ lplans = []
 if os.path.exists(f"{OUTDIR}/local_plans.jsonl"):
     with open(f"{OUTDIR}/local_plans.jsonl") as f:
         lplans = [json.loads(l) for l in f if l.strip()]
-m = np.load(f"{OUTDIR}/map.npz")
-grid, res, ox, oy = m["grid"], float(m["res"]), float(m["ox"]), float(m["oy"])
-H, W = grid.shape
+if os.path.exists(f"{OUTDIR}/map.npz"):
+    m = np.load(f"{OUTDIR}/map.npz")
+    grid, res, ox, oy = m["grid"], float(m["res"]), float(m["ox"]), float(m["oy"])
+    H, W = grid.shape
+    img = np.full((H, W), 0.82)
+    img[grid == 0] = 1.0
+    img[grid > 50] = 0.15
+else:
+    # localization mode: the logger gets no /map — use the SHIPPED map artifact
+    # (it is exactly the map the planner navigated against)
+    import yaml
+    prefix = os.environ.get("MAP_PREFIX",
+                            os.path.join(os.path.dirname(__file__), "../..",
+                                         "maps/oil_gas_field"))
+    meta = yaml.safe_load(open(prefix + ".yaml"))
+    res = float(meta["resolution"])
+    ox, oy = float(meta["origin"][0]), float(meta["origin"][1])
+    pix = imageio.imread(prefix + ".pgm")
+    img = np.flipud(pix.astype(float) / 255.0)   # pgm row 0 = top; imshow origin=lower
+    H, W = img.shape
 extent = [ox, ox + W * res, oy, oy + H * res]
-img = np.full((H, W), 0.82)
-img[grid == 0] = 1.0
-img[grid > 50] = 0.15
 
 t0, t_end = true[0][0], true[-1][0]
 frames_t = np.arange(0.0, t_end - t0, 1.0 / FPS)
