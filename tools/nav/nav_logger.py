@@ -43,6 +43,17 @@ class Logger(Node):
         self.create_subscription(Odometry, "/odom_filtered",
             lambda m: self.ekf.append((time.time(), m.pose.pose.position.x, m.pose.pose.position.y)), 10)
         self.create_subscription(Path, "/plan", self.on_plan, 10)
+        # planning-view capture (for the nav-view video panel): laser + local plan
+        self.scans = []          # (t, x, y, yaw, r0..r359) at ~1 Hz, pose from TF
+        self.local_plans = []    # (t, [x0,y0,x1,y1,...]) at ~1 Hz
+        self._last_scan = 0.0
+        self._last_lplan = 0.0
+        try:
+            from sensor_msgs.msg import LaserScan
+            self.create_subscription(LaserScan, "/scan", self.on_scan, 5)
+        except ImportError:
+            pass
+        self.create_subscription(Path, "/local_plan", self.on_local_plan, 5)
         mqos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL,
                           reliability=ReliabilityPolicy.RELIABLE, history=HistoryPolicy.KEEP_LAST)
         self.create_subscription(OccupancyGrid, "/map", self.on_map, mqos)
@@ -66,6 +77,28 @@ class Logger(Node):
             self.joints.append((now, *[m.data.joints_data[i].position for i in range(16)]))
     def on_plan(self, m):
         self.plan = [(p.pose.position.x, p.pose.position.y) for p in m.poses]
+    def on_scan(self, m):
+        now = time.time()
+        if now - self._last_scan < 1.0:
+            return
+        try:
+            t = self.tfbuf.lookup_transform("map", "base_link", rclpy.time.Time())
+        except Exception:
+            return
+        self._last_scan = now
+        q = t.transform.rotation
+        yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+        self.scans.append((now, t.transform.translation.x, t.transform.translation.y,
+                           yaw, *[round(float(r), 3) for r in m.ranges]))
+    def on_local_plan(self, m):
+        now = time.time()
+        if now - self._last_lplan < 1.0 or not m.poses:
+            return
+        self._last_lplan = now
+        pts = []
+        for p in m.poses:
+            pts.extend((round(p.pose.position.x, 3), round(p.pose.position.y, 3)))
+        self.local_plans.append((now, pts))
     def on_map(self, m):
         self.map = (m.info.resolution, m.info.width, m.info.height,
                     m.info.origin.position.x, m.info.origin.position.y,
@@ -95,6 +128,14 @@ def main():
         dump("gps.csv", n.gps, ["t", "x", "y"])
         dump("traj_ekf.csv", n.ekf, ["t", "x", "y"])
         dump("joints.csv", n.joints, JHDR)
+        with open(f"{OUT}/scans.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            for row in n.scans:
+                w.writerow(row)
+        import json
+        with open(f"{OUT}/local_plans.jsonl", "w") as f:
+            for t, pts in n.local_plans:
+                f.write(json.dumps({"t": t, "pts": pts}) + "\n")
 
     while rclpy.ok() and time.time() - t0 < RUN_SECS:
         rclpy.spin_once(n, timeout_sec=0.05)
