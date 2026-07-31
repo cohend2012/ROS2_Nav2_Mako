@@ -1,2 +1,0 @@
-[WARN] [1785465389.327223737] [nav_logger]: New publisher discovered on topic '/scan', offering incompatible QoS. No messages will be received from it. Last incompatible policy: RELIABILITY
-true=48527 drift=48520 est=2699 gps=1253 ekf=0 joints=5315 plan=65 map=y
