@@ -50,7 +50,11 @@ class Logger(Node):
         self._last_lplan = 0.0
         try:
             from sensor_msgs.msg import LaserScan
-            self.create_subscription(LaserScan, "/scan", self.on_scan, 5)
+            # /scan is BEST_EFFORT (SensorDataQoS) — a RELIABLE subscriber
+            # silently never connects (the classic QoS-mismatch pitfall)
+            sq = QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT,
+                            history=HistoryPolicy.KEEP_LAST)
+            self.create_subscription(LaserScan, "/scan", self.on_scan, sq)
         except ImportError:
             pass
         self.create_subscription(Path, "/local_plan", self.on_local_plan, 5)
