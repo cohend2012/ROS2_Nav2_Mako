@@ -16,7 +16,18 @@ route. Prove the whole site.
 - [ ] Patrol gate script (`tools/ci/patrol_gate.sh`): one MISSION of 5 diverse
       goals (W field, NW, N lane, E field, home) via the mission server;
       per-leg true error logged
-- [ ] **GATE M1a: 5/5 legs complete, mean true error < 0.5 m, no collisions**
+- [x] Patrol gate RUN 2026-07-31: **FAIL 4/5, mean 1.13 m — and the finding
+      that redefines M1.** Localization drifts monotonically over the mission
+      (est-vs-true by sixths: 0.21 → 0.44 → 1.65 → 2.0 m, never recovers;
+      scan-match loses anchor in the sparse N/E field and locks in wrong).
+      Single-goal runs end before drift matures — every prior green gate was
+      blind to this. The run-9 excursion class, now systematic.
+- [ ] **RUNTIME DRIFT BOUNDING (new, blocks M1a):** map-frame correction so
+      missions stay anchored — Phase A's dual-EKF/GPS bounding promoted from
+      "polish" to measured M1 blocker. Candidates: GPS-fused map-frame EKF
+      (sim form exists), slam re-convergence tuning (search window), or
+      re-anchor at known waypoints. Pick by measurement.
+- [ ] **GATE M1a (retry): 5/5 legs complete, mean true error < 0.5 m**
 - [ ] Two-panel tour video (replay | planner view) — the "driving around" demo
 - [ ] Eastern corridor (7.5, 4.0): one attempt per session, tracked not forced;
       promote to gate only when it passes twice
