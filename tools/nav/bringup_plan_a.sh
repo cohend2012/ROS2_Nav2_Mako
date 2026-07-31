@@ -52,10 +52,15 @@ SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export RO
 # Override for deliberate old-image tests: M20_ALLOW_STALE=1.
 if [ "${M20_ALLOW_STALE:-0}" != "1" ]; then
   REPO_MD5=$(md5sum "$REPO/src/m20_commander/m20_commander/commander_node.py" | cut -d" " -f1)
-  INST_MD5=$(docker exec $C bash -c 'md5sum $(find /ws/build/m20_commander /ws/install -name commander_node.py 2>/dev/null | head -1) 2>/dev/null' | cut -d" " -f1)
-  if [ -z "$INST_MD5" ] || [ "$REPO_MD5" != "$INST_MD5" ]; then
-    echo "ERROR: installed commander != repo (installed=$INST_MD5 repo=$REPO_MD5)."
-    echo "       Rebuild the image (make image + cyclone layer + recreate) or set M20_ALLOW_STALE=1."
+  INST_PATH=$(docker exec $C bash -c "find /ws -name commander_node.py 2>/dev/null | head -1")
+  if [ -z "$INST_PATH" ]; then
+    echo "ERROR: no commander_node.py found anywhere in /ws — image layout changed or container broken."
+    exit 1
+  fi
+  INST_MD5=$(docker exec $C md5sum "$INST_PATH" | cut -d" " -f1)
+  if [ "$REPO_MD5" != "$INST_MD5" ]; then
+    echo "ERROR: installed commander != repo ($INST_PATH=$INST_MD5 repo=$REPO_MD5)."
+    echo "       Rebuild the image (docker build + cyclone layer + recreate) or set M20_ALLOW_STALE=1."
     exit 1
   fi
 fi
