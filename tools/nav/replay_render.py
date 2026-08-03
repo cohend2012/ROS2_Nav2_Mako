@@ -40,16 +40,21 @@ try:
                 jrows.append((float(a[0]), np.array([float(v) for v in a[1:17]])))
 except FileNotFoundError:
     pass
+# bisect samplers — the linear min() scans were O(frames*rows) and timed out
+# on the 392 s patrol tour (67k rows x 7.8k frames ~ 500M ops)
+import bisect
+_jt = [r[0] - t0 for r in jrows]
 def sample_joints(tt):
     if not jrows:
         return None
-    i = min(range(len(jrows)), key=lambda k: abs((jrows[k][0]-t0)-tt))
+    i = min(max(bisect.bisect(_jt, tt) - 1, 0), len(jrows) - 1)
     return jrows[i][1]
 # resample to real-time FPS by timestamp
 frames_t = np.arange(0, dur, 1.0/FPS)
+_rt = [r[0] - t0 for r in rows]
 def sample(tt):
     # nearest logged row to time tt
-    i = min(range(len(rows)), key=lambda k: abs((rows[k][0]-t0)-tt))
+    i = min(max(bisect.bisect(_rt, tt) - 1, 0), len(rows) - 1)
     return rows[i]
 
 m = mujoco.MjModel.from_xml_path(str(M))
