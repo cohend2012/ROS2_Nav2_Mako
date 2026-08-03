@@ -49,8 +49,13 @@ def sample_joints(tt):
         return None
     i = min(max(bisect.bisect(_jt, tt) - 1, 0), len(jrows) - 1)
     return jrows[i][1]
-# resample to real-time FPS by timestamp
-frames_t = np.arange(0, dur, 1.0/FPS)
+# resample to real-time FPS by timestamp; FPS/TSTART/TEND env overrides let
+# long tours render in memory-safe chunks (the 392 s patrol OOM-killed a
+# single-pass render twice on the 6 GB VM)
+FPS = int(os.environ.get("FPS", FPS if isinstance(FPS, int) else 20))
+_ts = float(os.environ.get("TSTART", "0"))
+_te = float(os.environ.get("TEND", str(dur)))
+frames_t = np.arange(_ts, min(_te, dur), 1.0/FPS)
 _rt = [r[0] - t0 for r in rows]
 def sample(tt):
     # nearest logged row to time tt
