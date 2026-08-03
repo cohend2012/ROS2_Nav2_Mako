@@ -71,16 +71,18 @@ t0, t_end = true[0][0], true[-1][0]
 frames_t = np.arange(0.0, t_end - t0, 1.0 / FPS)
 
 
+import bisect
+_tcache = {}
 def latest(seq, tt):
-    """Last element with time <= t0+tt (seq sorted; dicts use key 't')."""
-    ans = None
-    for e in seq:
-        et = e["t"] if isinstance(e, dict) else e[0]
-        if et - t0 <= tt:
-            ans = e
-        else:
-            break
-    return ans
+    """Last element with time <= t0+tt (bisect; the linear walk was
+    O(frames*rows) and timed out on the 67k-row patrol log)."""
+    if not seq:
+        return None
+    key = id(seq)
+    if key not in _tcache:
+        _tcache[key] = [(e["t"] if isinstance(e, dict) else e[0]) - t0 for e in seq]
+    i = bisect.bisect(_tcache[key], tt) - 1
+    return seq[i] if i >= 0 else None
 
 
 fig, ax = plt.subplots(figsize=(9.6, 5.4), dpi=100)
