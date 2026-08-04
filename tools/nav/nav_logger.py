@@ -96,7 +96,7 @@ class Logger(Node):
                            yaw, *[round(float(r), 3) for r in m.ranges]))
     def on_local_plan(self, m):
         now = time.time()
-        if now - self._last_lplan < 1.0 or not m.poses:
+        if now - self._last_lplan < 0.25 or not m.poses:
             return
         self._last_lplan = now
         pts = []
