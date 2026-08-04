@@ -116,9 +116,17 @@ for tt in frames_t:
         ax.plot(p[1], p[2], "o", ms=7, color="#2ca02c", label="robot (true)")
         ax.arrow(p[1], p[2], 0.7 * math.cos(p[3]), 0.7 * math.sin(p[3]),
                  head_width=0.22, color="#2ca02c")
+    # interpolate est between samples (sample-hold made it trail even more
+    # than its real ~0.8 s latency — measured 2026-08-03)
     e = latest(est, tt)
     if e:
-        ax.plot(e[1], e[2], "x", ms=7, color="#9467bd", label="robot (est)")
+        i = est.index(e)
+        if i + 1 < len(est) and est[i+1][0] > e[0]:
+            f = min(1.0, (tt - (e[0] - t0)) / (est[i+1][0] - e[0]))
+            ex, ey = e[1] + f*(est[i+1][1]-e[1]), e[2] + f*(est[i+1][2]-e[2])
+        else:
+            ex, ey = e[1], e[2]
+        ax.plot(ex, ey, "x", ms=7, color="#9467bd", label="robot (est)")
     ax.plot(*GOAL, "*", ms=15, color="#d62728", label="goal")
     ax.set_xlim(extent[0], extent[1]); ax.set_ylim(extent[2], extent[3])
     ax.set_title(f"planner view  t={tt:5.1f}s")
