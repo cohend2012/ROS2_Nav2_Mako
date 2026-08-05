@@ -67,12 +67,18 @@ class AnchorGuardian(Node):
         gy = sum(p[1] for p in self.gps_buf) / len(self.gps_buf)
         residual = math.hypot(ex - gx, ey - gy)
         now = time.time()
-        if residual <= THRESH:
-            self.over_since = None
-            return
-        if self.over_since is None:
+        # HYSTERESIS (2026-08-03 patrol retry lesson): a hard reset below THRESH
+        # let a slowly-forming mis-lock flicker across the line forever — six
+        # "watching" entries, zero fires. Arm above THRESH, STAY armed while
+        # residual > 0.7*THRESH, disarm only below that; fire on cumulative
+        # armed time, not unbroken time.
+        if residual > THRESH and self.over_since is None:
             self.over_since = now
-            self.get_logger().warn(f"residual {residual:.2f} m > {THRESH} — watching")
+            self.get_logger().warn(f"residual {residual:.2f} m > {THRESH} — armed")
+        elif residual < 0.7 * THRESH and self.over_since is not None:
+            self.over_since = None
+            self.get_logger().info(f"residual {residual:.2f} m — disarmed")
+        if self.over_since is None:
             return
         if now - self.over_since < HOLD_S or now - self.last_fire < COOLDOWN_S:
             return
