@@ -185,6 +185,11 @@ fi
 if [ -n "${M20_STATIC_MAP:-}" ]; then
   echo "[4/7] starting slam_toolbox in LOCALIZATION mode (pre-built posegraph)"
   docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox localization_slam_toolbox_node --ros-args --params-file /cfg/localization_params.yaml >/cfg/out/slam.log 2>&1"
+  if [ "${M20_GUARDIAN:-1}" = "1" ]; then
+    echo "[4.5/7] starting anchor_guardian (mission drift bounding; M20_GUARDIAN=0 disables)"
+    docker cp "$REPO/tools/nav/anchor_guardian.py" $C:/cfg/anchor_guardian.py
+    docker exec -d $C bash -lc "$SRC; python3 /cfg/anchor_guardian.py >/cfg/out/guardian.log 2>&1"
+  fi
 else
   echo "[4/7] starting slam_toolbox (mapping)"
   docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox async_slam_toolbox_node --ros-args --params-file /cfg/mapper_params.yaml >/cfg/out/slam.log 2>&1"
