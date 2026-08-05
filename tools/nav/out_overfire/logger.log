@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/cfg/nav_logger.py", line 164, in <module>
+    main()
+  File "/cfg/nav_logger.py", line 151, in main
+    dump_all(); last_dump = time.time()
+  File "/cfg/nav_logger.py", line 129, in dump_all
+    dump("traj_true.csv", n.true, ["t", "x", "y", "yaw", "z", "roll", "pitch"])
+  File "/cfg/nav_logger.py", line 124, in dump
+    w = csv.writer(f); w.writerow(hdr); w.writerows(rows)
+KeyboardInterrupt

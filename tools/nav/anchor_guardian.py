@@ -30,10 +30,10 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from tf2_ros import Buffer, TransformListener
 
-THRESH = float(os.environ.get("GUARDIAN_THRESH", "1.0"))     # m
-HOLD_S = float(os.environ.get("GUARDIAN_HOLD", "3.0"))       # sustained secs
-COOLDOWN_S = float(os.environ.get("GUARDIAN_COOLDOWN", "15.0"))
-GPS_WINDOW = 5                                               # ~1 s at 5 Hz
+THRESH = float(os.environ.get("GUARDIAN_THRESH", "1.5"))     # m — healthy-max is ~1.2 (measured 2 runs, win 15)
+HOLD_S = float(os.environ.get("GUARDIAN_HOLD", "5.0"))       # sustained secs
+COOLDOWN_S = float(os.environ.get("GUARDIAN_COOLDOWN", "30.0"))
+GPS_WINDOW = 15                                              # ~3 s at 5 Hz (sigma ~0.2)
 
 
 class AnchorGuardian(Node):
@@ -75,7 +75,7 @@ class AnchorGuardian(Node):
         if residual > THRESH and self.over_since is None:
             self.over_since = now
             self.get_logger().warn(f"residual {residual:.2f} m > {THRESH} — armed")
-        elif residual < 0.7 * THRESH and self.over_since is not None:
+        elif residual < 1.0 and self.over_since is not None:   # disarm below healthy p95 band
             self.over_since = None
             self.get_logger().info(f"residual {residual:.2f} m — disarmed")
         if self.over_since is None:

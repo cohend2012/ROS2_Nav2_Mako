@@ -1,0 +1,37 @@
+[INFO] [1785944124.861679766] [slam_toolbox]: Using solver plugin solver_plugins::CeresSolver
+[INFO] [1785944124.862176362] [slam_toolbox]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+[WARN] [1785944124.870943583] [slam_toolbox]: LocalizationSlamToolbox: Starting localization at first node (dock) is correctly not supported.
+Load From File /cfg/maps/oil_gas_field.posegraph 
+Mapper <- Module
+Mapper <- m_pSequentialScanMatcher
+Mapper <- m_pGraph
+MapperGraph <- Graph; Graph <- m_Edges; Graph <- m_Vertices
+MapperGraph <- m_pMapper; MapperGraph <- m_pLoopScanMatcher; MapperGraph <- m_pTraversal
+Mapper <- m_pMapperSensorManager
+MapperSensorManager <- m_ScanManagers; MapperSensorManager <- m_Scans
+Mapper <- m_Listeners
+**Finished serializing Mapper**
+Load From File
+**Serializing Dataset**
+Dataset <- m_SensorNameLookup
+Dataset <- m_Data
+Dataset <- m_Lasers
+Dataset <- m_pDatasetInfo
+**Finished serializing Dataset**
+Registering sensor: [Custom Described Lidar]
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+W0805 15:35:24.915424   438 preprocessor.cc:62] Specified options.num_threads: 50 exceeds maximum available from the threading model Ceres was compiled with: 6.  Bounding to maximum number available.
+[WARN] [1785944124.932362213] [slam_toolbox]: minimum laser range setting (0.0 m) exceeds the capabilities of the used Lidar (0.5 m)
+Registering sensor: [Custom Described Lidar]
+[INFO] [1785944216.127711176] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-0.55 0.56), theta=1.42
+[INFO] [1785944233.114701780] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-1.28 -0.23), theta=-2.85
+[INFO] [1785944273.114392673] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-3.66 -0.98), theta=2.32
+[INFO] [1785944294.617651929] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-2.63 -0.14), theta=2.79
+[INFO] [1785944323.614602694] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-3.49 -0.33), theta=-2.72
+[INFO] [1785944385.119724150] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-4.14 0.44), theta=2.21
+[INFO] [1785944734.114989771] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-3.85 1.46), theta=2.18
+[INFO] [1785944793.115280648] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-3.73 0.58), theta=2.44
+[INFO] [1785944808.614621658] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-3.09 1.09), theta=2.02
+[INFO] [1785944887.115346648] [slam_toolbox]: LocalizePoseCallback: Localizing to: (-3.22 0.96), theta=1.86
+[INFO] [1785944938.881848386] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+terminate called after throwing an instance of 'karto::Exception'
