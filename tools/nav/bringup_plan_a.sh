@@ -185,6 +185,28 @@ fi
 if [ -n "${M20_STATIC_MAP:-}" ]; then
   echo "[4/7] starting slam_toolbox in LOCALIZATION mode (pre-built posegraph)"
   docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox localization_slam_toolbox_node --ros-args --params-file /cfg/localization_params.yaml >/cfg/out/slam.log 2>&1"
+  # SEED the localizer (2026-08-04 leg-1 root cause): map_start_at_dock is
+  # SILENTLY UNSUPPORTED in localization mode ("correctly not supported" in
+  # slam.log) — slam started UNSEEDED every mission; sometimes it converged
+  # from identity, sometimes leg 1 never localized and the robot never moved.
+  # Robot spawns at the map origin in sim; hardware will seed from GPS.
+  docker exec $C bash -lc "$SRC; timeout 20 python3 - <<'PYEOF'
+import rclpy
+from geometry_msgs.msg import PoseWithCovarianceStamped
+rclpy.init(); n = rclpy.create_node('loc_seed')
+pub = n.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
+while rclpy.ok() and pub.get_subscription_count() == 0:
+    rclpy.spin_once(n, timeout_sec=0.2)
+p = PoseWithCovarianceStamped()
+p.header.frame_id = 'map'
+p.header.stamp = n.get_clock().now().to_msg()
+p.pose.pose.orientation.w = 1.0
+p.pose.covariance[0] = p.pose.covariance[7] = 0.25
+p.pose.covariance[35] = 0.05
+pub.publish(p)
+import time; time.sleep(0.5)
+print('localization seeded at spawn')
+PYEOF" | tail -1
   if [ "${M20_GUARDIAN:-1}" = "1" ]; then
     echo "[4.5/7] starting anchor_guardian (mission drift bounding; M20_GUARDIAN=0 disables)"
     docker cp "$REPO/tools/nav/anchor_guardian.py" $C:/cfg/anchor_guardian.py
