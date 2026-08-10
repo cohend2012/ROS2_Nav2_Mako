@@ -1,0 +1,1535 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-08-05-15-51-48-598986-DanCohen-524
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [controller_server-1]: process started with pid [525]
+[INFO] [smoother_server-2]: process started with pid [527]
+[INFO] [planner_server-3]: process started with pid [529]
+[INFO] [behavior_server-4]: process started with pid [531]
+[INFO] [bt_navigator-5]: process started with pid [533]
+[INFO] [waypoint_follower-6]: process started with pid [535]
+[INFO] [velocity_smoother-7]: process started with pid [537]
+[INFO] [lifecycle_manager-8]: process started with pid [539]
+[waypoint_follower-6] [INFO] [1785945108.790068176] [waypoint_follower]: 
+[waypoint_follower-6] 	waypoint_follower lifecycle node launched. 
+[waypoint_follower-6] 	Waiting on external lifecycle transitions to activate
+[waypoint_follower-6] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[waypoint_follower-6] [INFO] [1785945108.793872603] [waypoint_follower]: Creating
+[smoother_server-2] [INFO] [1785945108.846845792] [smoother_server]: 
+[smoother_server-2] 	smoother_server lifecycle node launched. 
+[smoother_server-2] 	Waiting on external lifecycle transitions to activate
+[smoother_server-2] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[velocity_smoother-7] [INFO] [1785945108.848750427] [velocity_smoother]: 
+[velocity_smoother-7] 	velocity_smoother lifecycle node launched. 
+[velocity_smoother-7] 	Waiting on external lifecycle transitions to activate
+[velocity_smoother-7] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[smoother_server-2] [INFO] [1785945108.867375042] [smoother_server]: Creating smoother server
+[lifecycle_manager-8] [INFO] [1785945108.921325882] [lifecycle_manager_navigation]: Creating
+[behavior_server-4] [INFO] [1785945108.927081668] [behavior_server]: 
+[behavior_server-4] 	behavior_server lifecycle node launched. 
+[behavior_server-4] 	Waiting on external lifecycle transitions to activate
+[behavior_server-4] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[lifecycle_manager-8] [INFO] [1785945108.933356273] [lifecycle_manager_navigation]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[bt_navigator-5] [INFO] [1785945108.934306918] [bt_navigator]: 
+[bt_navigator-5] 	bt_navigator lifecycle node launched. 
+[bt_navigator-5] 	Waiting on external lifecycle transitions to activate
+[bt_navigator-5] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[bt_navigator-5] [INFO] [1785945108.935464622] [bt_navigator]: Creating
+[controller_server-1] [INFO] [1785945108.958881028] [controller_server]: 
+[controller_server-1] 	controller_server lifecycle node launched. 
+[controller_server-1] 	Waiting on external lifecycle transitions to activate
+[controller_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785945108.965503696] [planner_server]: 
+[planner_server-3] 	planner_server lifecycle node launched. 
+[planner_server-3] 	Waiting on external lifecycle transitions to activate
+[planner_server-3] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785945108.974820375] [planner_server]: Creating
+[controller_server-1] [INFO] [1785945108.977768408] [controller_server]: Creating controller server
+[controller_server-1] [INFO] [1785945109.001411805] [local_costmap.local_costmap]: 
+[controller_server-1] 	local_costmap lifecycle node launched. 
+[controller_server-1] 	Waiting on external lifecycle transitions to activate
+[controller_server-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[controller_server-1] [INFO] [1785945109.015185696] [local_costmap.local_costmap]: Creating Costmap
+[planner_server-3] [INFO] [1785945109.017743858] [global_costmap.global_costmap]: 
+[planner_server-3] 	global_costmap lifecycle node launched. 
+[planner_server-3] 	Waiting on external lifecycle transitions to activate
+[planner_server-3] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[planner_server-3] [INFO] [1785945109.021041141] [global_costmap.global_costmap]: Creating Costmap
+[lifecycle_manager-8] [INFO] [1785945109.052148268] [lifecycle_manager_navigation]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-8] [INFO] [1785945109.052439423] [lifecycle_manager_navigation]: [34m[1mConfiguring controller_server[0m[0m
+[controller_server-1] [INFO] [1785945109.053646868] [controller_server]: Configuring controller interface
+[controller_server-1] [INFO] [1785945109.054043296] [controller_server]: getting goal checker plugins..
+[controller_server-1] [INFO] [1785945109.054182984] [controller_server]: Controller frequency set to 20.0000Hz
+[controller_server-1] [INFO] [1785945109.054226546] [local_costmap.local_costmap]: Configuring
+[controller_server-1] [INFO] [1785945109.057069299] [local_costmap.local_costmap]: Using plugin "obstacle_layer"
+[controller_server-1] [INFO] [1785945109.071824171] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[controller_server-1] [INFO] [1785945109.077685920] [local_costmap.local_costmap]: Initialized plugin "obstacle_layer"
+[controller_server-1] [INFO] [1785945109.078037775] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[controller_server-1] [INFO] [1785945109.079331233] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[controller_server-1] [INFO] [1785945109.095757790] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker
+[controller_server-1] [INFO] [1785945109.097013735] [controller_server]: Created goal checker : goal_checker of type nav2_controller::SimpleGoalChecker
+[controller_server-1] [INFO] [1785945109.097378115] [controller_server]: Controller Server has goal_checker  goal checkers available.
+[controller_server-1] [INFO] [1785945109.105339189] [controller_server]: Created controller : FollowPath of type dwb_core::DWBLocalPlanner
+[controller_server-1] [INFO] [1785945109.107915468] [controller_server]: Setting transform_tolerance to 0.300000
+[controller_server-1] [INFO] [1785945109.126051042] [controller_server]: Using critic "RotateToGoal" (dwb_critics::RotateToGoalCritic)
+[controller_server-1] [INFO] [1785945109.127526348] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785945109.127861786] [controller_server]: Using critic "Oscillation" (dwb_critics::OscillationCritic)
+[controller_server-1] [INFO] [1785945109.128778925] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785945109.128905601] [controller_server]: Using critic "BaseObstacle" (dwb_critics::BaseObstacleCritic)
+[controller_server-1] [INFO] [1785945109.129137862] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785945109.129231468] [controller_server]: Using critic "GoalAlign" (dwb_critics::GoalAlignCritic)
+[controller_server-1] [INFO] [1785945109.130478160] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785945109.130702385] [controller_server]: Using critic "PathAlign" (dwb_critics::PathAlignCritic)
+[controller_server-1] [INFO] [1785945109.131266211] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785945109.131519248] [controller_server]: Using critic "PathDist" (dwb_critics::PathDistCritic)
+[controller_server-1] [INFO] [1785945109.131985975] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785945109.132194843] [controller_server]: Using critic "GoalDist" (dwb_critics::GoalDistCritic)
+[controller_server-1] [INFO] [1785945109.132643593] [controller_server]: Critic plugin initialized
+[controller_server-1] [INFO] [1785945109.132759982] [controller_server]: Controller Server has FollowPath  controllers available.
+[lifecycle_manager-8] [INFO] [1785945109.142419504] [lifecycle_manager_navigation]: [34m[1mConfiguring smoother_server[0m[0m
+[smoother_server-2] [INFO] [1785945109.142714734] [smoother_server]: Configuring smoother server
+[smoother_server-2] [INFO] [1785945109.157179177] [smoother_server]: Created smoother : simple_smoother of type nav2_smoother::SimpleSmoother
+[smoother_server-2] [INFO] [1785945109.160954895] [smoother_server]: Smoother Server has simple_smoother  smoothers available.
+[lifecycle_manager-8] [INFO] [1785945109.173921696] [lifecycle_manager_navigation]: [34m[1mConfiguring planner_server[0m[0m
+[planner_server-3] [INFO] [1785945109.174236279] [planner_server]: Configuring
+[planner_server-3] [INFO] [1785945109.174271895] [global_costmap.global_costmap]: Configuring
+[planner_server-3] [INFO] [1785945109.186458415] [global_costmap.global_costmap]: Using plugin "obstacle_layer"
+[planner_server-3] [INFO] [1785945109.192383709] [global_costmap.global_costmap]: Subscribed to Topics: scan
+[planner_server-3] [INFO] [1785945109.199330375] [global_costmap.global_costmap]: Initialized plugin "obstacle_layer"
+[planner_server-3] [INFO] [1785945109.199423367] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[planner_server-3] [INFO] [1785945109.200642162] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[planner_server-3] [INFO] [1785945109.215432541] [planner_server]: Created global planner plugin GridBased of type nav2_navfn_planner/NavfnPlanner
+[planner_server-3] [INFO] [1785945109.215506092] [planner_server]: Configuring plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785945109.216857081] [planner_server]: Planner Server has GridBased  planners available.
+[lifecycle_manager-8] [INFO] [1785945109.228805403] [lifecycle_manager_navigation]: [34m[1mConfiguring behavior_server[0m[0m
+[behavior_server-4] [INFO] [1785945109.230099017] [behavior_server]: Configuring
+[behavior_server-4] [INFO] [1785945109.245987444] [behavior_server]: Creating behavior plugin spin of type nav2_behaviors/Spin
+[behavior_server-4] [INFO] [1785945109.248919038] [behavior_server]: Configuring spin
+[behavior_server-4] [INFO] [1785945109.258697342] [behavior_server]: Creating behavior plugin backup of type nav2_behaviors/BackUp
+[behavior_server-4] [INFO] [1785945109.262178655] [behavior_server]: Configuring backup
+[behavior_server-4] [INFO] [1785945109.275046546] [behavior_server]: Creating behavior plugin wait of type nav2_behaviors/Wait
+[behavior_server-4] [INFO] [1785945109.278802681] [behavior_server]: Configuring wait
+[lifecycle_manager-8] [INFO] [1785945109.290262479] [lifecycle_manager_navigation]: [34m[1mConfiguring bt_navigator[0m[0m
+[bt_navigator-5] [INFO] [1785945109.290762340] [bt_navigator]: Configuring
+[lifecycle_manager-8] [INFO] [1785945109.558960337] [lifecycle_manager_navigation]: [34m[1mConfiguring waypoint_follower[0m[0m
+[waypoint_follower-6] [INFO] [1785945109.559524155] [waypoint_follower]: Configuring
+[waypoint_follower-6] [INFO] [1785945109.582681650] [waypoint_follower]: Created waypoint_task_executor : wait_at_waypoint of type nav2_waypoint_follower::WaitAtWaypoint
+[waypoint_follower-6] [INFO] [1785945109.585545287] [waypoint_follower]: Waypoint pause duration is set to zero, disabling task executor plugin.
+[lifecycle_manager-8] [INFO] [1785945109.592665480] [lifecycle_manager_navigation]: [34m[1mConfiguring velocity_smoother[0m[0m
+[velocity_smoother-7] [INFO] [1785945109.594161997] [velocity_smoother]: Configuring velocity smoother
+[lifecycle_manager-8] [INFO] [1785945109.615253122] [lifecycle_manager_navigation]: [34m[1mActivating controller_server[0m[0m
+[controller_server-1] [INFO] [1785945109.615549447] [controller_server]: Activating
+[controller_server-1] [INFO] [1785945109.615585999] [local_costmap.local_costmap]: Activating
+[controller_server-1] [INFO] [1785945109.615598678] [local_costmap.local_costmap]: Checking transform
+[controller_server-1] [INFO] [1785945109.616118001] [local_costmap.local_costmap]: start
+[controller_server-1] [INFO] [1785945109.866679985] [controller_server]: Creating bond (controller_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945109.975543467] [lifecycle_manager_navigation]: Server controller_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785945109.975638578] [lifecycle_manager_navigation]: [34m[1mActivating smoother_server[0m[0m
+[smoother_server-2] [INFO] [1785945109.976322956] [smoother_server]: Activating
+[smoother_server-2] [INFO] [1785945109.976382592] [smoother_server]: Creating bond (smoother_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945110.081925615] [lifecycle_manager_navigation]: Server smoother_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785945110.082063695] [lifecycle_manager_navigation]: [34m[1mActivating planner_server[0m[0m
+[planner_server-3] [INFO] [1785945110.082831724] [planner_server]: Activating
+[planner_server-3] [INFO] [1785945110.082917302] [global_costmap.global_costmap]: Activating
+[planner_server-3] [INFO] [1785945110.082939064] [global_costmap.global_costmap]: Checking transform
+[planner_server-3] [INFO] [1785945110.083612809] [global_costmap.global_costmap]: start
+[planner_server-3] [INFO] [1785945111.135106574] [planner_server]: Activating plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785945111.136993752] [planner_server]: Creating bond (planner_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945111.243182870] [lifecycle_manager_navigation]: Server planner_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785945111.243404626] [lifecycle_manager_navigation]: [34m[1mActivating behavior_server[0m[0m
+[behavior_server-4] [INFO] [1785945111.243890004] [behavior_server]: Activating
+[behavior_server-4] [INFO] [1785945111.243946022] [behavior_server]: Activating spin
+[behavior_server-4] [INFO] [1785945111.243971042] [behavior_server]: Activating backup
+[behavior_server-4] [INFO] [1785945111.243988141] [behavior_server]: Activating wait
+[behavior_server-4] [INFO] [1785945111.244009383] [behavior_server]: Creating bond (behavior_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945111.354920944] [lifecycle_manager_navigation]: Server behavior_server connected with bond.
+[lifecycle_manager-8] [INFO] [1785945111.355055056] [lifecycle_manager_navigation]: [34m[1mActivating bt_navigator[0m[0m
+[bt_navigator-5] [INFO] [1785945111.355765826] [bt_navigator]: Activating
+[bt_navigator-5] [INFO] [1785945111.437338141] [bt_navigator]: Creating bond (bt_navigator) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945111.544015055] [lifecycle_manager_navigation]: Server bt_navigator connected with bond.
+[lifecycle_manager-8] [INFO] [1785945111.544090351] [lifecycle_manager_navigation]: [34m[1mActivating waypoint_follower[0m[0m
+[waypoint_follower-6] [INFO] [1785945111.544639661] [waypoint_follower]: Activating
+[waypoint_follower-6] [INFO] [1785945111.544692188] [waypoint_follower]: Creating bond (waypoint_follower) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945111.652709197] [lifecycle_manager_navigation]: Server waypoint_follower connected with bond.
+[lifecycle_manager-8] [INFO] [1785945111.652842461] [lifecycle_manager_navigation]: [34m[1mActivating velocity_smoother[0m[0m
+[velocity_smoother-7] [INFO] [1785945111.653447705] [velocity_smoother]: Activating
+[velocity_smoother-7] [INFO] [1785945111.653531564] [velocity_smoother]: Creating bond (velocity_smoother) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945111.762292044] [lifecycle_manager_navigation]: Server velocity_smoother connected with bond.
+[lifecycle_manager-8] [INFO] [1785945111.762376908] [lifecycle_manager_navigation]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-8] [INFO] [1785945111.762388848] [lifecycle_manager_navigation]: [34m[1mCreating bond timer...[0m[0m
+[bt_navigator-5] [INFO] [1785945125.941544563] [bt_navigator]: Begin navigating from current location (0.10, -0.10) to (-6.00, -0.50)
+[controller_server-1] [INFO] [1785945125.964892918] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785945125.964969984] [controller_server]: No goal checker was specified in parameter 'current_goal_checker'. Server will use only plugin loaded goal_checker . This warning will appear once.
+[controller_server-1] [INFO] [1785945127.015383424] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945127.138878314] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945128.065388125] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945129.065367105] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945130.115341579] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945131.115331042] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945132.165399860] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945133.215380681] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945134.215372358] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945135.270445586] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945136.265393014] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945137.315703878] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945138.317813168] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945138.489166694] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945138.559833248] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945138.686955911] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945139.365851875] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945139.501622297] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945139.794272743] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945140.385570895] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945140.415362572] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945140.551952595] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945140.896329183] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945141.073940683] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945141.250304209] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945141.415448131] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945141.584927196] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945141.598450407] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945141.785096745] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.313123078] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.397152637] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.426627726] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.458683256] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945142.465431985] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945142.494635230] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.555284994] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.674611557] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.674945638] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.778063414] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.861047834] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.886476877] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945142.971170933] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945143.026439627] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945143.061981413] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.151791959] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.155232980] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.162113846] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.206228728] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.340423859] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.429159139] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.512615310] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945143.516020615] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945143.563117702] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.677905343] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.793742822] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945143.863947829] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945143.870045160] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945143.915115857] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945144.023844506] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945144.328708308] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945144.515571359] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945144.551744562] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945145.294278246] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945145.565379748] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945146.566157530] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945147.615922050] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945148.617330167] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945149.665626236] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945150.665372065] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945151.715374108] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945152.715367718] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945153.614935109] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945153.685146766] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945153.765332847] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945154.815406740] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945155.667890616] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945155.815374979] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945156.865323116] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945157.865372773] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945157.957481136] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945158.917195327] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945159.915363880] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945160.965396939] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945162.015375192] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945163.015395133] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945163.089926562] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945164.065397640] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945165.065391762] [controller_server]: Passing new path to controller.
+[controller_server-1] [ERROR] [1785945165.965476008] [controller_server]: Failed to make progress
+[controller_server-1] [WARN] [1785945165.965634990] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945165.978497879] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785945165.983666387] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [INFO] [1785945166.136415544] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945167.136380676] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945168.186362642] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945168.690233645] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945169.186397578] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945170.236358796] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945170.592093949] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945170.656458375] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945170.657685082] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945171.286427111] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945172.286341802] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945173.301574145] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945173.339981993] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945174.386368704] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945175.386361491] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945176.436386763] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945177.436553107] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945178.486349472] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945179.536427911] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945180.536402384] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945181.431422863] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945181.433123066] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945181.586345478] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945182.586358549] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945183.636351995] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945183.728103816] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945183.732472001] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945183.806900497] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945184.094952191] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945184.248526273] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945184.375670451] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945184.691409013] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945184.720659085] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945184.856092508] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945184.872127493] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945184.904774959] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945184.918636325] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945185.094052211] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945185.155490311] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945185.219700832] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945185.687558478] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945186.300767785] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945186.686404601] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945187.736399821] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945188.786351594] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945189.786371378] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945190.836635078] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945191.836368856] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945192.886371654] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945193.842536807] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945193.936394580] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945194.936401587] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945195.986382983] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945196.986358429] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945197.532801567] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945197.853083063] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945197.915401426] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945197.986375834] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945198.356781420] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945198.726976679] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945198.791935718] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945198.793086419] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945198.843429784] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945199.036370031] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945200.036397475] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945201.086344192] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945202.086400551] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945203.136363477] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945204.163626604] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945204.185811946] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945204.186360015] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945205.186346506] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945205.730600850] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [ERROR] [1785945206.036541437] [controller_server]: Failed to make progress
+[controller_server-1] [WARN] [1785945206.036672294] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945206.050984985] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-3] [INFO] [1785945206.051586717] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-1] [INFO] [1785945206.111536786] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785945206.225904458] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945207.176027629] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945208.177955839] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945209.226075171] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945210.225982035] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945211.275989142] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945212.276014942] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945213.326032895] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945213.870979938] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945213.890892281] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945214.376028877] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945215.375990371] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945216.425977695] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945217.280974206] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945217.425986663] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945218.477233593] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945219.291605599] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945219.476105915] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945220.526009643] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945221.576016326] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945222.575987899] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945223.626019489] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945224.626006841] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945224.686539316] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945225.676176365] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945226.677258083] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945227.726022780] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945228.777977271] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945228.866046785] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945228.924879761] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945228.959774628] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945228.999853755] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945229.776295323] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945230.826024173] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945231.826010961] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945232.876041500] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945233.876055549] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945234.877396048] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945235.926001261] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945236.976066716] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945237.975993794] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945239.026000066] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945240.026062579] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945241.076041553] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945242.126568031] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945243.126061120] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945244.125982746] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945245.176022529] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945245.286048959] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945246.177859281] [controller_server]: Passing new path to controller.
+[controller_server-1] [ERROR] [1785945246.226060331] [controller_server]: Failed to make progress
+[controller_server-1] [WARN] [1785945246.226231031] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945246.246359984] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785945246.249999819] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785945246.423569458] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945247.223694697] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945247.996512369] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945248.224135970] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945248.955120873] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945249.033019576] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945249.274761781] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945250.114465181] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945250.184511294] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945250.248793381] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945250.273850165] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945251.323737523] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945252.323993444] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945253.373768913] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945254.373872746] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945255.423696986] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945255.928365578] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945255.946484794] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945255.994909774] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945256.473675785] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945256.729293964] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945256.738297520] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945256.830073171] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945256.895344585] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945256.908620710] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945256.968437069] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.000719616] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.032070297] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.065446236] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.098746950] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945257.117986270] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945257.129566428] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945257.150579600] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945257.176281752] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945257.183735270] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945257.227899619] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.296366379] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.358388617] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.381032596] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.452445558] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945257.530007211] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945257.546514221] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.546604746] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for follow_path
+[behavior_server-4] [INFO] [1785945257.554301311] [behavior_server]: Running spin
+[behavior_server-4] [INFO] [1785945257.554694032] [behavior_server]: Turning 1.57 for spin behavior.
+[controller_server-1] [WARN] [1785945257.726565498] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945257.767892351] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.838687245] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.902913673] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945257.987274606] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.095496431] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.111296017] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945258.129245614] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785945258.178436990] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945258.206878548] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.287360329] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.399335910] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.480088069] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.510702576] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.562393168] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.590797385] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.694703196] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.895595210] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.939043183] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.948923119] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.975233155] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945258.997758561] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.008436022] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.082720910] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.086674647] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.166655791] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.244149797] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.260606290] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.285734298] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.288645393] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945259.798415855] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945260.188863970] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945261.260648210] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945261.296479301] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945261.688840880] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945262.647248136] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945262.677154242] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945262.695161172] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945262.709166201] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945264.011140715] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945264.117115886] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945264.181095061] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[behavior_server-4] [WARN] [1785945267.554904620] [behavior_server]: Exceeded time allowance before reaching the Spin goal - Exiting Spin
+[behavior_server-4] [WARN] [1785945267.555483838] [behavior_server]: spin failed
+[behavior_server-4] [WARN] [1785945267.555507286] [behavior_server]: [spin] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785945267.568044717] [behavior_server]: Running wait
+[bt_navigator-5] [WARN] [1785945267.858168509] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945267.886221810] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[behavior_server-4] [INFO] [1785945272.569032106] [behavior_server]: wait completed successfully
+[controller_server-1] [INFO] [1785945272.623665499] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945273.682550551] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945273.687789955] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945273.727822711] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945274.723711160] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945275.723749252] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945276.773690629] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945277.361556067] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945277.389464643] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945277.683863108] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945277.723970346] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945277.762740749] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945277.793839738] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945277.826052081] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945277.994384757] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945278.873682892] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945279.074022879] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945279.122127573] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945279.154122840] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945279.873671536] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945280.873650406] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945281.923695966] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945282.543978196] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945282.975463716] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945283.973681662] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945285.023688562] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945286.023692099] [controller_server]: Passing new path to controller.
+[controller_server-1] [ERROR] [1785945286.423787052] [controller_server]: Failed to make progress
+[controller_server-1] [WARN] [1785945286.425165244] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945286.443664154] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785945286.446718210] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785945286.623624717] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945287.068464016] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945287.279143798] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945288.073757545] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945288.829676628] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945288.850070912] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945289.124473593] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945289.877809218] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945290.173830443] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945291.173888591] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945292.223726532] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945293.223747983] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945293.461197464] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945294.170467605] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945294.273732320] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945294.274993675] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945294.328145835] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945295.323781091] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945295.441870953] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945295.479595934] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945296.323729771] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945297.373751801] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945298.374913835] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945299.181686636] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945299.423943439] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945300.423881601] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945301.474366625] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945302.474181946] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945302.810453527] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945303.301943634] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945303.523744697] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945304.525850132] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945305.573714757] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945306.573753037] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945307.623805498] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945308.623711164] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945309.594618063] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945309.679134297] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945309.725444680] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945310.723774336] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945311.773736731] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945312.439892138] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945312.451773699] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945312.469926892] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945312.510391124] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945312.773709462] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945313.823756448] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945314.823769921] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945315.273763606] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945315.353486203] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945315.810376067] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945315.816870048] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945315.891818671] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945315.925507990] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945315.925604575] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for follow_path
+[behavior_server-4] [INFO] [1785945315.926776578] [behavior_server]: Running backup
+[controller_server-1] [WARN] [1785945315.928364164] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[behavior_server-4] [INFO] [1785945315.929720613] [behavior_server]: DriveOnHeading: no acceleration or deceleration limits set
+[bt_navigator-5] [WARN] [1785945315.959045908] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945315.965820240] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945315.986554368] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945316.142511137] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945316.151221998] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945316.218280143] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945316.653776762] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945317.814539276] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945317.846007341] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945317.896564986] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945317.925093943] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945317.989295772] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.076878789] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.094079500] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.130287310] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.329147782] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.330909213] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.361671744] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.392874239] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.451124394] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945318.752473479] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945319.193050744] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945322.685368578] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945324.247285888] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945324.394350315] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945324.462059297] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945324.721401661] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945324.845974278] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945324.953385233] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945324.965014395] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[behavior_server-4] [WARN] [1785945325.929746523] [behavior_server]: Exceeded time allowance before reaching the DriveOnHeading goal - Exiting DriveOnHeading
+[behavior_server-4] [WARN] [1785945325.930173066] [behavior_server]: backup failed
+[behavior_server-4] [WARN] [1785945325.930215097] [behavior_server]: [backup] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945325.942155030] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-3] [INFO] [1785945325.944528231] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-1] [WARN] [1785945326.033139986] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945326.123215782] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945326.124664314] [controller_server]: Passing new path to controller.
+[controller_server-1] [ERROR] [1785945326.623781601] [controller_server]: Failed to make progress
+[controller_server-1] [WARN] [1785945326.623982837] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945326.641963966] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785945326.646510196] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785945326.820336633] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945327.160720568] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945327.903693619] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945327.984017706] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945328.086723168] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945328.220551232] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945329.220468534] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945329.344772969] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945330.168063005] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945330.270507729] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945331.270454019] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [INFO] [1785945331.694810154] [bt_navigator]: Received goal preemption request
+[bt_navigator-5] [INFO] [1785945331.695519980] [bt_navigator]: Begin navigating from current location (0.10, -0.10) to (-7.00, 2.00)
+[controller_server-1] [INFO] [1785945332.320430709] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945333.370463601] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945334.371147668] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945335.420508940] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945336.470466307] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945337.470506466] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945338.365051674] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945338.484259828] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945338.496785735] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945338.520423377] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945339.294100526] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945339.404998539] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945339.458226444] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945339.527424552] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945339.728823723] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945339.785126817] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945340.570528840] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945340.857854186] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945340.900483054] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945340.927969102] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945341.010542779] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945341.620665882] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945342.620452247] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945343.673438985] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945344.086191008] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945344.670562558] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945345.720472349] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945346.720468339] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945347.772478760] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945348.820536486] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945349.198979183] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945349.820426110] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945350.139566173] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945350.213020048] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945350.871082769] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945351.871359697] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945352.921289983] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945353.970445382] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945354.363326761] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945354.372513870] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945354.426654798] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945354.492230181] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945354.970501941] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945356.020594419] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945357.070477877] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945358.071110130] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945359.120430179] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945359.388726578] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945359.433626038] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945359.802790846] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945360.032792974] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945360.093590599] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945360.121495152] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945360.462083289] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945360.465436322] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945360.494058431] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945361.174703564] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945361.873512033] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945361.963892453] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945362.034792808] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945362.053274810] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945362.071284072] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945362.220814958] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945363.220470345] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945364.255572881] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945364.291706978] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945364.291753223] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose
+[planner_server-3] [INFO] [1785945364.304578289] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945364.310298097] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945364.322087351] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945364.674477285] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945364.771897646] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945364.843587706] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945364.893644801] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945364.937399954] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945364.963890481] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945365.093800653] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[planner_server-3] [WARN] [1785945365.096986807] [planner_server]: Planner loop missed its desired rate of 2.0000 Hz. Current loop rate is 1.2869 Hz
+[controller_server-1] [INFO] [1785945365.122103086] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945365.127802996] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945366.172972110] [controller_server]: Passing new path to controller.
+[controller_server-1] [ERROR] [1785945366.820541020] [controller_server]: Failed to make progress
+[controller_server-1] [WARN] [1785945366.820729387] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785945366.834555254] [behavior_server]: Running spin
+[behavior_server-4] [INFO] [1785945366.834781099] [behavior_server]: Turning 1.57 for spin behavior.
+[bt_navigator-5] [WARN] [1785945369.458955710] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945369.640023475] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945371.560206335] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[behavior_server-4] [INFO] [1785945372.635226815] [behavior_server]: spin completed successfully
+[controller_server-1] [INFO] [1785945372.682492912] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [INFO] [1785945373.734021037] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945373.922208305] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945374.252009288] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945374.271317086] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945374.577532946] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945374.784027277] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945375.498714703] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945375.784090345] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945376.590356715] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945376.811212048] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945376.855950081] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945376.884042405] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945377.136714490] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945377.149887131] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945377.223201814] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945377.389758941] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945377.407188181] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945377.802423045] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945377.896614841] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945377.912641422] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945377.936245118] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945377.979919525] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.041244270] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.060231494] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.095118459] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.145456205] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.207764934] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.589205152] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.672681385] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.738063758] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945378.788654542] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945378.934052568] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945378.996192977] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945379.151434470] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945379.364360644] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945379.380598670] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945379.406895720] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945379.424936558] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945379.435096597] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945379.658056186] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945379.933988719] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945379.937547053] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945380.545307215] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945380.949221522] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945380.996696345] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945380.996750114] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose
+[planner_server-3] [INFO] [1785945380.999560366] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945381.018010565] [bt_navigator_navigate_to_pose_rclcpp_node]: Node timed out while executing service call to global_costmap/clear_entirely_global_costmap.
+[controller_server-1] [WARN] [1785945381.021497674] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [ERROR] [1785945381.065863806] [bt_navigator_navigate_to_pose_rclcpp_node]: Failed to get result for follow_path in node halt!
+[behavior_server-4] [INFO] [1785945381.085467761] [behavior_server]: Running wait
+[controller_server-1] [INFO] [1785945381.086210674] [controller_server]: Goal was canceled. Stopping the robot.
+[controller_server-1] [INFO] [1785945381.086282994] [controller_server]: [follow_path] [ActionServer] Client requested to cancel the goal. Cancelling.
+[bt_navigator-5] [WARN] [1785945381.092673462] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945381.138345732] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945381.162750088] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945381.233831237] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945381.253150298] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945381.465124063] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945384.364472312] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945384.443728102] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945384.467082878] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945384.494389431] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945384.558414593] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945384.650558128] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945385.996971549] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[behavior_server-4] [INFO] [1785945386.090599596] [behavior_server]: wait completed successfully
+[bt_navigator-5] [WARN] [1785945386.091779452] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945386.153648165] [controller_server]: Received a goal, begin computing control effort.
+[bt_navigator-5] [WARN] [1785945386.190712703] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945386.465125397] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945386.691340924] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945386.725681370] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945386.766536892] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945386.863711410] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945387.012086322] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945387.208091836] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945387.457117093] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945387.557986420] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945388.030207452] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945388.170565237] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945388.208121473] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945388.555106560] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945388.570147206] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945388.648592883] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945388.679684427] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945388.728656905] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945389.258116578] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945389.678625751] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945389.716614099] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945389.764574471] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945389.814797640] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785945390.259284714] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945390.979065818] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945391.258516539] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945391.261987114] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945391.494159681] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945391.570923981] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945391.609661869] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945391.631292246] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945391.682263971] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945391.716148141] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945391.732948449] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945392.122072447] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945392.154323632] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945392.176941603] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945392.308081050] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945393.358321809] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945394.358224333] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945395.408109168] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945396.408061945] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945396.413978834] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945397.181191692] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945397.458091597] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945398.508100176] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945398.518038032] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945398.582405733] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945398.678842289] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945398.710194250] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945398.804693434] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945398.844413177] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945398.858065760] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945399.121953537] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945399.208478718] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945399.288289651] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945399.486334939] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945399.489649067] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945399.508092982] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945400.173021818] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945400.274303321] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945400.313638152] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945400.369399098] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945400.558100263] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945401.558023959] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945402.608093579] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945403.608135313] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945404.660390144] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945405.658518228] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945406.708066837] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945407.758925672] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945408.758118363] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945409.808101022] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945409.994501750] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945410.050473532] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945410.106619641] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945410.121930642] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945410.141923070] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945410.259301139] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945410.808121319] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945411.859904317] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945412.858111454] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945413.908087691] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945414.908100700] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945415.958083481] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945416.247088061] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945416.313584273] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945416.373283978] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945417.008087963] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945418.008109588] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945419.058092651] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945420.108099469] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945420.313592838] [controller_server]: Reached the goal!
+[bt_navigator-5] [INFO] [1785945420.347767896] [bt_navigator]: Goal succeeded
+[bt_navigator-5] [INFO] [1785945426.323345907] [bt_navigator]: Begin navigating from current location (-7.18, 1.95) to (2.00, 4.00)
+[controller_server-1] [INFO] [1785945426.351082725] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [INFO] [1785945427.402080313] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945428.452118092] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945429.452188009] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945430.502107684] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945431.502083523] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945432.554317867] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945432.797615197] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945432.839148346] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945433.282534618] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945433.466049598] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945433.566876203] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945433.583598668] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945433.584973602] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for follow_path
+[controller_server-1] [INFO] [1785945433.585202624] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [WARN] [1785945433.588858446] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945433.622224700] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945434.184334014] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945434.292848034] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945434.305286373] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945434.341256321] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945434.400108935] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945434.403059913] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945434.417795448] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945434.513267455] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945434.652106334] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945434.799786086] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945434.880085783] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945435.451202774] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945435.652438878] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945435.683060137] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945435.934337838] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945435.963460139] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.314429098] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.385298417] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.569351922] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.577127929] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.589074982] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.718996511] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.734321112] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.741915220] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945436.760482898] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945436.760564059] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945436.789285339] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945436.825394509] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.059348959] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.350144203] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.396857534] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.411343513] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.482696899] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.504598702] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.517952634] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945437.538251509] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785945437.560661764] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945437.563227387] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945437.805897474] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945437.902085377] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945437.960499712] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945438.852123760] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945439.902088399] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945440.902084856] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945441.952079546] [controller_server]: Passing new path to controller.
+[planner_server-3] [WARN] [1785945442.938028262] [planner_server]: GridBased: failed to create plan with tolerance 0.50.
+[planner_server-3] [WARN] [1785945442.939381532] [planner_server]: Planning algorithm GridBased failed to generate a valid path to (2.00, 4.00)
+[planner_server-3] [WARN] [1785945442.939537538] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.
+[planner_server-3] [INFO] [1785945442.963098166] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-1] [INFO] [1785945443.154755011] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945444.152344926] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945445.202304612] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945446.192118348] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945446.206386818] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945447.252111899] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945447.863834883] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945448.252109766] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945448.266419097] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945448.302537812] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945448.318220107] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945448.362334111] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945449.302140741] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945449.767099753] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945449.809503357] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945449.871714390] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945450.360118758] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945451.359604598] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945452.409589268] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945453.459624862] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945454.459631576] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945454.867679734] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945454.884195132] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945454.931236277] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945454.932268922] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945455.012061967] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945455.134622421] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945455.185955829] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945455.191969047] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945455.392088965] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945455.466207746] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945455.513338265] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945455.559677208] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945456.560483699] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945457.283599474] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945457.303699150] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945457.373832389] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945457.609634525] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945457.934313565] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945458.609739936] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945458.820120885] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945458.874854485] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945458.990385531] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945459.659628734] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945460.282416208] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945460.513864049] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945460.709634833] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945461.055799104] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945461.660527000] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945461.709683884] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945462.759670598] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945463.809658233] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945463.842822827] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945463.862056576] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945463.874742890] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945463.890971486] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945463.926301016] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945464.809639187] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945465.859620558] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945466.859621265] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945467.326962756] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945467.392915906] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945467.911862046] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945468.909661305] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945469.959635087] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945470.959682392] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945472.009592312] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945473.007727049] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945473.061827625] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945473.667035197] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945474.060126135] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945474.818504246] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945474.898165210] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945474.940997731] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945475.109719258] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945476.109667179] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945477.109835228] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945477.834182224] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945478.159636672] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945479.159628525] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945480.209646042] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945480.671438066] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945481.209627858] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945481.672887562] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785945482.259624136] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945482.469232914] [controller_server]: No valid trajectories out of 251! 
+[planner_server-3] [WARN] [1785945483.243084382] [planner_server]: GridBased: failed to create plan with tolerance 0.50.
+[planner_server-3] [WARN] [1785945483.243190938] [planner_server]: Planning algorithm GridBased failed to generate a valid path to (2.00, 4.00)
+[planner_server-3] [WARN] [1785945483.243216030] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.
+[planner_server-3] [INFO] [1785945483.265915900] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945483.975914382] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945484.047546742] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[planner_server-3] [WARN] [1785945484.115109433] [planner_server]: Planner loop missed its desired rate of 2.0000 Hz. Current loop rate is 1.1800 Hz
+[controller_server-1] [INFO] [1785945484.159636063] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945484.234557361] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945484.365180763] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945484.616931482] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945484.620164130] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945484.683468185] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945484.811904812] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945484.814024138] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945484.880092321] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945484.932935672] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945484.983814701] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.082678959] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.146199444] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.149466479] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.162141425] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.197337534] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945485.216554931] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945485.261219521] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945485.263245374] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945485.293477787] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.340367186] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945485.343376586] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945485.356522525] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945485.371864905] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945485.387009982] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.404506491] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.438179442] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.451293389] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.466617070] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.503305602] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945485.514550439] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945485.564224537] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.638328399] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.657547790] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.742303412] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.770027485] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.847622379] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.922970935] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.973864516] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945485.984404417] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945486.309632730] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945487.359799591] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945488.409638733] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945489.459714327] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945490.274325992] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945490.510225919] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945491.531070032] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945491.559786285] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945492.233701523] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.267052649] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.270373695] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.382619277] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.441808130] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.474391947] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.505217027] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.530422182] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945492.534547873] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945492.612576314] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945492.679241184] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.731159269] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945492.820531268] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945493.073025936] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945493.663784888] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945493.719640910] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945493.815387851] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945494.285727293] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945494.759617386] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945494.876452028] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945494.894350577] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945494.915420039] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945495.809629113] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945496.038374985] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945496.860268497] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945497.856476195] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945497.856550670] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose
+[planner_server-3] [INFO] [1785945497.856782254] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945497.952669353] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945498.160076125] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945498.162787244] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945498.178040898] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945498.214604776] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945498.368037029] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945498.421251469] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945499.159614943] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945500.209642510] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945501.209581477] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945502.259630732] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945502.452719969] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945502.534193443] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945502.580789673] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945502.632354066] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945502.660655737] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945503.309929143] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945504.265687553] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785945504.309634087] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945504.314809253] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945504.379768576] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945504.414958407] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785945505.359652599] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945506.177764240] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945506.256817273] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945506.359698060] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945507.238530431] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945507.273227341] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945507.287570012] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945507.412976555] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945508.409631741] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945509.411037077] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945510.461344149] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945511.188350031] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945511.346191595] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945511.509632550] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945512.510202360] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945513.560690836] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945514.610407682] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945515.611538092] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945516.610357616] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945517.350499043] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945517.659609789] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945518.710028925] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945519.709646523] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945519.993094302] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945520.028963782] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945520.162732503] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945520.163232414] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945520.759613946] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945521.759752462] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945522.315987192] [controller_server]: Reached the goal!
+[bt_navigator-5] [INFO] [1785945522.354980245] [bt_navigator]: Goal succeeded
+[bt_navigator-5] [INFO] [1785945527.387111948] [bt_navigator]: Begin navigating from current location (1.95, 4.07) to (5.50, 0.30)
+[controller_server-1] [INFO] [1785945527.431315075] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [INFO] [1785945528.481592012] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945529.531588457] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945529.573556518] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945529.606262630] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945529.625635345] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945530.581660606] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945531.631594117] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945532.681587367] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945533.685943477] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945534.685835347] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945534.781593486] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945535.831639788] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945536.235930343] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.286784034] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.336652224] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.386341628] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.436085203] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.485489004] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.535762242] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785945536.535823392] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785945536.535909534] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945536.553848517] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[controller_server-1] [INFO] [1785945536.556502891] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785945536.620131892] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.620329977] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [WARN] [1785945536.626995333] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.665671954] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.712260751] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.762187481] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945536.818504466] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785945536.857026967] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945536.865921504] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [ERROR] [1785945536.866050929] [controller_server]: Controller patience exceeded
+[controller_server-1] [WARN] [1785945536.866258105] [controller_server]: [follow_path] [ActionServer] Aborting handle.
+[behavior_server-4] [INFO] [1785945536.894659465] [behavior_server]: Running backup
+[behavior_server-4] [WARN] [1785945536.895548376] [behavior_server]: Collision Ahead - Exiting DriveOnHeading
+[behavior_server-4] [WARN] [1785945536.895578778] [behavior_server]: backup failed
+[behavior_server-4] [WARN] [1785945536.895589196] [behavior_server]: [backup] [ActionServer] Aborting handle.
+[controller_server-1] [INFO] [1785945536.923967363] [local_costmap.local_costmap]: Received request to clear entirely the local_costmap
+[planner_server-3] [INFO] [1785945536.925639088] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[controller_server-1] [INFO] [1785945537.095301312] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [WARN] [1785945537.102416231] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945537.157135938] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945537.207430802] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785945538.149354455] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945539.199388301] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945539.493762763] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945539.524882339] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945539.571271700] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945539.774148770] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945539.825312223] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945540.199352285] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945541.249740487] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945542.249808803] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945543.299393145] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945544.299406088] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945545.349370338] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945545.394592603] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945545.434051075] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945545.466654783] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945546.349386420] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945547.399397746] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945548.399378701] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945549.450271860] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945550.499516472] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945551.488205733] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945551.499385236] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945552.365673493] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945552.549838842] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945553.049053487] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945553.119289408] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945553.353570635] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945553.355075273] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945553.384292922] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945553.549507211] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945553.606032793] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945554.078192699] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945554.414563670] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945554.599399027] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945555.045659802] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945555.096225171] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945555.126351265] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945555.156922396] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945555.601889909] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945556.649389388] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945557.699380233] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945557.769057691] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945558.699747679] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945558.709264066] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945559.749694459] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945559.802702228] [controller_server]: Reached the goal!
+[bt_navigator-5] [INFO] [1785945559.835576732] [bt_navigator]: Goal succeeded
+[bt_navigator-5] [INFO] [1785945564.270969099] [bt_navigator]: Begin navigating from current location (5.34, 0.33) to (0.00, 0.50)
+[controller_server-1] [INFO] [1785945564.295772287] [controller_server]: Received a goal, begin computing control effort.
+[controller_server-1] [INFO] [1785945565.346456554] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945565.973468423] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945566.005465959] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945566.396270940] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945567.396343421] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945567.895869120] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945568.446448640] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945569.446282189] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945569.784369149] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945569.838346130] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945570.496300874] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945570.664198184] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945570.675631429] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945571.546290355] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945572.546268325] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945573.499758650] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945573.516708556] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945573.532604782] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945573.619105381] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945573.646725060] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945574.696293041] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945575.696402705] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945576.746266081] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945576.874324022] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945577.746288324] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945578.796241461] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945579.367527165] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945579.414219077] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945579.444930079] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945579.723833970] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945579.755185452] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[planner_server-3] [WARN] [1785945579.780919700] [planner_server]: GridBased: failed to create plan with tolerance 0.50.
+[planner_server-3] [WARN] [1785945579.781071353] [planner_server]: Planning algorithm GridBased failed to generate a valid path to (0.00, 0.50)
+[planner_server-3] [WARN] [1785945579.781183480] [planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle.
+[planner_server-3] [INFO] [1785945579.805138243] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945579.809169166] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945580.146520380] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945581.146286602] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945582.196278769] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945583.196426165] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945584.246287475] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945585.248239382] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945586.296274800] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945587.346909240] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945588.346281018] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945589.396271143] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945590.196027688] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945590.396697549] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945590.407034287] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945591.447552208] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945592.446259954] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945593.496225779] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945594.546319054] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945594.687954953] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945595.546263119] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945596.596369618] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945597.596273879] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945598.646468955] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945599.646269267] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945600.696268863] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945601.197515865] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.482707434] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.522879143] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.573380822] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.702804703] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.738473438] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose
+[planner_server-3] [INFO] [1785945601.740488129] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945601.746555909] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.796663399] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.867038124] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945601.960030051] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945602.146407646] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945602.684609145] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945602.686869715] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945603.146307520] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945604.196275211] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945605.160286158] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945605.217913838] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945605.253982944] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945605.288987196] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945605.294227421] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945605.312497424] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[controller_server-1] [INFO] [1785945606.297871077] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945607.346814197] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945608.033932946] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945608.035052549] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945608.106373956] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945608.106668685] [controller_server]: Control loop missed its desired rate of 20.0000Hz
+[bt_navigator-5] [WARN] [1785945608.217207724] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945608.396471044] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945609.446365738] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945610.496390550] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945611.011974105] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [WARN] [1785945611.202244077] [controller_server]: No valid trajectories out of 251! 
+[bt_navigator-5] [WARN] [1785945611.371597695] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945611.496326472] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945612.547122971] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945613.646276256] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945614.646275584] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945615.746374884] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945616.746415376] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945617.827699445] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945617.844756706] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945617.846281381] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945617.909959732] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945618.896286094] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945619.835888436] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945619.909924185] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945619.996302079] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945620.996294548] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945622.096275465] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945622.314099854] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945622.354628098] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945622.714581004] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945622.795595309] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945622.811348512] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945623.097872672] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945624.146382120] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945625.196274628] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945626.246294079] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945627.296249512] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945628.346282232] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945629.108969514] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945629.396258284] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945630.446895525] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945631.497140082] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945631.955121367] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945632.001855061] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945632.010569099] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945632.015533776] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945632.104651981] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945632.155445841] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945632.496288763] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945633.546257377] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945634.596427759] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945635.365303083] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945635.423545712] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945635.646262372] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945636.686758680] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945636.686826871] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose
+[planner_server-3] [INFO] [1785945636.687051829] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945636.752208012] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945637.146269776] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945638.146271653] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945639.196256120] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945640.246313637] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945641.246470364] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945642.296314249] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945642.537867968] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945643.296269225] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945644.346283296] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945645.396267360] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945646.396310155] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945646.769860799] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945647.447802940] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945648.446279992] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945649.496266589] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945650.485259605] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945650.485346684] [bt_navigator_navigate_to_pose_rclcpp_node]: Timed out while waiting for action server to acknowledge goal request for compute_path_to_pose
+[planner_server-3] [INFO] [1785945650.485574587] [global_costmap.global_costmap]: Received request to clear entirely the global_costmap
+[bt_navigator-5] [WARN] [1785945650.546710573] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[planner_server-3] [WARN] [1785945651.091402591] [planner_server]: Planner loop missed its desired rate of 2.0000 Hz. Current loop rate is 1.6600 Hz
+[controller_server-1] [INFO] [1785945651.146265942] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945651.287039050] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945651.391458014] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945652.146256220] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945652.794612131] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945653.196289959] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945654.250361353] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945655.246610002] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945656.246277755] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945657.296310164] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945657.711566210] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945658.346298165] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945659.346284165] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945660.396271384] [controller_server]: Passing new path to controller.
+[controller_server-1] [WARN] [1785945660.452543364] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [WARN] [1785945661.149141893] [controller_server]: No valid trajectories out of 251! 
+[controller_server-1] [INFO] [1785945661.396277258] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945662.446330029] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945663.496288074] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945664.496284856] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945665.492925369] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[bt_navigator-5] [WARN] [1785945665.522070612] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945665.546591796] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945666.596677174] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945667.598681789] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945668.646271247] [controller_server]: Passing new path to controller.
+[bt_navigator-5] [WARN] [1785945668.756528856] [BehaviorTreeEngine]: Behavior Tree tick rate 100.00 was exceeded!
+[controller_server-1] [INFO] [1785945669.696711492] [controller_server]: Passing new path to controller.
+[controller_server-1] [INFO] [1785945669.799213954] [controller_server]: Reached the goal!
+[bt_navigator-5] [INFO] [1785945669.832185390] [bt_navigator]: Goal succeeded
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[controller_server-1] [INFO] [1785945677.163550233] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-1] [INFO] [1785945677.163615545] [controller_server]: Running Nav2 LifecycleNode rcl preshutdown (controller_server)
+[bt_navigator-5] [INFO] [1785945677.164407657] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-5] [INFO] [1785945677.164480775] [bt_navigator]: Running Nav2 LifecycleNode rcl preshutdown (bt_navigator)
+[bt_navigator-5] [INFO] [1785945677.164625498] [bt_navigator]: Deactivating
+[bt_navigator-5] [INFO] [1785945677.164669071] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[INFO] [lifecycle_manager-8]: sending signal 'SIGINT' to process[lifecycle_manager-8]
+[INFO] [velocity_smoother-7]: sending signal 'SIGINT' to process[velocity_smoother-7]
+[INFO] [waypoint_follower-6]: sending signal 'SIGINT' to process[waypoint_follower-6]
+[INFO] [bt_navigator-5]: sending signal 'SIGINT' to process[bt_navigator-5]
+[ERROR] [waypoint_follower-6]: process has died [pid 535, exit code -2, cmd '/opt/ros/humble/lib/nav2_waypoint_follower/waypoint_follower --ros-args --log-level info --ros-args -r __node:=waypoint_follower --params-file /tmp/launch_params_ov9cu4le -r /tf:=tf -r /tf_static:=tf_static'].
+[INFO] [behavior_server-4]: sending signal 'SIGINT' to process[behavior_server-4]
+[INFO] [planner_server-3]: sending signal 'SIGINT' to process[planner_server-3]
+[INFO] [smoother_server-2]: sending signal 'SIGINT' to process[smoother_server-2]
+[INFO] [controller_server-1]: sending signal 'SIGINT' to process[controller_server-1]
+[controller_server-1] [INFO] [1785945677.166278026] [controller_server]: Deactivating
+[controller_server-1] [INFO] [1785945677.166364029] [local_costmap.local_costmap]: Deactivating
+[controller_server-1] [INFO] [1785945677.220283618] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[controller_server-1] [INFO] [1785945677.244079628] [controller_server]: Cleaning up
+[controller_server-1] [INFO] [1785945677.244587919] [local_costmap.local_costmap]: Cleaning up
+[ERROR] [behavior_server-4]: process has died [pid 531, exit code -2, cmd '/opt/ros/humble/lib/nav2_behaviors/behavior_server --ros-args --log-level info --ros-args -r __node:=behavior_server --params-file /tmp/launch_params_ov9cu4le -r /tf:=tf -r /tf_static:=tf_static'].
+[ERROR] [smoother_server-2]: process has died [pid 527, exit code -2, cmd '/opt/ros/humble/lib/nav2_smoother/smoother_server --ros-args --log-level info --ros-args -r __node:=smoother_server --params-file /tmp/launch_params_ov9cu4le -r /tf:=tf -r /tf_static:=tf_static'].
+[bt_navigator-5] [INFO] [1785945677.188851465] [bt_navigator]: Cleaning up
+[ERROR] [controller_server-1]: process has died [pid 525, exit code -2, cmd '/opt/ros/humble/lib/nav2_controller/controller_server --ros-args --log-level info --ros-args --params-file /tmp/launch_params_ov9cu4le -r /tf:=tf -r /tf_static:=tf_static -r cmd_vel:=cmd_vel_nav'].
+[planner_server-3] [INFO] [1785945677.166212051] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-3] [INFO] [1785945677.166289807] [planner_server]: Running Nav2 LifecycleNode rcl preshutdown (planner_server)
+[planner_server-3] [INFO] [1785945677.166425191] [planner_server]: Deactivating
+[planner_server-3] [INFO] [1785945677.166472822] [global_costmap.global_costmap]: Deactivating
+[smoother_server-2] [INFO] [1785945677.166985327] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[smoother_server-2] [INFO] [1785945677.167073075] [smoother_server]: Running Nav2 LifecycleNode rcl preshutdown (smoother_server)
+[smoother_server-2] [INFO] [1785945677.167215600] [smoother_server]: Deactivating
+[smoother_server-2] [INFO] [1785945677.167258554] [smoother_server]: Destroying bond (smoother_server) to lifecycle manager.
+[smoother_server-2] [INFO] [1785945677.190796247] [smoother_server]: Cleaning up
+[smoother_server-2] [INFO] [1785945677.240484033] [smoother_server]: Destroying bond (smoother_server) to lifecycle manager.
+[lifecycle_manager-8] [INFO] [1785945677.168745403] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-8] [INFO] [1785945677.186651774] [lifecycle_manager_navigation]: Running Nav2 LifecycleManager rcl preshutdown (lifecycle_manager_navigation)
+[lifecycle_manager-8] [INFO] [1785945677.186750570] [lifecycle_manager_navigation]: [34m[1mTerminating bond timer...[0m[0m
+[behavior_server-4] [INFO] [1785945677.169482700] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[behavior_server-4] [INFO] [1785945677.169552037] [behavior_server]: Running Nav2 LifecycleNode rcl preshutdown (behavior_server)
+[behavior_server-4] [INFO] [1785945677.169675706] [behavior_server]: Deactivating
+[behavior_server-4] [INFO] [1785945677.171039643] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[behavior_server-4] [INFO] [1785945677.191474567] [behavior_server]: Cleaning up
+[behavior_server-4] [INFO] [1785945677.222044410] [behavior_server]: Destroying bond (behavior_server) to lifecycle manager.
+[waypoint_follower-6] [INFO] [1785945677.178975002] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[waypoint_follower-6] [INFO] [1785945677.179144678] [waypoint_follower]: Running Nav2 LifecycleNode rcl preshutdown (waypoint_follower)
+[waypoint_follower-6] [INFO] [1785945677.186260306] [waypoint_follower]: Deactivating
+[waypoint_follower-6] [INFO] [1785945677.188972653] [waypoint_follower]: Destroying bond (waypoint_follower) to lifecycle manager.
+[waypoint_follower-6] [INFO] [1785945677.214959192] [waypoint_follower]: Cleaning up
+[waypoint_follower-6] [INFO] [1785945677.230938028] [waypoint_follower]: Destroying bond (waypoint_follower) to lifecycle manager.
+[velocity_smoother-7] [INFO] [1785945677.181819135] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_smoother-7] [INFO] [1785945677.187931706] [velocity_smoother]: Running Nav2 LifecycleNode rcl preshutdown (velocity_smoother)
+[velocity_smoother-7] [INFO] [1785945677.188046647] [velocity_smoother]: Deactivating
+[velocity_smoother-7] [INFO] [1785945677.188139429] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[velocity_smoother-7] [INFO] [1785945677.216470080] [velocity_smoother]: Cleaning up
+[velocity_smoother-7] [INFO] [1785945677.216572449] [velocity_smoother]: Destroying bond (velocity_smoother) to lifecycle manager.
+[smoother_server-2] [INFO] [1785945677.296054671] [smoother_server]: Destroying
+[behavior_server-4] [INFO] [1785945677.334007860] [behavior_server]: Destroying
+[velocity_smoother-7] [INFO] [1785945677.339507279] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-1] [INFO] [1785945677.345140914] [controller_server]: Destroying bond (controller_server) to lifecycle manager.
+[waypoint_follower-6] [INFO] [1785945677.353356728] [waypoint_follower]: Destroying
+[velocity_smoother-7] [INFO] [1785945677.364328046] [velocity_smoother]: Destroying
+[controller_server-1] [INFO] [1785945677.383412011] [local_costmap.local_costmap]: Destroying
+[lifecycle_manager-8] [INFO] [1785945677.422486923] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[controller_server-1] [INFO] [1785945677.432198753] [controller_server]: Destroying
+[bt_navigator-5] [INFO] [1785945677.511682165] [bt_navigator]: Completed Cleaning up
+[bt_navigator-5] [INFO] [1785945677.511782786] [bt_navigator]: Destroying bond (bt_navigator) to lifecycle manager.
+[bt_navigator-5] [INFO] [1785945677.516656505] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[bt_navigator-5] [INFO] [1785945677.527968152] [bt_navigator]: Destroying
+[lifecycle_manager-8] [INFO] [1785945677.559526024] [lifecycle_manager_navigation]: Destroying lifecycle_manager_navigation
+[planner_server-3] [INFO] [1785945678.084690827] [planner_server]: Deactivating plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785945678.084866221] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-3] [INFO] [1785945678.096172260] [planner_server]: Cleaning up
+[planner_server-3] [INFO] [1785945678.127795487] [global_costmap.global_costmap]: Cleaning up
+[planner_server-3] [INFO] [1785945678.136624487] [planner_server]: Cleaning up plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785945678.136847234] [planner_server]: Destroying plugin GridBased of type NavfnPlanner
+[planner_server-3] [INFO] [1785945678.164622193] [planner_server]: Destroying bond (planner_server) to lifecycle manager.
+[planner_server-3] [INFO] [1785945678.176273465] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[planner_server-3] [INFO] [1785945678.182886755] [global_costmap.global_costmap]: Destroying
+[planner_server-3] [INFO] [1785945678.226591581] [planner_server]: Destroying
+[INFO] [velocity_smoother-7]: process has finished cleanly [pid 537]
+[INFO] [bt_navigator-5]: process has finished cleanly [pid 533]
+[INFO] [lifecycle_manager-8]: process has finished cleanly [pid 539]
