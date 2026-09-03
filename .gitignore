@@ -13,3 +13,10 @@ __pycache__/
 
 MUJOCO_LOG.TXT
 tools/nav/out_demo/
+
+# Transient run workspaces: per-run logs and intermediate renders.
+# Evidence that MATTERS is committed deliberately: docs/media/*.mp4 (videos),
+# tools/ci/out/*.csv (gate results), maps/ (the map artifact + its score).
+tools/nav/out_*/
+tools/ci/out/run_*/
+MUJOCO_LOG.TXT
