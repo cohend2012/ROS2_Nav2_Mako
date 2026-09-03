@@ -2,8 +2,20 @@
 
 PX4-style autonomy stack for the Deep Robotics Lynx M20 Pro.
 
-**Start here → [`docs/SECOND_BRAIN.md`](docs/SECOND_BRAIN.md)** — architecture,
-decisions, contracts, roadmap, and open questions all live there.
+**Start here → [`docs/ONBOARDING.md`](docs/ONBOARDING.md)** — where the project
+stands, how to work in this codebase, and the ROS 2 (Python + C++) skill path.
+
+Then, as needed:
+
+| Document | For |
+|---|---|
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | current milestone and the gate that closes it — read every session |
+| [`docs/RUN_GUIDE.md`](docs/RUN_GUIDE.md) | every command: bringup, driving, maps, gates, videos, troubleshooting |
+| [`docs/NAV2_ARCHITECTURE.md`](docs/NAV2_ARCHITECTURE.md) | how the navigation stack fits together (standalone explainer) |
+| [`docs/LESSONS_LEARNED.md`](docs/LESSONS_LEARNED.md) | every hard-won lesson: symptom → cause → fix → rule |
+| [`docs/ENGINEERING_RULES.md`](docs/ENGINEERING_RULES.md) | the four binding rules for code in this repo |
+| [`docs/NAV2_SETUP_RUNBOOK.md`](docs/NAV2_SETUP_RUNBOOK.md) | standing a nav stack up from zero, on any robot |
+| [`docs/SECOND_BRAIN.md`](docs/SECOND_BRAIN.md) | long-term memory: ADRs, contracts, phases, changelog |
 
 **ROS 2 distro: Humble / Ubuntu 22.04** (ADR-007). The robot's onboard system runs
 Foxy, but that stays *behind the vendor boundary* — our stack talks to it through the
