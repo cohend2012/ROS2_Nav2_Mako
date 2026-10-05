@@ -91,6 +91,11 @@ GUI = os.environ.get("M20_SIM_GUI", "1") == "1"
 # Values mirror m20_behaviors/behaviors/standup.py FOLDED — keep in sync.
 START_POSE = os.environ.get("M20_START_POSE", "stand")
 NO_ODOM_TF = os.environ.get("M20_NO_ODOM_TF", "0") == "1"
+# Demo-only anti-tip stabilizer (see Sim._upright_assist). Default OFF.
+UPRIGHT_ASSIST = os.environ.get("M20_UPRIGHT_ASSIST", "0") == "1"
+UPRIGHT_DEADBAND = math.radians(5.0)
+# Demo-only ground-truth odometry (odom frame = truth). Default OFF: tests keep drifting odom.
+GT_ODOM = os.environ.get("M20_GT_ODOM", "0") == "1"
 FOLDED = np.array([
     0.0, -1.0,  2.3, 0.0,   # FL
     0.0, -1.0,  2.3, 0.0,   # FR
@@ -227,6 +232,16 @@ class Sim(Node):
             from mujoco import viewer as mj_viewer   # 'from' avoids shadowing `mujoco`
             self.viewer = mj_viewer.launch_passive(self.m, self.d)
         self.substeps = max(1, round(SIM_HZ / PUB_HZ))
+        if UPRIGHT_ASSIST:
+            # robot root = body of the free joint; gains scaled from its mass so a full
+            # tipping moment (m*g*h at ~45 deg) is beaten with margin
+            self._base_body = int(self.m.jnt_bodyid[0])
+            mass = float(self.m.body_subtreemass[self._base_body])
+            self._up_kp = 8.0 * mass * 9.81 * 0.5          # N*m per rad beyond the deadband
+            self._up_kd = 0.8 * mass                         # N*m*s per rad
+            self._up_max = 3.0 * mass * 9.81 * 0.5           # torque cap
+            self.get_logger().warn(f"UPRIGHT ASSIST ON (demo only): mass {mass:.1f} kg, "
+                                   f"kp {self._up_kp:.0f}, kd {self._up_kd:.0f}, cap {self._up_max:.0f} N*m")
         self.create_timer(1.0 / PUB_HZ, self.tick)
         self.get_logger().info(
             f"M20 MuJoCo sim up (GUI={GUI}, nq={self.m.nq}, substeps={self.substeps})")
@@ -286,12 +301,40 @@ class Sim(Node):
             self.pos[i], self.vel[i] = j.position, j.velocity
             self.kp[i], self.kd[i], self.tau[i] = j.kp, j.kd, j.torque
 
+    def _upright_assist(self):
+        """DEMO-ONLY virtual stabilizer (M20_UPRIGHT_ASSIST=1): beyond a small tilt deadband,
+        torque the base back toward level (PD on roll/pitch, yaw untouched), so the robot
+        cannot tip no matter what the planner commands. NOT physical — keep it off for any
+        test that should catch falls (gates, sim-to-real evidence)."""
+        R = np.empty(9)
+        mujoco.mju_quat2Mat(R, self.d.qpos[3:7])
+        R = R.reshape(3, 3)
+        zb = R[:, 2]                                    # body up-axis in world
+        axis = np.cross(zb, [0.0, 0.0, 1.0])            # rotate body-up toward world-up
+        s = float(np.linalg.norm(axis))
+        tilt = math.asin(min(1.0, s))
+        if zb[2] < 0:
+            tilt = math.pi - tilt
+        w = R @ self.d.qvel[3:6]                        # free-joint ang. vel is body-frame
+        w_tilt = w - np.array([0.0, 0.0, w[2]])         # leave yaw free
+        tau = np.zeros(3)
+        if tilt > UPRIGHT_DEADBAND and s > 1e-9:
+            tau += self._up_kp * (tilt - UPRIGHT_DEADBAND) * axis / s
+        if tilt > UPRIGHT_DEADBAND / 2:
+            tau -= self._up_kd * w_tilt
+        n = float(np.linalg.norm(tau))
+        if n > self._up_max:
+            tau *= self._up_max / n
+        self.d.xfrc_applied[self._base_body, 3:6] = tau
+
     def tick(self):
         for _ in range(self.substeps):
             q = self.d.qpos[7:7 + NJ]
             qd = self.d.qvel[6:6 + NJ]
             t = self.kp * (self.pos - q) + self.kd * (self.vel - qd) + self.tau
             self.d.ctrl[:] = np.clip(t, self.lo, self.hi)
+            if UPRIGHT_ASSIST:
+                self._upright_assist()
             mujoco.mj_step(self.m, self.d)
         if self.viewer is not None:
             if not self.viewer.is_running():
@@ -338,6 +381,10 @@ class Sim(Node):
         self.odom_th = math.atan2(math.sin(self.odom_th), math.cos(self.odom_th))
         self.odom_x += vx * math.cos(self.odom_th) * self.odt
         self.odom_y += vx * math.sin(self.odom_th) * self.odt
+        if GT_ODOM:
+            # DEMO-ONLY perfect odometry (M20_GT_ODOM=1): the odom frame IS ground truth,
+            # so with a fixed map->odom (bringup M20_GT_LOC=1) Nav2 never mislocalizes.
+            self.odom_x, self.odom_y, self.odom_th = float(self.d.qpos[0]), float(self.d.qpos[1]), float(y)
         oq_z, oq_w = math.sin(self.odom_th / 2), math.cos(self.odom_th / 2)
         od = Odometry()
         od.header.stamp = now

@@ -29,6 +29,13 @@
 #       engine (standup, TIER_VENDOR) BEFORE the bridge starts. Real standup on
 #       camera; joints logged for the replay render.
 #   M20_NO_GOAL=1  bring the stack up but send no goal (mapping / coverage runs).
+# Flags (3dgs-sim-env):
+#   M20_SCENE=indoor_splat.xml  run a different world (any tools/sim/*.xml installed by
+#       setup_sim.sh). Default oil_gas_field.xml. Non-default scenes have no pre-built
+#       map (live SLAM only) and need explicit GOAL_X/GOAL_Y unless M20_NO_GOAL=1.
+#   M20_SPLAT_CAMERA=1  photoreal /camera/image_raw rendered from the scene's Gaussian
+#       splat (tools/splat/splat_camera_node.py, m20_splat image, GPU). Needs a
+#       <scene>.scene.yaml next to the scene and the PLY in ~/m20_sim/splats/.
 # ============================================================================
 set -e
 # FRAME CONTRACT GUARD (ship rule): M20_EKF_TF is a MAP-PRODUCTION tool only —
@@ -42,6 +49,13 @@ C=docker-commander-1
 DOM=42
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 MODEL="$HOME/m20_sim/sdk_deploy/src/M20_sdk_deploy/M20_description"
+SCENE="${M20_SCENE:-oil_gas_field.xml}"
+[ -f "$MODEL/m20_mjcf/mjcf/$SCENE" ] || { echo "ERROR: scene $SCENE not installed next to M20.xml (run tools/setup_sim.sh)"; exit 1; }
+if [ "$SCENE" != "oil_gas_field.xml" ]; then
+  # the only pre-built map and the default goal both belong to the oil & gas field
+  [ -z "${M20_STATIC_MAP:-}" ] || { echo "ERROR: M20_STATIC_MAP is an oil_gas_field map; $SCENE runs live SLAM only"; exit 1; }
+  [ "${M20_NO_GOAL:-0}" = "1" ] || [ -n "${GOAL_X:-}" ] || { echo "ERROR: $SCENE needs GOAL_X/GOAL_Y (the default goal is an oil_gas_field point) or M20_NO_GOAL=1"; exit 1; }
+fi
 GOAL_X="${GOAL_X:--6.0}"; GOAL_Y="${GOAL_Y:--0.5}"
 SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export ROS_DOMAIN_ID=$DOM RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
 
@@ -102,17 +116,86 @@ print("patched global costmap -> static layer (full known field)")
 PYEOF
 fi
 
-echo "[2/7] starting MuJoCo sim (oil_gas_field, headless, start=$([ "${M20_STANDUP:-0}" = 1 ] && echo folded || echo stand))"
+if [ "$SCENE" != "oil_gas_field.xml" ]; then
+  # Splat/indoor scenes: faster cruise for exploration tours. STAGED copy only — the
+  # oil & gas gates keep nav2_params.yaml as-is. Measured 2026-10-05 (splat demo): 1.0-1.6
+  # m/s with 2.0 m/s^2 accel TIPPED the M20 — flooring it out of a tight spot while still
+  # turning makes the skid-steer fishtail (uncommanded -1.2 rad/s yaw, body lifts, rolls).
+  # Keep the ORIGINAL accel (1.0) and a modest cruise; DWB still turns in place.
+  # Goal tolerance back to the live-SLAM value 0.45 (nav2_params.yaml history note:
+  # 0.20 assumes known-map localization; live SLAM jitters -> arrive-never-declare).
+  # Footprint: the real M20 rectangle (0.86 x 0.56 m incl. wheels) instead of the 0.45 m
+  # circle — its corners reach 0.51 m, so the circle let them scrape boxes at speed.
+  VMAX="${M20_MAX_VEL:-0.7}"; AMAX="${M20_MAX_ACC:-1.0}"
+  echo "[1.6/7] ${SCENE%.xml}: cruise ${VMAX} m/s, accel ${AMAX} / decel 1.5, M20 footprint, keep-away inflation 1.0 m, goal tol 0.45 m (staged params only)"
+  # -i is REQUIRED: without it docker exec drops stdin and `python3 -` runs an empty script
+  docker exec -i -e VMAX="$VMAX" -e AMAX="$AMAX" $C python3 - <<'PYEOF'
+import os, yaml
+p = "/cfg/nav2_params.yaml"
+v = float(os.environ["VMAX"])
+cfg = yaml.safe_load(open(p))
+c = cfg["controller_server"]["ros__parameters"]
+f = c["FollowPath"]
+f["max_vel_x"] = f["max_speed_xy"] = v
+acc = float(os.environ["AMAX"])
+f["acc_lim_x"], f["decel_lim_x"] = acc, -1.5
+f["xy_goal_tolerance"] = c["goal_checker"]["xy_goal_tolerance"] = 0.45
+s = cfg["velocity_smoother"]["ros__parameters"]
+s["max_velocity"][0] = v
+s["max_accel"][0], s["max_decel"][0] = acc, -1.5
+fp = "[[0.43, 0.28], [0.43, -0.28], [-0.43, -0.28], [-0.43, 0.28]]"
+# Keep-away (2026-10-05): the stock 0.55 m inflation decayed fast (scaling 3.0) and DWB
+# barely weighed obstacle cost (BaseObstacle 0.02) -> laps spent 10-18 % within 0.3 m of
+# boxes (closest 8 cm). Wider, slower-decaying inflation + a real obstacle weight make
+# the planner use aisle centres and the controller steer away from cost.
+for k in ("global_costmap", "local_costmap"):
+    cm = cfg[k][k]["ros__parameters"]
+    cm.pop("robot_radius", None)
+    cm["footprint"], cm["footprint_padding"] = fp, 0.10
+    cm["inflation_layer"]["inflation_radius"] = 1.0
+    cm["inflation_layer"]["cost_scaling_factor"] = 1.5
+f["BaseObstacle.scale"] = 0.15
+# Anti-dither (2026-10-05): with keep-away costs DWB's best option in tight spots was
+# "vx 0, wz +-0.04" — too small for the skid-steer to turn (bridge pivot assist starts at
+# 0.15 rad/s), so the robot sat 30-160 s until the progress checker fired. DWB rejects any
+# command below BOTH min_speed_xy and min_speed_theta: it must drive or really turn.
+f["min_speed_xy"], f["min_speed_theta"] = 0.10, 0.25
+# ...and if it still stalls, recover sooner: 40 s dated from slow 15-20 s pivots; a 180 deg
+# turn now takes ~5 s (0.7 rad/s), so 15 s still never aborts a legitimate in-place turn.
+c["progress_checker"]["movement_time_allowance"] = 15.0
+yaml.safe_dump(cfg, open(p, "w"), sort_keys=False)
+print(f"  patched: max_vel_x={v}, accel {acc}/-1.5, footprint 0.86x0.56 +0.10, inflation 1.0 (scale 1.5), BaseObstacle 0.15, goal tol 0.45")
+PYEOF
+fi
+
+# the splat camera replaces the MuJoCo camera (one /camera/image_raw publisher)
+SIM_CAMERA="${M20_CAMERA:-0}"; [ "${M20_SPLAT_CAMERA:-0}" = "1" ] && SIM_CAMERA=0
+echo "[2/7] starting MuJoCo sim (${SCENE%.xml}, headless, start=$([ "${M20_STANDUP:-0}" = 1 ] && echo folded || echo stand))"
 docker rm -f m20_sim_run 2>/dev/null || true
 docker run -d --name m20_sim_run --network host --ipc host \
   -e ROS_DOMAIN_ID=$DOM -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=0 -e M20_LIDAR_REALISM=${M20_LIDAR_REALISM:-1} \
   -e M20_START_POSE=${M20_STANDUP:+folded} \
-  -e M20_CAMERA=${M20_CAMERA:-0} -e MUJOCO_GL=egl \
-  -e M20_NO_ODOM_TF=${M20_EKF_TF:-0} \
-  -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
+  -e M20_CAMERA=$SIM_CAMERA -e MUJOCO_GL=egl \
+  -e M20_NO_ODOM_TF=${M20_EKF_TF:-0} -e M20_UPRIGHT_ASSIST=${M20_UPRIGHT_ASSIST:-0} -e M20_GT_ODOM=${M20_GT_LOC:-0} \
+  -e M20_MJCF=/model/m20_mjcf/mjcf/$SCENE \
   -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
   m20_sim:latest python3 /mujoco_sim.py
 sleep 8
+
+if [ "${M20_SPLAT_CAMERA:-0}" = "1" ]; then
+  SCENE_YAML="$REPO/tools/sim/${SCENE%.xml}.scene.yaml"
+  [ -f "$SCENE_YAML" ] || { echo "ERROR: M20_SPLAT_CAMERA=1 but $SCENE has no scene yaml (not a splat world)"; exit 1; }
+  SPLAT_FILE=$(awk '/^  file:/{print $2; exit}' "$SCENE_YAML")
+  [ -f "$HOME/m20_sim/splats/$SPLAT_FILE" ] || { echo "ERROR: splat ~/m20_sim/splats/$SPLAT_FILE missing (see RUN_GUIDE 'Splat worlds')"; exit 1; }
+  echo "[2.2/7] starting splat camera (gsplat on GPU, $SPLAT_FILE -> /camera/image_raw)"
+  docker rm -f m20_splat_cam 2>/dev/null || true
+  docker run -d --name m20_splat_cam --gpus all --network host --ipc host \
+    -e ROS_DOMAIN_ID=$DOM -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+    -e SPLAT_PLY=/splat/$SPLAT_FILE -e SPLAT_SCENE=/scene/$(basename "$SCENE_YAML") \
+    -v "$HOME/m20_sim/splats":/splat:ro -v "$REPO/tools/sim":/scene:ro \
+    -v "$REPO/tools/splat/splat_camera_node.py":/splat_camera_node.py:ro \
+    m20_splat:latest python3 /splat_camera_node.py
+fi
 
 echo "[2.4/7] static TF base_link->lidar_link (commander-local; cross-container"
 echo "        transient_local latching proved unreliable after WSL reboots)"
@@ -212,6 +295,12 @@ PYEOF" | tail -1
     docker cp "$REPO/tools/nav/anchor_guardian.py" $C:/cfg/anchor_guardian.py
     docker exec -d $C bash -lc "$SRC; python3 /cfg/anchor_guardian.py >/cfg/out/guardian.log 2>&1"
   fi
+elif [ "${M20_GT_LOC:-0}" = "1" ]; then
+  # DEMO-ONLY ground-truth localization: the sim publishes odom = truth (M20_GT_ODOM),
+  # map->odom is a fixed identity, and no SLAM runs. Nav2 can't mislocalize; obstacles
+  # still come from the live LiDAR (rolling costmaps). NOT for gates / evidence runs.
+  echo "[4/7] GROUND-TRUTH localization (demo only): static map->odom, no slam_toolbox"
+  docker exec -d $C bash -lc "$SRC; ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 0 --frame-id map --child-frame-id odom"
 else
   echo "[4/7] starting slam_toolbox (mapping)"
   docker exec -d $C bash -lc "$SRC; ros2 run slam_toolbox async_slam_toolbox_node --ros-args --params-file /cfg/mapper_params.yaml >/cfg/out/slam.log 2>&1"

@@ -1,0 +1,41 @@
+# M20 splat camera image = stack image (ROS 2 Humble) + PyTorch/CUDA + gsplat.
+# Renders the Gaussian-splat world at the sim's ground-truth pose (tools/splat/splat_camera_node.py).
+# Dev/test tool, NOT deployed to the robot. Needs the NVIDIA Container Toolkit + `docker run --gpus all`.
+FROM m20_autonomy:latest
+
+# nvcc + headers so gsplat's CUDA kernels build at image-build time (no GPU needed to compile).
+RUN apt-get update && apt-get install -y --no-install-recommends wget \
+    && wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb \
+    && dpkg -i cuda-keyring_1.1-1_all.deb && rm cuda-keyring_1.1-1_all.deb \
+    && apt-get update && apt-get install -y --no-install-recommends \
+      cuda-nvcc-12-8 cuda-cudart-dev-12-8 cuda-cccl-12-8 \
+    && rm -rf /var/lib/apt/lists/*
+ENV CUDA_HOME=/usr/local/cuda-12.8 PATH=/usr/local/cuda-12.8/bin:$PATH
+
+# CUDA 12.8 wheels are the first with Blackwell (sm_120, RTX 50xx) kernels.
+# numpy<2 keeps ROS Humble's system Python packages happy.
+RUN pip install --no-cache-dir "numpy<2" \
+    && pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu128 \
+    && pip install --no-cache-dir ninja jaxtyping rich pyyaml
+
+# Build gsplat from source for the GPUs we run on (5090 = 12.0; 8.6/8.9 for other dev boxes).
+ARG GSPLAT_VERSION=1.5.3
+RUN TORCH_CUDA_ARCH_LIST="8.6;8.9;12.0" MAX_JOBS=8 BUILD_NO_CUDA=0 \
+    pip install --no-cache-dir --no-build-isolation --no-binary gsplat "gsplat==${GSPLAT_VERSION}"
+
+# Browser viewer (tools/splat/splat_viewer.py): viser serves the photoreal free-camera view.
+# yourdfpy: viser's URDF loader, draws the M20 (vendor URDF, mounted at runtime) posed from the sim.
+# Pin numpy<2 in the SAME resolve: an unpinned install upgrades numpy to 2.x and breaks
+# ROS Humble's apt cv2 (viser imports it to encode images).
+RUN pip install --no-cache-dir viser yourdfpy "numpy<2"
+
+# MuJoCo offscreen renderer for the viewer's "physics sim + splat" composite: the sim's own
+# M20 MJCF (mounted at /model) rendered with real joint state, depth-composited into gsplat.
+# Same MuJoCo version as the sim image (m20_sim). numpy<2 in the same resolve (see above).
+# GL: MUJOCO_GL=egl. On WSL2 the run adds the /usr/lib/wsl driver libs + GALLIUM_DRIVER=d3d12
+# so Mesa's EGL runs on the GPU (D3D12); elsewhere NVIDIA EGL via NVIDIA_DRIVER_CAPABILITIES=all.
+RUN pip install --no-cache-dir "mujoco==3.14.0" "numpy<2"
+ENV MUJOCO_GL=egl
+
+COPY tools/splat/splat_camera_node.py tools/splat/splat_viewer.py /
+CMD ["python3", "/splat_camera_node.py"]

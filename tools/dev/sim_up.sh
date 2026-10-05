@@ -13,6 +13,8 @@ SRC="source /opt/ros/humble/setup.bash; source /ws/install/setup.bash; export RO
 
 # GUI: live MuJoCo viewer window via WSLg (default ON). M20_GUI=0 for headless.
 GUI="${M20_GUI:-1}"
+# M20_SCENE: any tools/sim/*.xml installed by setup_sim.sh (default oil_gas_field.xml).
+SCENE="${M20_SCENE:-oil_gas_field.xml}"
 
 cleanup() {
   trap - INT TERM EXIT
@@ -38,20 +40,20 @@ docker cp "$REPO/tools/slam/mapper_params.yaml" $C:/cfg/mapper_params.yaml >/dev
 docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml" $C:/cfg/pointcloud_to_laserscan.yaml >/dev/null
 
 if [ "$GUI" = "1" ]; then
-  echo "[sim_up] starting MuJoCo sim (oil_gas_field) WITH LIVE VIEWER — a window will open..."
+  echo "[sim_up] starting MuJoCo sim (${SCENE%.xml}) WITH LIVE VIEWER — a window will open..."
   docker run -d --name m20_sim_run --network host --ipc host \
     -e ROS_DOMAIN_ID=42 -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=1 \
     -e DISPLAY="${DISPLAY:-:0}" -e WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
     -e XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
     -v /tmp/.X11-unix:/tmp/.X11-unix -v /mnt/wslg:/mnt/wslg \
-    -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
+    -e M20_MJCF=/model/m20_mjcf/mjcf/$SCENE \
     -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
     m20_sim:latest python3 /mujoco_sim.py >/dev/null
 else
-  echo "[sim_up] starting MuJoCo sim (oil_gas_field, headless — M20_GUI=0)..."
+  echo "[sim_up] starting MuJoCo sim (${SCENE%.xml}, headless — M20_GUI=0)..."
   docker run -d --name m20_sim_run --network host --ipc host \
     -e ROS_DOMAIN_ID=42 -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e M20_SIM_GUI=0 \
-    -e M20_MJCF=/model/m20_mjcf/mjcf/oil_gas_field.xml \
+    -e M20_MJCF=/model/m20_mjcf/mjcf/$SCENE \
     -v "$MODEL":/model:ro -v "$REPO/tools/mujoco_sim.py":/mujoco_sim.py:ro \
     m20_sim:latest python3 /mujoco_sim.py >/dev/null
 fi
