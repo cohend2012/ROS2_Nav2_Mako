@@ -42,6 +42,7 @@ STOP_RETRIES = int(os.environ.get("VIEW_STOP_RETRIES", 2))        # explore: re-
 STALL_RADIUS = float(os.environ.get("VIEW_STALL_RADIUS", 1.2))    # explore: this close to a stop...
 STALL_SECS = float(os.environ.get("VIEW_STALL_SECS", 5.0))        # ...and no 10 cm of progress this long = reached
 LOG_PATH = os.environ.get("VIEW_LOG", "/tmp/explore_log.csv")      # black box: t,truth xy yaw roll pitch z,est xy,cmd vx wz
+LAPS_DIR = os.environ.get("VIEW_LAPS_DIR", "/laps")                # recorded laps for replay (mounted host dir)
 # Vendor M20 URDF (DeepRoboticsLab/URDF_model, mounted at runtime). Its 16 actuated joints
 # share names + order with the sim's /JOINTS_DATA (fl, fr, hl, hr x hipx, hipy, knee, wheel).
 URDF = os.environ.get("M20_URDF", "/urdf/M20.urdf")
@@ -255,6 +256,8 @@ class State:
         self.pose = None          # (p, R) world<-base
         self.joints = None        # 16 joint angles, SIM_JOINTS order
         self.cam_img = None
+        self.det_img, self.det_t = None, 0.0   # /detections/image (annotated camera) + arrival time
+        self.objects = []                      # confirmed object map from detector_node.py
         self.explore = None       # {"tour": [...], "i": int, "skipped": int, "stop": bool, "gh": goal handle}
         self.est = None           # Nav2's own belief: map->base_link (x, y)
         self.loc_err = None       # |truth - belief| (sim only: truth exists here)
@@ -297,6 +300,23 @@ def start_ros(state):
 
     node.create_subscription(Odometry, "/odom_true", odom, qos_profile_sensor_data)
     node.create_subscription(Image, "/camera/image_raw", image, qos_profile_sensor_data)
+
+    def det_image(msg):
+        if msg.encoding == "rgb8":
+            with state.lock:
+                state.det_img = np.frombuffer(bytes(msg.data), np.uint8).reshape(msg.height, msg.width, 3)
+                state.det_t = time.time()
+
+    def det_objects(msg):
+        import json
+        try:
+            state.objects = json.loads(msg.data).get("objects", [])
+        except ValueError:
+            pass
+
+    from std_msgs.msg import String
+    node.create_subscription(Image, "/detections/image", det_image, qos_profile_sensor_data)
+    node.create_subscription(String, "/detections/objects", det_objects, 10)
     from geometry_msgs.msg import Twist
     node.create_subscription(Twist, "/cmd_vel", lambda m: setattr(state, "cmd", (m.linear.x, m.angular.z)), 10)
 
@@ -573,6 +593,104 @@ def load_mj_robot():
     return mjr
 
 
+def _slerp(q0, q1, a):
+    """Shortest-arc slerp between unit quaternions (wxyz)."""
+    d = float(np.dot(q0, q1))
+    if d < 0:
+        q1, d = -q1, -d
+    if d > 0.9995:
+        q = q0 + a * (q1 - q0)
+        return q / np.linalg.norm(q)
+    th = math.acos(min(1.0, d))
+    return (math.sin((1 - a) * th) * q0 + math.sin(a * th) * q1) / math.sin(th)
+
+
+class LapRecording:
+    """One explore lap, recorded for replay: robot pose + joints at 20 Hz (interpolated on
+    playback: lerp position/joints, slerp orientation -> smooth at any speed), the camera frame
+    the panel showed (JPEG, 5 Hz), and the object map / tour progress whenever they change.
+    Every stream is timestamped, so replay shows exactly what was on screen at lap time tau.
+    Saved as a pickle in LAPS_DIR so a recorded lap survives viewer restarts."""
+    POSE_DT, IMG_DT = 0.05, 0.2
+
+    def __init__(self):
+        self.t, self.p, self.quat, self.q = [], [], [], []
+        self.img_t, self.img = [], []
+        self.obj_t, self.obj = [], []
+        self.cur_t, self.cur = [], []
+        self.meta = {}
+
+    def add(self, t, pose, q, shown, objects, cur, cv2):
+        if not self.t or t - self.t[-1] >= self.POSE_DT:
+            self.t.append(t)
+            self.p.append(np.asarray(pose[0], float).copy())
+            self.quat.append(np.asarray(mat_to_wxyz(pose[1]), float))
+            self.q.append(np.zeros(16) if q is None else np.asarray(q, float).copy())
+        if shown is not None and (not self.img_t or t - self.img_t[-1] >= self.IMG_DT):
+            ok, buf = cv2.imencode(".jpg", cv2.cvtColor(shown, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 85])
+            if ok:
+                self.img_t.append(t); self.img.append(buf.tobytes())
+        if not self.obj or objects is not self.obj[-1]:
+            self.obj_t.append(t); self.obj.append(objects)
+        if not self.cur or cur != self.cur[-1]:
+            self.cur_t.append(t); self.cur.append(cur)
+
+    @property
+    def duration(self):
+        return (self.t[-1] - self.t[0]) if len(self.t) > 1 else 0.0
+
+    def finalize(self):
+        self.t_arr = np.array(self.t)
+        self.p_arr, self.quat_arr, self.q_arr = np.array(self.p), np.array(self.quat), np.array(self.q)
+        self.img_t_arr, self.obj_t_arr, self.cur_t_arr = map(np.array, (self.img_t, self.obj_t, self.cur_t))
+        return self
+
+    @staticmethod
+    def _last(ts, vals, t, default=None):
+        i = int(np.searchsorted(ts, t, side="right")) - 1
+        return vals[i] if 0 <= i < len(vals) else default
+
+    def sample(self, tau):
+        """Lap time tau (s from start) -> (pose (p, R), joints, jpeg|None, objects, stop index, trail)."""
+        t = self.t_arr[0] + min(max(tau, 0.0), self.duration)
+        i = int(np.clip(np.searchsorted(self.t_arr, t), 1, len(self.t_arr) - 1))
+        a = float(np.clip((t - self.t_arr[i - 1]) / max(self.t_arr[i] - self.t_arr[i - 1], 1e-6), 0, 1))
+        p = (1 - a) * self.p_arr[i - 1] + a * self.p_arr[i]
+        w, x, y, z = _slerp(self.quat_arr[i - 1], self.quat_arr[i], a)
+        q = (1 - a) * self.q_arr[i - 1] + a * self.q_arr[i]
+        trail = [tuple(v[:2]) for v in self.p_arr[:i:2]] + [tuple(p[:2])]
+        return ((p, quat_to_mat(x, y, z, w)), q, self._last(self.img_t_arr, self.img, t),
+                self._last(self.obj_t_arr, self.obj, t, []), self._last(self.cur_t_arr, self.cur, t), trail)
+
+    def save(self, directory):
+        import pickle
+        os.makedirs(directory, exist_ok=True)
+        path = os.path.join(directory, time.strftime("lap_%Y%m%d_%H%M%S.pkl"))
+        with open(path, "wb") as f:
+            pickle.dump({k: getattr(self, k) for k in ("t", "p", "quat", "q", "img_t", "img", "obj_t", "obj",
+                                                       "cur_t", "cur", "meta")}, f)
+        return path
+
+    @classmethod
+    def load_latest(cls, directory):
+        import glob, pickle
+        files = sorted(glob.glob(os.path.join(directory, "lap_*.pkl")))
+        if not files:
+            return None, None
+        r = cls()
+        with open(files[-1], "rb") as f:
+            for k, v in pickle.load(f).items():
+                setattr(r, k, v)
+        return r.finalize(), files[-1]
+
+
+def class_colour(name):
+    """Same stable per-class colour as tools/splat/detector_node.py (crc32 hue)."""
+    import colorsys, zlib
+    r, g, b = colorsys.hsv_to_rgb((zlib.crc32(name.encode()) % 360) / 360.0, 0.85, 1.0)
+    return int(r * 255), int(g * 255), int(b * 255)
+
+
 class MiniMap:
     """Live top-down mini-map on the photoreal map rendered by tools/splat/render_topdown.py
     (scene yaml `topdown:` block): tour route + numbered stops, driven trail, and the robot
@@ -599,9 +717,18 @@ class MiniMap:
         if not self.trail or math.dist(self.trail[-1], (x, y)) > 0.05:
             self.trail.append((x, y))
 
-    def draw(self, pose=None, current=None, out_w=420):
-        """pose: (p, R) or None; current: 1-based index of the stop being driven to (None = idle)."""
+    def draw(self, pose=None, current=None, out_w=420, objects=()):
+        """pose: (p, R) or None; current: 1-based index of the stop being driven to (None = idle);
+        objects: confirmed detections [{cls, xyz, ...}] drawn as labelled diamonds."""
         cv2, img = self.cv2, self.base.copy()
+        for o in objects:
+            u, v = self.px(o["xyz"][0], o["xyz"][1])
+            c = class_colour(o["cls"])
+            pts = np.array([(u, v - 9), (u + 9, v), (u, v + 9), (u - 9, v)], np.int32)
+            cv2.fillPoly(img, [pts], c, cv2.LINE_AA)
+            cv2.polylines(img, [pts], True, (0, 0, 0), 1, cv2.LINE_AA)
+            cv2.putText(img, o["cls"], (u + 11, v + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 0), 3, cv2.LINE_AA)
+            cv2.putText(img, o["cls"], (u + 11, v + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.55, c, 1, cv2.LINE_AA)
         route = [self.px(0.0, 0.0)] + [self.px(*s) for s in self.tour]
         cv2.polylines(img, [np.array(route, np.int32)], False, (0, 200, 255), 2, cv2.LINE_AA)
         if len(self.trail) > 1:
@@ -650,6 +777,7 @@ def load_minimap(scene):
 
 def main():
     import viser
+    import cv2                       # lap recorder (JPEG frames) + replay decode
     scene, g, render = load_world()
     print(f"[splat_viewer] {len(g['means'])} Gaussians loaded; open http://localhost:{PORT}", flush=True)
     mjr = load_mj_robot()
@@ -697,6 +825,16 @@ def main():
     if minimap is not None:
         with server.gui.add_folder("Top-down map (photoreal)"):
             map_panel = server.gui.add_image(minimap.draw(), label="robot · trail · tour stops")
+    with server.gui.add_folder("Replay"):
+        replay_info = server.gui.add_text("Recording", initial_value="no lap recorded yet", disabled=True)
+        replay_speed = server.gui.add_dropdown("Speed", ("1x", "2x", "4x", "8x"), initial_value="2x")
+        replay_loop = server.gui.add_checkbox("Loop", initial_value=False)
+        replay_pos = server.gui.add_slider("Position %", min=0, max=100, step=0.5, initial_value=0)
+        replay_btn = server.gui.add_button("Replay last lap")
+        replay_stop = server.gui.add_button("Stop replay")
+    with server.gui.add_folder("Object detection"):
+        show_det = server.gui.add_checkbox("Show detections (camera + map)", initial_value=True)
+        det_summary = server.gui.add_text("Object map", initial_value="waiting for detector...", disabled=True)
     with server.gui.add_folder("Robot camera (photoreal)"):
         cam_panel = server.gui.add_image(np.zeros((240, 320, 3), np.uint8), label="/camera/image_raw")
 
@@ -713,10 +851,94 @@ def main():
 
     auto_started = False   # VIEW_AUTO_EXPLORE: exactly one lap per viewer start
     last_map_t, lap_ref, map_current = 0.0, None, None
+    last_obj_t = 0.0                        # detector object-map summary refresh
+    # lap recorder (while exploring) + replay. The newest saved lap is loaded at start.
+    rec, rec_ref = None, None
+    last_lap, lap_file = LapRecording.load_latest(LAPS_DIR)
+    if last_lap is not None:
+        replay_info.value = f"{os.path.basename(lap_file)}: {last_lap.duration:.0f} s lap (saved)"
+    rp = {"on": False, "start": 0.0, "offset": 0.0, "pos_set": False}
+
+    def replay_tau(now):
+        return rp["offset"] + (now - rp["start"]) * float(replay_speed.value.rstrip("x"))
+
+    def start_replay(_, at=0.0):
+        if state.explore is not None:
+            state.status = "replay: wait for the current lap to finish"; return
+        if last_lap is None or last_lap.duration <= 0:
+            state.status = "replay: no lap recorded yet — run 'Explore the world' first"; return
+        rp["offset"], rp["start"], rp["on"] = at, time.time(), True
+
+    def stop_replay(_):
+        if rp["on"]:
+            rp["on"] = False
+            state.status = "replay stopped"
+            if minimap is not None:
+                minimap.trail = []
+
+    @replay_speed.on_update
+    def _(_):                         # keep the lap position when the speed changes mid-replay
+        if rp["on"]:
+            now = time.time()
+            rp["offset"], rp["start"] = replay_tau(now - 1e-9), now
+
+    @replay_pos.on_update
+    def _(_):                         # user scrub -> seek (ignore our own progress updates)
+        if rp["pos_set"] or last_lap is None:
+            return
+        start_replay(None, at=replay_pos.value / 100.0 * last_lap.duration)
+
+    replay_btn.on_click(start_replay)
+    replay_stop.on_click(stop_replay)
     while True:
         t0 = time.time()
         with state.lock:
             pose, cam_img, q = state.pose, state.cam_img, state.joints
+        det_fresh = state.det_img is not None and t0 - state.det_t < 1.5
+        live_objects, live_det = state.objects, (state.det_img if det_fresh else None)
+        # ---- RECORD the lap: pose + joints (20 Hz), the camera frame the panel shows, map state
+        e_ = state.explore
+        if e_ is not None and not rp["on"]:
+            if rec_ref is not e_:
+                rec, rec_ref = LapRecording(), e_
+            if pose is not None:
+                shown = live_det if (show_det.value and live_det is not None) else cam_img
+                rec.add(t0, pose, q, shown, live_objects, max(e_["i"], 1), cv2)
+        elif e_ is None and rec_ref is not None:          # lap ended: keep + save it
+            rec_ref = None
+            if rec is not None and rec.duration > 5:
+                rec.meta = {"status": state.status, "scene": scene.get("name")}
+                last_lap = rec.finalize()
+                try:
+                    lap_file = last_lap.save(LAPS_DIR)
+                    replay_info.value = f"{os.path.basename(lap_file)}: {last_lap.duration:.0f} s lap (saved)"
+                except OSError as ex:
+                    replay_info.value = f"last lap: {last_lap.duration:.0f} s (not saved: {ex})"
+        # ---- REPLAY: every view shows the recorded lap at lap time tau (smoothly interpolated)
+        replay_frame = None
+        if rp["on"]:
+            tau, dur = replay_tau(t0), last_lap.duration
+            if tau > dur:
+                if replay_loop.value:
+                    rp["offset"], rp["start"], tau = 0.0, t0, 0.0
+                else:
+                    rp["on"] = False
+                    state.status = f"replay finished ({dur:.0f} s lap)"
+            if rp["on"]:
+                pose, q, jpg, r_objs, r_cur, r_trail = last_lap.sample(tau)
+                replay_frame = (r_objs, r_cur, r_trail)
+                if jpg is not None and jpg is not rp.get("jpg"):
+                    rp["jpg"] = jpg
+                    rp["img"] = cv2.cvtColor(cv2.imdecode(np.frombuffer(jpg, np.uint8), cv2.IMREAD_COLOR),
+                                             cv2.COLOR_BGR2RGB)
+                cam_img = rp.get("img", cam_img)
+                spd = float(replay_speed.value.rstrip("x"))
+                state.status = (f"REPLAY {spd:g}× {'(loop) ' if replay_loop.value else ''}— "
+                                f"{tau / spd:.0f}/{dur / spd:.0f} s  (lap time {tau:.0f}/{dur:.0f} s)")
+                if t0 - rp.get("pos_t", 0) > 0.5:       # progress slider, without triggering a seek
+                    rp["pos_set"] = True
+                    replay_pos.value = round(100.0 * tau / dur, 1)
+                    rp["pos_set"], rp["pos_t"] = False, t0
         use_mj = mjr is not None and robot_mode.value == ROBOT_MODES[0]
         robot.visible = not use_mj          # composite replaces the URDF scene mesh
         if urdf is not None and q is not None and not use_mj:
@@ -735,19 +957,39 @@ def main():
                 auto_started = True
                 explore(tour)
         status.value = state.status
-        if cam_img is not None and t0 - last_img_t > 0.2:
-            cam_panel.image = cam_img
+        objects_now = replay_frame[0] if replay_frame else live_objects
+        if t0 - last_img_t > 0.2 and (cam_img is not None or det_fresh):
+            if replay_frame:          # the recorded frame (already annotated if detections were on)
+                cam_panel.image = cam_img
+            else:                     # annotated detector frame while detections are on and fresh
+                cam_panel.image = live_det if (show_det.value and live_det is not None) else cam_img
             last_img_t = t0
+        if t0 - last_obj_t > 0.5:                      # object-map summary, 2 Hz
+            # detections are shown on the robot camera panel and the top-down map only —
+            # deliberately NOT as 3D markers in the main view (keeps the photoreal view clean)
+            objs = objects_now
+            by = {}
+            for o in objs:
+                by[o["cls"]] = by.get(o["cls"], 0) + 1
+            det_summary.value = (f"{len(objs)} objects: " + ", ".join(f"{k} ×{v}" for k, v in
+                                 sorted(by.items(), key=lambda kv: -kv[1]))) if objs else \
+                ("no objects confirmed yet" if det_fresh else "waiting for detector...")
+            last_obj_t = t0
         if map_panel is not None and t0 - last_map_t > 0.2:     # mini-map ~5 Hz
-            e = state.explore
-            if e is not None and lap_ref is not e:              # new lap -> fresh trail
-                minimap.trail.clear()
-                lap_ref = e
-            if pose is not None and e is not None:
-                minimap.add_trail(pose[0][0], pose[0][1])
-            if e is not None:
-                map_current = max(e["i"], 1)
-            map_panel.image = minimap.draw(pose, map_current)
+            if replay_frame:
+                # trail = recorded poses up to the replay cursor; progress = recorded stop index
+                objs_map, cur, minimap.trail = replay_frame
+            else:
+                e = state.explore
+                if e is not None and lap_ref is not e:          # new lap -> fresh trail
+                    minimap.trail.clear()
+                    lap_ref = e
+                if pose is not None and e is not None:
+                    minimap.add_trail(pose[0][0], pose[0][1])
+                if e is not None:
+                    map_current = max(e["i"], 1)
+                cur, objs_map = map_current, live_objects
+            map_panel.image = minimap.draw(pose, cur, objects=objs_map if show_det.value else ())
             last_map_t = t0
         n_clients = 0
         for client in list(server.get_clients().values()):

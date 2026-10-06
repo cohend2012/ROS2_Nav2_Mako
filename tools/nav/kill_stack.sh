@@ -18,5 +18,5 @@ docker exec $C bash -c "
     sleep 2
   done
   echo \"remaining stack procs: \$(ps -eo args | grep -E '$PAT' | grep -v grep | wc -l)\""
-docker rm -f m20_sim_run m20_splat_cam m20_splat_view m20_mujoco_mirror 2>/dev/null
+docker rm -f m20_sim_run m20_splat_cam m20_splat_view m20_mujoco_mirror m20_detector 2>/dev/null
 echo "sim container removed; stack down."

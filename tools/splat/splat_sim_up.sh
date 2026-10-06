@@ -42,6 +42,7 @@ if [ -d /usr/lib/wsl/lib ]; then
   GL_ARGS+=(-v /usr/lib/wsl:/usr/lib/wsl:ro -e LD_LIBRARY_PATH=/usr/lib/wsl/lib
             -e GALLIUM_DRIVER=d3d12 -e MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA)
 fi
+mkdir -p "$HOME/m20_sim/laps"            # recorded laps for Viser replay (persist across restarts)
 docker rm -f m20_splat_view >/dev/null 2>&1 || true
 docker run -d --name m20_splat_view --gpus all --network host --ipc host \
   -e ROS_DOMAIN_ID=42 -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp -e VIEW_PORT="$PORT" \
@@ -49,9 +50,20 @@ docker run -d --name m20_splat_view --gpus all --network host --ipc host \
   -e SPLAT_PLY=/splat/$SPLAT_FILE -e SPLAT_SCENE=/scene/$(basename "$SCENE_YAML") \
   -v "$HOME/m20_sim/splats":/splat:ro -v "$REPO/tools/sim":/scene:ro \
   -v "$REPO/tools/splat":/splat_tools:ro -v "$HOME/m20_sim/m20_urdf":/urdf:ro \
-  -v "$M20_DESC":/model:ro \
+  -v "$M20_DESC":/model:ro -v "$HOME/m20_sim/laps":/laps \
   m20_splat:latest python3 /splat_tools/splat_viewer.py >/dev/null
 [ -f "$HOME/m20_sim/m20_urdf/M20.urdf" ] || echo "[splat_sim_up] NOTE: ~/m20_sim/m20_urdf/M20.urdf missing — robot drawn as a box"
+
+# Object detector (GPU): OWLv2 office vocabulary on the photoreal camera -> /detections/image
+# (annotated) + /detections/objects (3D object map). Viser shows both. M20_DETECT=0 = off.
+if [ "${M20_DETECT:-1}" = "1" ]; then
+  echo "[splat_sim_up] starting object detector"
+  docker rm -f m20_detector >/dev/null 2>&1 || true
+  docker run -d --name m20_detector --gpus all --network host --ipc host \
+    -e ROS_DOMAIN_ID=42 -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+    -v "$REPO/tools/splat":/splat_tools:ro \
+    m20_splat:latest python3 -u /splat_tools/detector_node.py >/dev/null
+fi
 
 # MuJoCo mirror relay: streams the sim's robot state on :8770 so a NATIVE MuJoCo viewer on
 # the host (tools/splat/mujoco_mirror.py) shows the same run — WSLg can't paint MuJoCo here.

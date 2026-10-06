@@ -37,5 +37,26 @@ RUN pip install --no-cache-dir viser yourdfpy "numpy<2"
 RUN pip install --no-cache-dir "mujoco==3.14.0" "numpy<2"
 ENV MUJOCO_GL=egl
 
+# Object detection (tools/splat/detector_node.py): torchvision COCO FasterRCNN-v2 (DET_MODEL=coco).
+# --no-deps + the version matched to the installed torch: an unpinned install pulled in a
+# whole new torch (2.14/cu130). Weights are baked in so the demo needs no download.
+ARG TORCHVISION_VERSION=0.26.0
+RUN pip install --no-cache-dir --no-deps "torchvision==${TORCHVISION_VERSION}" \
+      --index-url https://download.pytorch.org/whl/cu128 \
+    && python3 -c "import torch, torchvision as tv; assert torch.__version__.startswith('2.11'), torch.__version__; \
+from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2, FasterRCNN_ResNet50_FPN_V2_Weights as W; \
+fasterrcnn_resnet50_fpn_v2(weights=W.DEFAULT); print('torchvision', tv.__version__, 'weights cached')"
+
+# Default detector: OWLv2 (open-vocabulary, HF transformers) queried with an office vocabulary.
+# Constraints keep torch 2.11/cu128 and numpy<2; pillow>=10 because Ubuntu's 9.0 lacks
+# Image.Resampling (transformers' image processors fail to import). Weights baked in (~600 MB).
+ENV HF_HOME=/opt/hf
+RUN printf "torch==2.11.0+cu128\nnumpy<2\n" > /tmp/constraints.txt \
+    && pip install --no-cache-dir -c /tmp/constraints.txt "transformers>=4.45,<5" "pillow>=10" \
+         --extra-index-url https://download.pytorch.org/whl/cu128 \
+    && python3 -c "import torch; assert torch.__version__.startswith('2.11'), torch.__version__; \
+from transformers import Owlv2Processor, Owlv2ForObjectDetection as M; m='google/owlv2-base-patch16-ensemble'; \
+Owlv2Processor.from_pretrained(m); M.from_pretrained(m); print('OWLv2 weights cached')"
+
 COPY tools/splat/splat_camera_node.py tools/splat/splat_viewer.py /
 CMD ["python3", "/splat_camera_node.py"]
