@@ -34,7 +34,7 @@ def test_rejects_when_disarmed():
 
 def test_precheck_failure_blocks_start():
     e = make_engine_armed()
-    req("camera_scan", "{}")   # missing target_class
+    req("three_wheel", "{}")   # precheck always fails until Phase 8 (camera_scan now defaults its target)
     s = last_status()
     assert s.state == BehaviorStatus.STATE_FAILED and "precheck" in s.detail
     assert e.active is None
