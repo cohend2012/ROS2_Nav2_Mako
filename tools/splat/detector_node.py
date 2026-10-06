@@ -47,13 +47,7 @@ KEEP = {"person", "backpack", "handbag", "suitcase", "bottle", "cup", "chair", "
 FX = (W / 2) / math.tan(HFOV / 2)
 
 
-def colour(name):
-    """Stable per-class colour (crc32, not hash(): str hashing is salted per process, and
-    the viewer must colour a class the same way)."""
-    import colorsys, zlib
-    h = zlib.crc32(name.encode()) % 360
-    r, g, b = colorsys.hsv_to_rgb(h / 360.0, 0.85, 1.0)
-    return int(r * 255), int(g * 255), int(b * 255)
+from det_draw import class_colour, draw_box, label_text   # one drawing style with splat_viewer.py
 
 
 def make_detector(dev):
@@ -88,11 +82,33 @@ def make_detector(dev):
     return detect, "FasterRCNN-v2 COCO (office subset)"
 
 
+def box3d(depth, box, z_med, pose, depth_band=0.6, stride=3):
+    """3D axis-aligned box (world) for a 2D detection: the box's pixels whose depth is within
+    depth_band of the object's median depth (drops background/foreground bleed), back-projected
+    through the camera mount; 10th-90th percentile extents (robust to stray pixels).
+    Returns (center xyz, size xyz) or None."""
+    x0, y0, x1, y1 = (int(round(v)) for v in box)
+    x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, W), min(y1, H)
+    d = depth[y0:y1:stride, x0:x1:stride]
+    vv, uu = np.mgrid[y0:y1:stride, x0:x1:stride]
+    m = (d > 0.05) & (np.abs(d - z_med) < depth_band)
+    if m.sum() < 12:
+        return None
+    z, u, v = d[m], uu[m] + 0.5, vv[m] + 0.5
+    p_opt = np.stack([(u - W / 2) / FX * z, (v - H / 2) / FX * z, z], axis=1)
+    p_base = p_opt @ R_BASE_OPT.T + np.array([CAM_FWD, 0.0, CAM_UP])
+    pw = p_base @ pose[2].T + pose[1]
+    lo, hi = np.percentile(pw, 10, axis=0), np.percentile(pw, 90, axis=0)
+    lo[2] = max(lo[2], 0.0)                     # never below the floor
+    size = np.clip(hi - lo, 0.10, 3.0)
+    return ((lo + hi) / 2).tolist(), size.tolist()
+
+
 class ObjectMap:
     def __init__(self):
         self.objs, self.next_id = [], 1
 
-    def add(self, cls, xyz, score):
+    def add(self, cls, xyz, score, size=None):
         best, bd = None, MERGE_DIST
         for o in self.objs:
             if o["cls"] == cls:
@@ -100,16 +116,21 @@ class ObjectMap:
                 if d < bd:
                     best, bd = o, d
         if best is None:
-            self.objs.append({"id": self.next_id, "cls": cls, "xyz": list(xyz), "n": 1, "score": score})
+            self.objs.append({"id": self.next_id, "cls": cls, "xyz": list(xyz), "n": 1, "score": score,
+                              "size": None if size is None else list(size)})
             self.next_id += 1
         else:
             a = 1.0 / min(best["n"] + 1, 10)          # running mean, settles after ~10 sightings
             best["xyz"] = [(1 - a) * p + a * q for p, q in zip(best["xyz"], xyz)]
+            if size is not None:
+                best["size"] = list(size) if best.get("size") is None else \
+                    [(1 - a) * p + a * q for p, q in zip(best["size"], size)]
             best["n"] += 1
             best["score"] = max(best["score"], score)
 
     def confirmed(self):
-        return [dict(o, xyz=[round(v, 2) for v in o["xyz"]], score=round(o["score"], 2))
+        return [dict(o, xyz=[round(v, 2) for v in o["xyz"]], score=round(o["score"], 2),
+                     size=None if o.get("size") is None else [round(v, 2) for v in o["size"]])
                 for o in self.objs if o["n"] >= CONFIRM_N]
 
 
@@ -187,28 +208,28 @@ def main():
             cy0, cy1 = int(y0 + 0.3 * (y1 - y0)), int(y1 - 0.3 * (y1 - y0)) + 1
             patch = depth[cy0:cy1, cx0:cx1]
             patch = patch[patch > 0.05]
-            xyz = None
+            xyz, size = None, None
             if patch.size and pose is not None:
                 z = float(np.median(patch))
                 if z < MAX_RANGE:
-                    u, v = (x0 + x1) / 2, (y0 + y1) / 2
-                    p_opt = np.array([(u - W / 2) / FX * z, (v - H / 2) / FX * z, z])
-                    p_base = R_BASE_OPT @ p_opt + np.array([CAM_FWD, 0.0, CAM_UP])
-                    xyz = (pose[1] + pose[2] @ p_base).tolist()
-                    omap.add(name, xyz, float(sc))
+                    b3 = box3d(depth, box, z, pose)
+                    if b3 is not None:                  # 3D box: centre + extent from the depth pixels
+                        xyz, size = b3
+                    else:                               # fallback: ray through the box centre
+                        u, v = (x0 + x1) / 2, (y0 + y1) / 2
+                        p_opt = np.array([(u - W / 2) / FX * z, (v - H / 2) / FX * z, z])
+                        p_base = R_BASE_OPT @ p_opt + np.array([CAM_FWD, 0.0, CAM_UP])
+                        xyz = (pose[1] + pose[2] @ p_base).tolist()
+                    omap.add(name, xyz, float(sc), size)
             det.append({"cls": name, "score": round(float(sc), 2),
                         "box": [int(x0), int(y0), int(x1), int(y1)],
-                        "xyz": None if xyz is None else [round(v, 2) for v in xyz]})
+                        "xyz": None if xyz is None else [round(v, 2) for v in xyz],
+                        "size": None if size is None else [round(v, 2) for v in size]})
         # annotated image
         img = rgb.copy()
-        for d in det:
-            c = colour(d["cls"])
-            x0, y0, x1, y1 = d["box"]
-            cv2.rectangle(img, (x0, y0), (x1, y1), c, 2)
-            txt = f"{d['cls']} {d['score']:.2f}" + (f" {math.dist(pose[1][:2], d['xyz'][:2]):.1f}m" if d["xyz"] and pose else "")
-            (tw, th), _ = cv2.getTextSize(txt, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-            cv2.rectangle(img, (x0, max(0, y0 - th - 6)), (x0 + tw + 4, max(th + 6, y0)), c, -1)
-            cv2.putText(img, txt, (x0 + 2, max(th + 2, y0 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+        for d in det:                   # shared style (det_draw.py) = the boxes in Viser's main view
+            dist = math.dist(pose[1][:2], d["xyz"][:2]) if (d["xyz"] and pose) else None
+            draw_box(img, d["box"], label_text(d["cls"], d["score"], dist), class_colour(d["cls"]))
         im = Image()
         im.header.stamp = node.get_clock().now().to_msg()
         im.header.frame_id = "camera_optical_link"

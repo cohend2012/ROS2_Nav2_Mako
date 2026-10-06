@@ -684,11 +684,49 @@ class LapRecording:
         return r.finalize(), files[-1]
 
 
-def class_colour(name):
-    """Same stable per-class colour as tools/splat/detector_node.py (crc32 hue)."""
-    import colorsys, zlib
-    r, g, b = colorsys.hsv_to_rgb((zlib.crc32(name.encode()) % 360) / 360.0, 0.85, 1.0)
-    return int(r * 255), int(g * 255), int(b * 255)
+from det_draw import class_colour, draw_box, label_text   # same style as the robot camera panel
+
+
+def draw_objects(rgb, depth, c2w, fov_y, objects, pose, min_score=0.0, box_scale=1.0, style_scale=1.0):
+    """Draw the detector's confirmed objects INTO a main-view frame, styled exactly like the
+    robot camera's boxes: each object's 3D box (centre + size from the depth pixels) is
+    projected through this view's pinhole camera; its screen-space bounding rectangle gets
+    the shared det_draw box + "class score distance" tag. Hidden when the splat (or robot)
+    is clearly in front of the object at its centre pixel. rgb is modified in place.
+    min_score: hide objects below this confidence; box_scale: shrink the 3D extent before
+    projecting (the projected envelope of a 3D box reads larger than the object);
+    style_scale: line/tag size relative to the camera panel's style."""
+    h, w = rgb.shape[:2]
+    fy = (h / 2) / math.tan(fov_y / 2)
+    w2c = np.linalg.inv(c2w)
+    robot_xy = None if pose is None else pose[0][:2]
+    items = []
+    for o in objects:
+        if o.get("score", 0.0) < min_score:
+            continue
+        c = np.asarray(o["xyz"], float)
+        s = box_scale * np.asarray(o.get("size") or (0.4, 0.4, 0.4), float)
+        corners = c + 0.5 * s * np.array([[sx, sy, sz] for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)])
+        pc = corners @ w2c[:3, :3].T + w2c[:3, 3]
+        if (pc[:, 2] < 0.15).any():                       # (partly) behind the camera
+            continue
+        u, v = fy * pc[:, 0] / pc[:, 2] + w / 2, fy * pc[:, 1] / pc[:, 2] + h / 2
+        x0, x1, y0, y1 = max(u.min(), 0), min(u.max(), w - 1), max(v.min(), 0), min(v.max(), h - 1)
+        min_px = 14 * w / 640.0                           # tiny far boxes just stack into clutter
+        if x1 - x0 < min_px or y1 - y0 < min_px or (x1 - x0) * (y1 - y0) > 0.8 * w * h:
+            continue
+        cc = w2c[:3, :3] @ c + w2c[:3, 3]
+        if cc[2] > 12.0:                                  # beyond 12 m: drop (like a camera's range)
+            continue
+        uc, vc = int(fy * cc[0] / cc[2] + w / 2), int(fy * cc[1] / cc[2] + h / 2)
+        if 0 <= uc < w and 0 <= vc < h:                   # occlusion at the centre pixel
+            d_front = float(depth[max(vc - 2, 0):vc + 3, max(uc - 2, 0):uc + 3].min())
+            if cc[2] - 0.5 * float(s.max()) > d_front + 0.3:
+                continue
+        dist = None if robot_xy is None else math.dist(robot_xy, c[:2])
+        items.append((cc[2], (x0, y0, x1, y1), label_text(o["cls"], o.get("score", 0.0), dist), class_colour(o["cls"])))
+    for _, box, text, col in sorted(items, key=lambda it: -it[0]):   # far first, near on top
+        draw_box(rgb, box, text, col, scale=style_scale * w / 640.0)
 
 
 class MiniMap:
@@ -834,6 +872,10 @@ def main():
         replay_stop = server.gui.add_button("Stop replay")
     with server.gui.add_folder("Object detection"):
         show_det = server.gui.add_checkbox("Show detections (camera + map)", initial_value=True)
+        show_3d = server.gui.add_checkbox("3D boxes in main view", initial_value=True)
+        min_conf = server.gui.add_slider("Min confidence", min=0.3, max=0.9, step=0.05,
+                                         initial_value=float(os.environ.get("VIEW_MIN_CONF", 0.5)))
+        box_size = server.gui.add_slider("Box size", min=0.4, max=1.0, step=0.05, initial_value=0.7)
         det_summary = server.gui.add_text("Object map", initial_value="waiting for detector...", disabled=True)
     with server.gui.add_folder("Robot camera (photoreal)"):
         cam_panel = server.gui.add_image(np.zeros((240, 320, 3), np.uint8), label="/camera/image_raw")
@@ -851,7 +893,8 @@ def main():
 
     auto_started = False   # VIEW_AUTO_EXPLORE: exactly one lap per viewer start
     last_map_t, lap_ref, map_current = 0.0, None, None
-    last_obj_t = 0.0                        # detector object-map summary refresh
+    last_obj_t = 0.0                        # detector object-map summary + 3D boxes refresh
+    box_handles = {}                        # object id -> ((label, box) handles, geometry key)
     # lap recorder (while exploring) + replay. The newest saved lap is loaded at start.
     rec, rec_ref = None, None
     last_lap, lap_file = LapRecording.load_latest(LAPS_DIR)
@@ -964,10 +1007,30 @@ def main():
             else:                     # annotated detector frame while detections are on and fresh
                 cam_panel.image = live_det if (show_det.value and live_det is not None) else cam_img
             last_img_t = t0
-        if t0 - last_obj_t > 0.5:                      # object-map summary, 2 Hz
-            # detections are shown on the robot camera panel and the top-down map only —
-            # deliberately NOT as 3D markers in the main view (keeps the photoreal view clean)
+        if t0 - last_obj_t > 0.5:                      # object map: summary + 3D boxes, 2 Hz
             objs = objects_now
+            # 3D bounding boxes in the main view: class-coloured wireframe + label per confirmed
+            # object at/above Min confidence, scaled by Box size. Viser depth-tests them against
+            # the splat depth sent with each frame, so walls in front hide them. A box is rebuilt
+            # only when its geometry (or the sliders) change.
+            want = {o["id"]: o for o in objs if o.get("score", 0.0) >= min_conf.value} \
+                if (show_3d.value and show_det.value) else {}
+            for oid in list(box_handles):
+                if oid not in want:
+                    for h_ in box_handles.pop(oid)[0]:
+                        h_.remove()
+            for oid, o in want.items():
+                size = tuple(box_size.value * v for v in (o.get("size") or (0.4, 0.4, 0.4)))
+                key = (tuple(round(v, 1) for v in o["xyz"]), tuple(round(v, 2) for v in size))
+                if oid in box_handles and box_handles[oid][1] == key:
+                    continue
+                for h_ in box_handles.pop(oid, ((), None))[0]:
+                    h_.remove()
+                bx = server.scene.add_box(f"/detections/{oid}", color=class_colour(o["cls"]),
+                                          dimensions=size, wireframe=True, position=tuple(o["xyz"]))
+                lb = server.scene.add_label(f"/detections/{oid}/label", text=o["cls"],
+                                            position=(0.0, 0.0, size[2] / 2 + 0.12), depth_test=True)
+                box_handles[oid] = ((lb, bx), key)      # child label first when removing
             by = {}
             for o in objs:
                 by[o["cls"]] = by.get(o["cls"], 0) + 1
@@ -989,7 +1052,8 @@ def main():
                 if e is not None:
                     map_current = max(e["i"], 1)
                 cur, objs_map = map_current, live_objects
-            map_panel.image = minimap.draw(pose, cur, objects=objs_map if show_det.value else ())
+            map_panel.image = minimap.draw(pose, cur, objects=[o for o in objs_map if o.get("score", 0) >= min_conf.value]
+                                           if show_det.value else ())
             last_map_t = t0
         n_clients = 0
         for client in list(server.get_clients().values()):
