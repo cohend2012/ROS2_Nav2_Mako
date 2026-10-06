@@ -1,0 +1,26 @@
+# CI gate (ADR-011): every commit builds the container and runs colcon tests
+# inside it — the same artifact that deploys to the robot. Sim-gate jobs for
+# TIER_POLICY behaviors (ADR-010) will be added as a second job in Phase 8.
+name: ci
+on: [push, pull_request]
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pytest
+      - run: python3 -m pytest tests -q
+
+  build-and-test:
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build stack image
+        run: docker build -f docker/Dockerfile -t m20_autonomy:ci .
+      - name: colcon test
+        run: >
+          docker run --rm m20_autonomy:ci
+          bash -lc "source /ws/install/setup.bash && cd /ws && colcon test && colcon test-result --verbose"
