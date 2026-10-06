@@ -33,7 +33,7 @@ def test_watchdog_halts_on_timeout():
     arm(b)
     rclpy.set_time(10.0)
     rclpy.deliver("/cmd_vel", Twist())
-    rclpy.set_time(10.6)          # > 0.5 s default timeout
+    rclpy.set_time(11.1)          # > 1.0 s default timeout
     b.watchdog()
     assert b.stopped and b.sdk.stops >= 1
     assert b.sdk.vel[-1] == (0.0, 0.0, 0.0)
