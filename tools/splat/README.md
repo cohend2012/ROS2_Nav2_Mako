@@ -27,7 +27,26 @@ Open **Viser** at <http://localhost:8080>. It shows:
 Press Ctrl-C in the launcher terminal to stop. Relaunch for each lap; repeated laps on one stack
 let state drift build up.
 
-## One-time setup
+## New machine setup
+
+You need a Linux or WSL2 (Ubuntu) machine with an NVIDIA GPU, Docker, the
+[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+and about 35 GB of free disk. On Windows, run everything from a WSL terminal, not Git Bash.
+
+1. Get `gaussians_indoor.ply` (about 213 MB, not in git) from the team.
+2. Run the setup script from the repo root:
+   ```bash
+   bash tools/splat/setup_splat_demo.sh --splat /path/to/gaussians_indoor.ply   # a https:// URL works too
+   ```
+   It checks the GPU, builds the Docker images (30–60 min the first time), starts the commander,
+   installs the MuJoCo robot model and scenes, verifies the splat's checksum, and fetches the M20
+   URDF. Re-running it is safe: finished steps are skipped. `--check` only reports what's missing.
+3. When it prints **All set**, launch the demo with the command under [Run it](#run-it).
+
+The generated world, tour and top-down map for this splat are committed. You don't need to
+regenerate them unless you change the splat.
+
+## Manual setup steps (reference)
 
 | Step | Command |
 |---|---|
@@ -50,6 +69,7 @@ let state drift build up.
 | `splat_viewer.py` | Viser app: composite view, explore tour, mini-map, detections, replay |
 | `mujoco_mirror_relay.py`, `mujoco_mirror.py` | Stream the sim state to a native MuJoCo window |
 | `splat_sim_up.sh` | One-command demo launcher |
+| `setup_splat_demo.sh` | One-time setup on a new machine (images, models, splat check) |
 | `detect_probe*.py` | Offline detector comparison on tour renders |
 
 ## Demo-only settings (never use them for gates or evidence)
