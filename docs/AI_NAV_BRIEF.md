@@ -1,6 +1,6 @@
 # Technical Brief: A Learned Navigation System for the M20
 
-**Status:** PROPOSED. Awaiting owner approval (see §9). No code has been written yet.
+**Status:** APPROVED 2026-11-04 (§9) and BUILT (Phases 1-3). How to run it: `docs/AI_NAV_RUNBOOK.md`. Measured gate results: `docs/ai_nav/RESULTS.md`.
 **Date:** 2026-11-04
 **Scope:** MuJoCo sim → ROS 2 Humble stack (this repo) → Jetson-class deployment
 **Supersedes:** the "Cloud-VLM language missions" item filed under *Later* in `ROADMAP.md`
@@ -118,13 +118,19 @@ the goal given relative to the robot.
   (matching `LIDAR_REALISM`), and odometry slip.
 - **Reward:** progress toward the goal, a success bonus, a collision or tip-over penalty,
   and a small smoothness penalty.
-- **Integration:** a ROS 2 node takes a **carrot point** (lookahead on Nav2's global
-  `/plan`) and publishes the velocity command into the existing smoother. Nav2 keeps
-  global planning, recoveries, and costmaps. We swap only the local controller.
-  `M20_AI_CONTROLLER=1` selects it, so the master behavior does not change until it
-  passes a gate.
-- **Safety envelope:** a hard check outside the policy halts motion if the minimum
-  forward range is below 0.35 m. It cannot be disabled.
+- **Integration (owner decision: build all three):** one node, `m20_ai_controller`,
+  with three modes selected by `M20_AI_CONTROLLER`. Each mode tracks a **carrot point**
+  (1.5 m lookahead) on a path and publishes into the existing velocity smoother.
+  - `follow_path`: hybrid under Nav2. Nav2's planner, BT and recoveries stay; our node
+    serves `/follow_path` in place of controller_server.
+  - `standalone`: our own global planner (A* on `/map`) plus the policy; serves
+    `/navigate_to_pose`, with no Nav2 running.
+  - `direct`: no map; the policy chases the goal and avoids obstacles reactively.
+  With the flag empty, the stack runs master's classical DWB unchanged.
+- **Safety envelope:** a hard check outside the policy stops forward motion when any
+  return in the ±35° forward cone is closer than 0.60 m. It cannot be disabled. The
+  value is 0.60 m because the LiDAR's blind radius is 0.5 m. Below that, an obstacle
+  returns nothing, so 3 s of world-frame obstacle memory backs the envelope up.
 
 ### 4.2 L2: Semantic memory (`m20_semantics`)
 
@@ -203,11 +209,13 @@ two-track plan did in July.
 
 ## 9. Decisions requested from the owner
 
-1. Approve Phases 1–3 for build, with Phase 4 designed but not built.
-2. Default VLM provider for development (Claude / Cosmos endpoint / both behind the
-   interface).
-3. L1 integration: hybrid local controller under the Nav2 global plan (recommended),
-   versus a standalone point-goal navigator that bypasses Nav2.
+Decided by the owner on 2026-11-04:
+1. **Scope:** build Phases 1–3. Phase 4 ("find the kitchen") is designed but not built.
+2. **VLM:** both providers behind one interface, with Claude as the default and Cosmos
+   through an OpenAI-compatible endpoint. The offline backend is always present as a
+   fallback.
+3. **Integration:** "do both, hybrid, local and global". All three modes are built
+   (§4.1): under Nav2, standalone with our own global planner, and direct.
 
 ---
 

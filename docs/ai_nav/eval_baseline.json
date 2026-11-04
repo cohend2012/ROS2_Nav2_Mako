@@ -1,0 +1,72 @@
+{
+  "policy": "baseline",
+  "date": "2026-11-04",
+  "G1": {
+    "success": 0.952,
+    "collision": 0.002,
+    "tipped": 0.0,
+    "timeout": 0.046,
+    "spl": 0.8651097856291737,
+    "n": 500,
+    "pass": true
+  },
+  "G2": {
+    "1.0": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 0.9164584580464517,
+      "n": 10
+    },
+    "1.1": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 1.0,
+      "n": 10
+    },
+    "1.2": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 1.0,
+      "n": 10
+    },
+    "1.4": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 1.0,
+      "n": 10
+    },
+    "1.6": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 1.0,
+      "n": 10
+    },
+    "2.0": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 1.0,
+      "n": 10
+    }
+  },
+  "field": {
+    "success": 0.62,
+    "collision": 0.24,
+    "tipped": 0.0,
+    "timeout": 0.14,
+    "spl": 0.5535593859362123,
+    "n": 50
+  },
+  "wall_s": 227
+}

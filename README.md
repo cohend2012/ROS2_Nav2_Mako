@@ -17,6 +17,7 @@ Then, as needed:
 | [`docs/ENGINEERING_RULES.md`](docs/ENGINEERING_RULES.md) | the four binding rules for code in this repo |
 | [`docs/NAV2_SETUP_RUNBOOK.md`](docs/NAV2_SETUP_RUNBOOK.md) | standing a nav stack up from zero, on any robot |
 | [`docs/SECOND_BRAIN.md`](docs/SECOND_BRAIN.md) | long-term memory: ADRs, contracts, phases, changelog |
+| [`docs/AI_NAV_BRIEF.md`](docs/AI_NAV_BRIEF.md) · [`docs/AI_NAV_RUNBOOK.md`](docs/AI_NAV_RUNBOOK.md) | M20-Brain: learned navigation + language missions (why · how) |
 
 **ROS 2 distro: Humble / Ubuntu 22.04** (ADR-007). The robot's onboard system runs
 Foxy, but that stays *behind the vendor boundary* — our stack talks to it through the
@@ -140,6 +141,8 @@ this level: side-effects behind injectable objects, state machines as plain meth
 - `src/m20_missions` — mission server + AI agent interface
 - `src/m20_behaviors` — behavior engine + plugins (camera_scan, self_right, …)
 - `src/m20_station` — operator bridge (foxglove_bridge + rosbridge)
+- `src/m20_ai_nav` — M20-Brain L1: learned (PPO/ONNX) navigator → `/cmd_vel`, 3 modes ([brief](docs/AI_NAV_BRIEF.md), [runbook](docs/AI_NAV_RUNBOOK.md))
+- `src/m20_agent` — M20-Brain L2/L3: landmark memory + VLM mission agent (Claude / Cosmos / offline)
 - `src/m20_bringup` — top-level launch
 - `docker/` — Dockerfile, compose, healthcheck, entrypoint
 - `tools/vendor.repos` — pinned vendor/third-party dependencies

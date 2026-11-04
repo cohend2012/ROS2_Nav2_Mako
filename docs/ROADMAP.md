@@ -71,8 +71,24 @@ Entry requires M4 green. NOT before — see readiness assessment below.
 - [ ] Outdoor L3.2 batch, tethered → untethered on gate pass
 - [ ] **GATE M5: 10/10 outdoor goals, geofenced, e-stop drill passed**
 
+## AI track — M20-Brain (owner-approved parallel track, 2026-11-04)
+Runs beside M1 the way the July two-track plan did; it does NOT fix the M1a
+localization drift (that stays the M1 blocker). Brief: docs/AI_NAV_BRIEF.md ·
+run it: docs/AI_NAV_RUNBOOK.md · numbers: docs/ai_nav/RESULTS.md
+- [x] Phase 1 — learned velocity navigator (PPO -> ONNX), 3 modes
+      (follow_path under Nav2 / standalone A* / direct), G1+G2 in MuJoCo
+- [x] ROS 2 wiring smoke: all 3 modes + agent on real Humble + Nav2
+- [x] Phase 2 — mission agent: landmark registry, Claude/Cosmos/offline, return home; G4
+- [x] Phase 3 — 6 sim gauges + reading; G5 end-to-end in MuJoCo
+- [ ] **G3 on the owner box:** `M20_AI_CONTROLLER=follow_path` batch_nav_test.sh
+      ≥9/10, mean < 0.5 m (then standalone, then the patrol gate)
+- [ ] G4 with `--backend claude` (needs ANTHROPIC_API_KEY) and `--backend cosmos`
+      (needs a GPU endpoint) — offline passes 10/10
+- [ ] Gauge missions in the full stack (M20_CAMERA=1 + gauge scene)
+- [ ] Phase 4 (designed, not built): open-vocabulary "find X" exploration (VLFM-style)
+
 ## Later (filed, deliberately not now)
-Cloud-VLM language missions (Phase 7 opener — after M1, it demos on the tour) ·
+Cloud-VLM language missions — DONE as the AI track above ·
 MPPI controller trial · slow-align tuning · commander C++ port (P2) ·
 Foxglove custom panels · fleet items (Phase 10)
 

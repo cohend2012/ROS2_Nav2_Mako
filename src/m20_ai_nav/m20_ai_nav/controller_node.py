@@ -93,6 +93,7 @@ class AiController(Node):
                                        cancel_callback=lambda gh: CancelResponse.ACCEPT,
                                        callback_group=self.cb)
         self.active = None
+        self._last_fp = None          # (gx, gy, t) of the last preempted follow_path goal
         self.get_logger().info(f"AI controller up: mode={self.mode} "
                                f"model={g('model_path')} -> {g('cmd_vel_out')}")
 
@@ -122,7 +123,13 @@ class AiController(Node):
     def on_goal(self, _req):
         # one goal at a time; a new goal preempts the old one (Nav2 semantics)
         if self.active is not None:
+            # remember what we were driving to BEFORE the old loop unwinds, so the
+            # incoming goal can tell "replan of the same goal" from "new goal"
+            gx, gy = self.core.tracker.path[-1]
+            self._last_fp = (float(gx), float(gy), time.monotonic())
             self.active.abort_requested = True
+        else:
+            self._last_fp = None
         return GoalResponse.ACCEPT
 
     def pose(self):
@@ -138,6 +145,9 @@ class AiController(Node):
     def drive(self, gh, feedback_fn, replan_fn=None):
         """10 Hz loop until SUCCEEDED / STUCK / cancel / preempt. Returns (ok, why)."""
         gh.abort_requested = False
+        t_wait = time.monotonic()
+        while self.active is not None and time.monotonic() - t_wait < 1.0:
+            time.sleep(0.02)            # let a preempted loop unwind: one publisher at a time
         self.active = gh
         period = 1.0 / spec.CONTROL_HZ
         last_replan = time.monotonic()
@@ -188,8 +198,22 @@ class AiController(Node):
         if not poses:
             gh.abort(); return FollowPath.Result()
         q = poses[-1].pose.orientation
-        self.core.set_path([(ps.pose.position.x, ps.pose.position.y) for ps in poses],
-                           goal_yaw=yaw_from_quat(q.x, q.y, q.z, q.w))
+        xy = [(ps.pose.position.x, ps.pose.position.y) for ps in poses]
+        gyaw = yaw_from_quat(q.x, q.y, q.z, q.w)
+        # Nav2's BT replans at 1 Hz and delivers each new path as a PREEMPTING goal.
+        # Same destination as the goal we were just driving = a replan: keep the
+        # stuck timer and the blind-zone memory (a full reset every second would
+        # make STUCK impossible and forget obstacles inside the LiDAR blind radius).
+        t_wait = time.monotonic()
+        while self.active is not None and time.monotonic() - t_wait < 1.0:
+            time.sleep(0.02)            # old loop must stop ticking before we touch core
+        last = self._last_fp
+        if (last is not None and time.monotonic() - last[2] < 3.0
+                and math.hypot(xy[-1][0] - last[0], xy[-1][1] - last[1]) < 0.3):
+            self.core.update_path(xy)
+            self.core.goal_yaw = gyaw
+        else:
+            self.core.set_path(xy, goal_yaw=gyaw)
 
         def fb(pose):
             f = FollowPath.Feedback()
@@ -197,7 +221,8 @@ class AiController(Node):
             f.speed = float(self.vx_meas)
             gh.publish_feedback(f)
         ok, why = self.drive(gh, fb)
-        self.get_logger().info(f"follow_path {'OK' if ok else 'FAIL'}: {why}")
+        if why != "preempted":
+            self.get_logger().info(f"follow_path {'OK' if ok else 'FAIL'}: {why}")
         return self.finish(gh, ok, FollowPath.Result())
 
     # ---------------- modes: standalone / direct (we ARE /navigate_to_pose) ----------

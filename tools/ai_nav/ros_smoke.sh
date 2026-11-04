@@ -41,4 +41,20 @@ for MODE in $MODES; do
   set -e
   if [ $rc -eq 0 ]; then echo "mode=$MODE PASS"; else echo "mode=$MODE FAIL (rc=$rc) — logs: $OUTROOT/$MODE/"; fail=1; fi
 done
+# summary for docs/ai_nav/RESULTS.md (tools/ai_nav/make_results.py)
+python3 - "$OUTROOT" "$REPO/docs/ai_nav/smoke.json" "$RUNNER" $MODES <<'PY'
+import json, os, sys, time, platform
+root, out, runner, modes = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
+def rd(m, f):
+    p = os.path.join(root, m, f)
+    try:
+        return json.loads(open(p).read().strip().splitlines()[-1])
+    except Exception as e:                      # missing/garbled = FAIL, never skipped
+        return {"pass": False, "why": f"{f}: {e}"}
+res = {"date": time.strftime("%Y-%m-%d %H:%M"), "env": f"runner={runner}, {platform.platform()}",
+       "modes": {m: {"nav": rd(m, "nav.json"), "agent": rd(m, "agent.json")} for m in modes}}
+os.makedirs(os.path.dirname(out), exist_ok=True)
+json.dump(res, open(out, "w"), indent=2)
+print("wrote", out)
+PY
 exit $fail
