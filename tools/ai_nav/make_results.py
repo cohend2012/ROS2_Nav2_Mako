@@ -132,6 +132,44 @@ def main():
               "Next training run: (1) add the site's long ground pipes to the procedural slots, (2) add a "
               "tip-over/roll-rate penalty, (3) curriculum on near-contact pivots. The policy contract (spec.py) does "
               "not change, so the ROS side needs no edits to ship v2.", ""]
+    # ---------------- office ----------------
+    ov2, ov1, obl = load("office_v2.json"), load("office_v1.json"), load("office_baseline.json")
+    if ov2 or ov1:
+        L += ["## Office gates (procedural offices, A* + NavCore + shield as deployed)", "",
+              "O1 = held-out offices (people 0-3), O2 = door-width sweep (no people), O3 = 3 walking people.", "",
+              "| policy | O1 success | O1 collision | O1 timeout/stuck | O3 success | O3 collision |",
+              "|---|---|---|---|---|---|"]
+        for name, e in (("**office v2 (shielded RL)**", ov2), ("v1 (outdoor-trained)", ov1), ("scripted baseline", obl)):
+            if e and "O1" in e:
+                o1, o3 = e["O1"], e["O3"]
+                L.append(f"| {name} | {pct(o1['success'])} | {pct(o1['collision'])} | {pct(o1['timeout'])} | "
+                         f"{pct(o3['success'])} | {pct(o3['collision'])} |")
+        L += ["", "| door width | " + " | ".join(n for n, e in (("v2", ov2), ("v1", ov1), ("baseline", obl)) if e) + " |",
+              "|---|" + "---|" * sum(1 for e in (ov2, ov1, obl) if e)]
+        for w in ("0.80", "0.85", "0.90", "1.00"):
+            cells = [f"{pct(e['O2'][w]['success'])} ok / {pct(e['O2'][w]['collision'])} coll"
+                     for e in (ov2, ov1, obl) if e and "O2" in e]
+            L.append(f"| {w} m | " + " | ".join(cells) + " |")
+        L.append("")
+    so = load("smoke_office.json")
+    if so:
+        L += ["### Office ROS 2 wiring (real Humble + Nav2, office overlay, box-exact LiDAR)", "",
+              "Reception → meeting room through its **0.85 m door**, then \"go to the meeting room and come back\".", "",
+              "| mode | nav goal | agent mission | verdict |", "|---|---|---|---|"]
+        for m, r in so["modes"].items():
+            n, ag = r["nav"], r["agent"]
+            L.append(f"| `{m}` | {('status ' + str(n.get('status')) + ', err ' + str(n.get('final_err_m')) + ' m') if 'status' in n else n.get('why')} | "
+                     f"{ag.get('detail', ag.get('why'))} | {'PASS' if n['pass'] and ag['pass'] else 'FAIL'} |")
+        L += ["", "`direct` is refused indoors by design (no map → cannot route through doors).", ""]
+    reps = sorted(glob.glob(os.path.join(D, "mission_office", "report_*.json")))
+    if reps:
+        L += ["### Office missions in MuJoCo (office demo site, vendor M20 physics)", "",
+              "| request | plan | result | sim time | home error |", "|---|---|---|---|---|"]
+        for p_ in reps:
+            r = json.load(open(p_)); sim = r.get("sim", {})
+            L.append(f"| {r['request']} | {' → '.join(x['action'] + ':' + x.get('target', '') for x in r.get('plan', []))} | "
+                     f"{'✓' if r['success'] else '✗ ' + r['detail']} | {sim.get('sim_time_s')} s | {sim.get('home_error_m')} m |")
+        L.append("")
     L += ["## Not measured here (owner box)", "",
           "- **G3**: the full MuJoCo + ROS stack batch with `M20_AI_CONTROLLER=follow_path`. It needs the "
           "m20_autonomy/m20_sim images and the drdds bridge, which are not buildable in this cloud "

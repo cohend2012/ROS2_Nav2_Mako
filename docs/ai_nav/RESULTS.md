@@ -103,6 +103,33 @@ Environment: runner=local, Linux-6.18.44-fc-v233-x86_64-with-glibc2.39
 - **G2 cannot separate them.** Both pass every gap width down to 1.0 m, so the brief's "strictly better on gaps < 1.2 m" bar is not demonstrated. The sweep needs narrower gaps or a dynamic obstacle.
 - **Recommendation:** run G3 with `follow_path` against DWB on the owner box before relying on it. Next training run: (1) add the site's long ground pipes to the procedural slots, (2) add a tip-over/roll-rate penalty, (3) curriculum on near-contact pivots. The policy contract (spec.py) does not change, so the ROS side needs no edits to ship v2.
 
+## Office gates (procedural offices, A* + NavCore + shield as deployed)
+
+O1 = held-out offices (people 0-3), O2 = door-width sweep (no people), O3 = 3 walking people.
+
+| policy | O1 success | O1 collision | O1 timeout/stuck | O3 success | O3 collision |
+|---|---|---|---|---|---|
+| v1 (outdoor-trained) | 40.0% | 40.0% | 20.0% | 35.0% | 35.0% |
+| scripted baseline | 42.5% | 10.0% | 47.5% | 30.0% | 5.0% |
+
+| door width | v1 | baseline |
+|---|---|---|
+| 0.80 m | 40.0% ok / 60.0% coll | 40.0% ok / 10.0% coll |
+| 0.85 m | 40.0% ok / 50.0% coll | 40.0% ok / 10.0% coll |
+| 0.90 m | 40.0% ok / 50.0% coll | 40.0% ok / 10.0% coll |
+| 1.00 m | 30.0% ok / 70.0% coll | 30.0% ok / 20.0% coll |
+
+### Office ROS 2 wiring (real Humble + Nav2, office overlay, box-exact LiDAR)
+
+Reception → meeting room through its **0.85 m door**, then "go to the meeting room and come back".
+
+| mode | nav goal | agent mission | verdict |
+|---|---|---|---|
+| `follow_path` | no result in 150.0 s | ok | FAIL |
+| `standalone` | status 4, err 0.132 m | ok | PASS |
+
+`direct` is refused indoors by design (no map → cannot route through doors).
+
 ## Not measured here (owner box)
 
 - **G3**: the full MuJoCo + ROS stack batch with `M20_AI_CONTROLLER=follow_path`. It needs the m20_autonomy/m20_sim images and the drdds bridge, which are not buildable in this cloud session (packages.ros.org is blocked by its network policy).

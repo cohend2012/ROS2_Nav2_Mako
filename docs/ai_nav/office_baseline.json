@@ -1,0 +1,52 @@
+{
+  "O1": {
+    "success": 0.425,
+    "collision": 0.1,
+    "tipped": 0.0,
+    "timeout": 0.475,
+    "spl": 0.4124940009311093,
+    "n": 40
+  },
+  "O2": {
+    "0.80": {
+      "success": 0.4,
+      "collision": 0.1,
+      "tipped": 0.0,
+      "timeout": 0.5,
+      "spl": 0.3891354348226545,
+      "n": 10
+    },
+    "0.85": {
+      "success": 0.4,
+      "collision": 0.1,
+      "tipped": 0.0,
+      "timeout": 0.5,
+      "spl": 0.37370941835561927,
+      "n": 10
+    },
+    "0.90": {
+      "success": 0.4,
+      "collision": 0.1,
+      "tipped": 0.0,
+      "timeout": 0.5,
+      "spl": 0.3722489415121243,
+      "n": 10
+    },
+    "1.00": {
+      "success": 0.3,
+      "collision": 0.2,
+      "tipped": 0.0,
+      "timeout": 0.5,
+      "spl": 0.28424947317521515,
+      "n": 10
+    }
+  },
+  "O3": {
+    "success": 0.3,
+    "collision": 0.05,
+    "tipped": 0.0,
+    "timeout": 0.65,
+    "spl": 0.2963553200552399,
+    "n": 20
+  }
+}
