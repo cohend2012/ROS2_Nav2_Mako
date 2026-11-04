@@ -9,7 +9,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ros-humble-nav2-bringup ros-humble-robot-localization \
       ros-humble-foxglove-bridge ros-humble-rosbridge-suite \
       ros-humble-pointcloud-to-laserscan \
+      python3-yaml python3-pil python3-numpy \
     && rm -rf /var/lib/apt/lists/*
+
+# M20-Brain runtime (docs/AI_NAV_BRIEF.md): ONNX policy inference for m20_ai_nav,
+# VLM clients for m20_agent. NO torch / mujoco / SB3 here — training is offline
+# (tools/ai_nav/train.py), only the exported .onnx ships. Pin versions for ADR-011.
+RUN pip3 install --no-cache-dir "onnxruntime==1.23.2" "anthropic>=2.4,<3" "openai>=1.60,<4"
 
 WORKDIR /ws
 COPY src ./src

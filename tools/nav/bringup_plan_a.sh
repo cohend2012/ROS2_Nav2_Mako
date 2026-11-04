@@ -25,6 +25,15 @@
 #   M20_STATIC_MAP=maps/oil_gas_field  navigate against the PRE-BUILT map:
 #       slam_toolbox localization mode (posegraph) + static-layer global costmap
 #       (planner sees the whole field at t=0). Empty = live-SLAM path (master).
+#   M20_AI_CONTROLLER=follow_path|standalone|direct  (M20-Brain L1, docs/AI_NAV_BRIEF.md)
+#       follow_path: Nav2 WITHOUT controller_server; the learned PPO policy serves
+#                    /follow_path (hybrid under Nav2's planner/BT/recoveries)
+#       standalone : NO Nav2; our A* on /map + learned policy serve /navigate_to_pose
+#       direct     : NO Nav2, no map; learned policy chases the goal, avoids reactively
+#       Empty = classical Nav2 DWB (master behavior unchanged).
+#   M20_AGENT=claude|cosmos|offline  start the language mission agent (/m20/agent/command).
+#       claude needs ANTHROPIC_API_KEY in the container env; cosmos needs
+#       M20_COSMOS_BASE_URL + M20_COSMOS_MODEL. Gauge reads need M20_CAMERA=1 on the sim.
 #   M20_STANDUP=1  spawn the sim FOLDED and rise via the commander-gated behavior
 #       engine (standup, TIER_VENDOR) BEFORE the bridge starts. Real standup on
 #       camera; joints logged for the replay render.
@@ -75,6 +84,18 @@ docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml"        
 docker cp "$REPO/tools/nav/nav_logger.py"                                         $C:/cfg/nav_logger.py
 docker cp "$REPO/tools/estimator.py"                                              $C:/cfg/estimator.py
 docker cp "$REPO/src/m20_missions/m20_missions/mission_server.py"                 $C:/cfg/mission_server.py
+if [ -n "${M20_AI_CONTROLLER:-}${M20_AGENT:-}" ]; then
+  echo "[1.2/7] M20-Brain: staging m20_ai_nav + m20_agent into $C:/cfg"
+  case "${M20_AI_CONTROLLER:-}" in ""|follow_path|standalone|direct) ;; *)
+    echo "ERROR: M20_AI_CONTROLLER must be follow_path|standalone|direct (got '$M20_AI_CONTROLLER')"; exit 1;; esac
+  [ -z "${M20_AI_CONTROLLER:-}" ] || [ -f "$REPO/src/m20_ai_nav/models/m20_nav_policy.onnx" ] || {
+    echo "ERROR: src/m20_ai_nav/models/m20_nav_policy.onnx missing (train + export: tools/ai_nav/)"; exit 1; }
+  docker exec $C bash -lc "rm -rf /cfg/m20_ai_nav /cfg/m20_agent"
+  docker cp "$REPO/src/m20_ai_nav" $C:/cfg/m20_ai_nav
+  docker cp "$REPO/src/m20_agent"  $C:/cfg/m20_agent
+  docker exec $C bash -lc "python3 -c 'import onnxruntime, anthropic, openai, yaml, PIL' 2>/dev/null || pip3 install -q onnxruntime==1.23.2 'anthropic>=2.4,<3' 'openai>=1.60,<4' pyyaml pillow" \
+    || { echo "ERROR: could not install M20-Brain python deps in $C"; exit 1; }
+fi
 
 if [ -n "${M20_STATIC_MAP:-}" ]; then
   echo "[1.5/7] static-map mode: staging pre-built map + localization config"
@@ -218,12 +239,21 @@ else
 fi
 sleep 6
 
-echo "[5/7] starting Nav2 (logs -> /cfg/out/nav2.log; the 2026-07-17 lesson)"
-docker exec -d $C bash -lc "$SRC; ros2 launch nav2_bringup navigation_launch.py params_file:=/cfg/nav2_params.yaml use_sim_time:=false >/cfg/out/nav2.log 2>&1"
+if [ -n "${M20_AI_CONTROLLER:-}" ]; then
+  echo "[5/7] starting M20-Brain navigator mode=$M20_AI_CONTROLLER (logs -> /cfg/out/ai_nav.log)"
+  docker exec -d $C bash -lc "$SRC; ros2 launch /cfg/m20_ai_nav/launch/ai_nav.launch.py mode:=$M20_AI_CONTROLLER params_file:=/cfg/nav2_params.yaml model_path:=/cfg/m20_ai_nav/models/m20_nav_policy.onnx >/cfg/out/ai_nav.log 2>&1"
+else
+  echo "[5/7] starting Nav2 (logs -> /cfg/out/nav2.log; the 2026-07-17 lesson)"
+  docker exec -d $C bash -lc "$SRC; ros2 launch nav2_bringup navigation_launch.py params_file:=/cfg/nav2_params.yaml use_sim_time:=false >/cfg/out/nav2.log 2>&1"
+fi
 sleep 14
 
 echo "[5.5/7] starting mission server (/m20/mission/run — tools/dev/m20 goto|mission)"
 docker exec -d $C bash -lc "$SRC; python3 /cfg/mission_server.py >/cfg/out/mission.log 2>&1"
+if [ -n "${M20_AGENT:-}" ]; then
+  echo "[5.6/7] starting M20-Brain agent backend=$M20_AGENT (send: tools/agent/say.sh '<request>')"
+  docker exec -d $C bash -lc "$SRC; cd /cfg/m20_agent && ANTHROPIC_API_KEY='${ANTHROPIC_API_KEY:-}' M20_COSMOS_BASE_URL='${M20_COSMOS_BASE_URL:-}' M20_COSMOS_MODEL='${M20_COSMOS_MODEL:-}' python3 -m m20_agent.agent_node --ros-args -p backend:=$M20_AGENT -p landmarks:=/cfg/m20_agent/config/oil_gas_field_landmarks.yaml -p report_dir:=/cfg/out/agent >/cfg/out/agent.log 2>&1"
+fi
 
 if [ "${M20_STANDUP:-0}" != "1" ]; then
   echo "[6a/7] starting logger (standup path started it earlier)"

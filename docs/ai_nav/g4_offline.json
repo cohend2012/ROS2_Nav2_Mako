@@ -1,0 +1,128 @@
+{
+  "backend": "offline",
+  "passed": 10,
+  "of": 10,
+  "pass": true,
+  "date": "2026-11-04",
+  "rows": [
+    {
+      "prompt": "Read all the gauges and return to where you started.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "read_gauge:gauge_pg302",
+        "read_gauge:gauge_pg102",
+        "read_gauge:gauge_pg301",
+        "read_gauge:gauge_pg101",
+        "read_gauge:gauge_ti201",
+        "read_gauge:gauge_fl401",
+        "return_home:"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Run the mission: check every pressure and temperature gauge on site, then come back.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "read_gauge:gauge_pg302",
+        "read_gauge:gauge_pg102",
+        "read_gauge:gauge_pg301",
+        "read_gauge:gauge_pg101",
+        "read_gauge:gauge_ti201",
+        "read_gauge:gauge_fl401",
+        "return_home:"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Go to tank 1.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "goto:tank1"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Read PG-301 and PG-302.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "read_gauge:gauge_pg301",
+        "read_gauge:gauge_pg302"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "What does the wellhead temperature gauge say?",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "read_gauge:gauge_ti201"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Drive to the pipe rack, then the east field, then come back home.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "goto:pipe_rack",
+        "goto:east_field",
+        "return_home:"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Inspect skid 1 for leaks and return to start.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "inspect:skid1",
+        "return_home:"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Read the tank 2 gauge, wait 10 seconds, read it again, then go home.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "read_gauge:gauge_pg102",
+        "return_home:"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Patrol the west field, north lane and east field.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "goto:west_field",
+        "goto:north_lane",
+        "goto:east_field"
+      ],
+      "rationale": "offline keyword plan",
+      "latency_s": 0.0
+    },
+    {
+      "prompt": "Find the kitchen.",
+      "pass": true,
+      "errors": [],
+      "plan": [
+        "wait:1.0"
+      ],
+      "rationale": "offline planner found no known landmark or task in the request",
+      "latency_s": 0.0
+    }
+  ]
+}

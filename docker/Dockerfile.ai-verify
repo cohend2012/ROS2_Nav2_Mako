@@ -1,0 +1,16 @@
+# Slim image for the M20-Brain ROS integration smoke test (tools/ai_nav/ros_smoke.sh).
+# Real ROS 2 Humble + Nav2 + our packages; the plant is a kinematic fake world
+# (tools/ai_nav/ros_smoke/fake_world.py) so this runs anywhere, no MuJoCo/GPU.
+FROM ros:humble-ros-base
+SHELL ["/bin/bash", "-c"]
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3-pip python3-colcon-common-extensions python3-yaml python3-pil python3-numpy \
+      ros-humble-nav2-bringup ros-humble-nav2-msgs ros-humble-tf2-ros-py \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --no-cache-dir "onnxruntime==1.23.2" "anthropic>=2.4,<3" "openai>=1.60,<4"
+WORKDIR /ws
+COPY src/m20_msgs src/m20_msgs
+COPY src/m20_missions src/m20_missions
+COPY src/m20_ai_nav src/m20_ai_nav
+COPY src/m20_agent src/m20_agent
+RUN source /opt/ros/humble/setup.bash && colcon build --symlink-install 2>&1 | tail -5

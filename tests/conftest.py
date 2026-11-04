@@ -2,7 +2,8 @@ import os, sys
 HERE = os.path.dirname(__file__)
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(HERE, "shims"))
-for pkg in ["m20_commander", "m20_locomotion_bridge", "m20_behaviors", "m20_missions"]:
+for pkg in ["m20_commander", "m20_locomotion_bridge", "m20_behaviors", "m20_missions",
+            "m20_ai_nav", "m20_agent"]:
     sys.path.insert(0, os.path.join(ROOT, "src", pkg))
 
 import pytest

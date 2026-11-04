@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>m20_ai_nav</name>
+  <version>0.1.0</version>
+  <description>M20-Brain L1: learned local navigator (PPO, ONNX) that outputs cmd_vel. Modes: follow_path (under Nav2), standalone (own A*), direct.</description>
+  <maintainer email="cohend2012@gmail.com">Dan Cohen</maintainer>
+  <license>MIT</license>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <!-- onnxruntime is pip-installed in docker/Dockerfile (no rosdep key) -->
+  <export><build_type>ament_python</build_type></export>
+</package>

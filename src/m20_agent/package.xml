@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>m20_agent</name>
+  <version>0.1.0</version>
+  <description>M20-Brain L2/L3: landmark registry + VLM mission agent. Plans in language, executes ONLY via /m20/mission/run.</description>
+  <maintainer email="cohend2012@gmail.com">Dan Cohen</maintainer>
+  <license>MIT</license>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>m20_msgs</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-pil</exec_depend>
+  <!-- anthropic / openai are pip-installed in docker/Dockerfile (no rosdep keys) -->
+  <export><build_type>ament_python</build_type></export>
+</package>
