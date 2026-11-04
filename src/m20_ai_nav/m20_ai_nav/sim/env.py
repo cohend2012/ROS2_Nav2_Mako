@@ -350,14 +350,25 @@ class M20NavEnv(gym.Env):
             pl = GridPlanner(robot_radius=self.OFFICE_PLAN_RADIUS, inflation_radius=0.8, plan_res=0.10)
             pl.set_map(*rasterize(self.m, self.d, res=0.10))
             self.planner = pl
-            free = np.argwhere(pl.dist > 0.55)          # start/goal: whole robot fits
+            # Sample INSIDE the building only (the raster spans 20 m, the office 14 m:
+            # sampling the whole raster put ~half the v2 episodes outside the walls,
+            # unwinnable for any controller -> flat 27% office success, 2026-11-04).
+            # Starts need PIVOT clearance (corner sweep 0.53 m + pad), like a dock;
+            # goals need the body to fit with a little margin.
+            inside = np.zeros_like(pl.dist, bool)
+            for r_ in range(pl.h):
+                for c_ in range(pl.w):
+                    wx, wy = pl.cell_to_world(r_, c_)
+                    inside[r_, c_] = abs(wx) < office.HALF - 0.3 and abs(wy) < office.HALF - 0.3
+            free_s = np.argwhere(inside & (pl.dist > 0.85))
+            free_g = np.argwhere(inside & (pl.dist > 0.60))
             path = None
             for _ in range(60):
                 if "start" in opts:
                     s0 = tuple(opts["start"]); g0 = tuple(opts["goal"])
                 else:
-                    s0 = pl.cell_to_world(*free[self.rng.integers(len(free))])
-                    g0 = pl.cell_to_world(*free[self.rng.integers(len(free))])
+                    s0 = pl.cell_to_world(*free_s[self.rng.integers(len(free_s))])
+                    g0 = pl.cell_to_world(*free_g[self.rng.integers(len(free_g))])
                     if not 3.0 < math.hypot(g0[0] - s0[0], g0[1] - s0[1]) < 13.0:
                         continue
                     if any(math.hypot(s0[0] - px, s0[1] - py) < 1.2 for px, py in self._people_xy()):

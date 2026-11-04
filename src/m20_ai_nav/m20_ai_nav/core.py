@@ -173,7 +173,11 @@ def shield(vx, wz, bins, stop_range=0.60, front_half_angle=math.radians(35)):
         vx, blocked, detail = 0.0, True, f"front {front_min(bins, front_half_angle):.2f} m < stop_range"
     if footprint_hits(vx, wz, bins):
         cvx, cwz = 0.0, 0.0
-        for cvx, cwz in ((0.5 * vx, wz), (vx, 0.0), (0.0, 0.5 * wz), (-0.10, 0.0), (0.0, 0.0)):
+        # gentler variants, then backing arcs (reverse while turning lets a boxed-in
+        # robot get out where straight reversing and pivoting are both blocked)
+        sgn = 1.0 if wz >= 0 else -1.0
+        for cvx, cwz in ((0.5 * vx, wz), (vx, 0.0), (0.0, 0.5 * wz), (-0.10, 0.0),
+                         (-0.10, 0.3 * sgn), (-0.10, -0.3 * sgn), (0.0, 0.0)):
             if not footprint_hits(cvx, cwz, bins):
                 break
         detail = f"footprint guard: ({vx:+.2f},{wz:+.2f}) -> ({cvx:+.2f},{cwz:+.2f})"
