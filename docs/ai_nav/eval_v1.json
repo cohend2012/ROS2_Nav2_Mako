@@ -1,0 +1,72 @@
+{
+  "policy": "m20_nav_policy.onnx",
+  "date": "2026-11-04",
+  "G1": {
+    "success": 0.982,
+    "collision": 0.008,
+    "tipped": 0.01,
+    "timeout": 0.0,
+    "spl": 0.8384344232850839,
+    "n": 500,
+    "pass": true
+  },
+  "G2": {
+    "1.0": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 0.9652345878600446,
+      "n": 10
+    },
+    "1.1": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 0.9844779653280955,
+      "n": 10
+    },
+    "1.2": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 0.9895066987241791,
+      "n": 10
+    },
+    "1.4": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 0.9816383734782725,
+      "n": 10
+    },
+    "1.6": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 0.9793487858010377,
+      "n": 10
+    },
+    "2.0": {
+      "success": 1.0,
+      "collision": 0.0,
+      "tipped": 0.0,
+      "timeout": 0.0,
+      "spl": 0.9746988220498898,
+      "n": 10
+    }
+  },
+  "field": {
+    "success": 0.94,
+    "collision": 0.04,
+    "tipped": 0.02,
+    "timeout": 0.0,
+    "spl": 0.8536111976107281,
+    "n": 50
+  },
+  "wall_s": 152
+}

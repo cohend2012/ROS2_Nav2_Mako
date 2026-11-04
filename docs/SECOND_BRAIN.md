@@ -493,6 +493,24 @@ that includes `M20.xml` + obstacle bodies; keep the vendor model file untouched.
 
 ## 9. Changelog
 
+- **2026-11-04 (rev 45) — M20-BRAIN BUILT: learned velocity navigator + language
+  mission agent (AI track, owner-approved; docs/AI_NAV_BRIEF.md).** Hierarchical,
+  NaVILA-style: VLM agent (Claude default / Cosmos Reason via OpenAI-compatible
+  endpoint / offline fallback) → landmark registry → RunMission → PPO policy (ONNX,
+  3M steps, CPU, 90 min) emitting (vx, wz) on /cmd_vel_nav. Policy trained on the
+  vendor MJCF through the bridge's EXACT mixer (parity unit-tested). Three modes:
+  follow_path (under Nav2), standalone (own A*), direct. Measured (docs/ai_nav/
+  RESULTS.md): G1 98.2% vs scripted 95.2% but collisions 0.8% vs 0.2%; field
+  as-deployed 94% vs scripted 100% — **the learned policy is not yet better than a
+  simple tracker on this site**; G4 offline 10/10; G5 6/6 gauges within 0.2% FS,
+  0 confident-wrong, home 0.16 m; all 3 modes PASS on real Humble + Nav2 (RoboStack;
+  packages.ros.org blocked in the cloud session). Integration lessons, all now
+  fixed + documented in AI_NAV_RUNBOOK §6: Humble standalone costmap is always
+  costmap/costmap and never bonds; rcl rejects YAML aliases; sparse paths pin a
+  vertex-based carrot; LiDAR blind radius (0.5 m) < body + margin needs obstacle
+  memory; pivots sweep 0.50 m (A* lethal 0.55); pivots scrub the base off the goal.
+  OPEN: G3 on the owner box (follow_path vs DWB); G4 with real VLMs.
+
 - **2026-07-27 (rev 44) — PHASE 5.5 EXIT TEST PASSED: camera_scan finds and
   centers the wellhead, 1.9° from true bearing.** First perception-driven
   behavior through the full engine pipeline (standup → camera_scan sequential,

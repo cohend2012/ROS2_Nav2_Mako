@@ -1,0 +1,8 @@
+{
+  "obs_version": 1,
+  "obs_dim": 151,
+  "source": "final.zip",
+  "timesteps": 3002368,
+  "sha256": "d2957770def8bc8db10d8d100c1b4bfffab5a5576714b4895cfc9bd6a0dde399",
+  "parity_max_abs_err": 5.960464477539062e-07
+}

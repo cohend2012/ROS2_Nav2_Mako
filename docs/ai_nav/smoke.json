@@ -1,13 +1,13 @@
 {
-  "date": "2026-11-04 17:51",
+  "date": "2026-11-04 18:48",
   "env": "runner=local, Linux-6.18.44-fc-v233-x86_64-with-glibc2.39",
   "modes": {
-    "follow_path": {
+    "direct": {
       "nav": {
         "pass": true,
         "status": 4,
-        "final_err_m": 0.128,
-        "duration_s": 24.5
+        "final_err_m": 0.154,
+        "duration_s": 33.5
       },
       "agent": {
         "pass": true,
@@ -19,7 +19,47 @@
         ],
         "reading": 63.84,
         "expected": 64.0,
-        "home_err_m": 0.089
+        "home_err_m": 0.155
+      }
+    },
+    "standalone": {
+      "nav": {
+        "pass": true,
+        "status": 4,
+        "final_err_m": 0.139,
+        "duration_s": 24.4
+      },
+      "agent": {
+        "pass": true,
+        "success": true,
+        "detail": "ok",
+        "plan": [
+          "read_gauge:gauge_pg101",
+          "return_home:"
+        ],
+        "reading": 63.84,
+        "expected": 64.0,
+        "home_err_m": 0.165
+      }
+    },
+    "follow_path": {
+      "nav": {
+        "pass": true,
+        "status": 4,
+        "final_err_m": 0.075,
+        "duration_s": 23.6
+      },
+      "agent": {
+        "pass": true,
+        "success": true,
+        "detail": "ok",
+        "plan": [
+          "read_gauge:gauge_pg101",
+          "return_home:"
+        ],
+        "reading": 63.84,
+        "expected": 64.0,
+        "home_err_m": 0.123
       }
     }
   }

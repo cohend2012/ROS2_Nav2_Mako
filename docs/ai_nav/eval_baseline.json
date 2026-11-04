@@ -61,11 +61,11 @@
     }
   },
   "field": {
-    "success": 0.62,
-    "collision": 0.24,
+    "success": 1.0,
+    "collision": 0.0,
     "tipped": 0.0,
-    "timeout": 0.14,
-    "spl": 0.5535593859362123,
+    "timeout": 0.0,
+    "spl": 0.966009814455948,
     "n": 50
   },
   "wall_s": 227

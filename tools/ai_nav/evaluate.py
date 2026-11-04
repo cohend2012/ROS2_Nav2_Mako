@@ -10,7 +10,8 @@ G1: held-out procedural episodes (seeds 100000+, full density, domain randomizat
     SPL uses the straight-line start->goal distance as the shortest-path length l,
     which UNDER-estimates l around obstacles, so the SPL reported here is conservative.
 G2: gap-width sweep: barrier with one gap of width w across the route; 10 seeds per w.
-F : the real oil_gas_field.xml scene, random collision-free start/goal pairs.
+F : the real oil_gas_field.xml scene as DEPLOYED (standalone: A* + NavCore + policy),
+    start/goal from the planner's free space, connected pairs only; SPL vs the A* length.
 
 Baseline = a scripted reactive controller (vector-field-histogram style), NOT DWB:
 DWB is gated in the full stack by G3 (batch_nav_test.sh) on the owner's box.
@@ -84,6 +85,53 @@ def run_episode(env, pol, seed, options=None):
             "spl": (l / max(p, l)) if s else 0.0, "steps": env.steps}
 
 
+def run_field(pol, n, seed0=300000, timeout_s=90.0):
+    """Field scene AS DEPLOYED (standalone mode): A* on the scene's occupancy grid
+    gives the path, NavCore + the policy drive it. Start/goal are sampled from the
+    planner's FREE space (>= 0.8 m from any obstacle) and must be connected. The ground
+    pipes fence the pad, so a straight-line goal across one is unreachable for a
+    wheeled robot, and no deployed mode ever asks the bare policy to do that."""
+    sys.path.insert(0, os.path.join(HERE, "..", "agent"))
+    from sim_mission import rasterize
+    from m20_ai_nav.core import NavCore, SUCCEEDED, STUCK
+    from m20_ai_nav.grid_planner import GridPlanner
+    env = M20NavEnv(scene="field", randomize=True, max_steps=10 ** 9)
+    env.reset(seed=seed0)
+    import mujoco
+    mujoco.mj_forward(env.m, env.d)
+    pl = GridPlanner(); pl.set_map(*rasterize(env.m, env.d))
+    rng = np.random.default_rng(seed0)
+    free = np.argwhere(pl.dist > 0.8)
+    rows = []
+    while len(rows) < n:
+        (r0, c0), (r1, c1) = free[rng.integers(len(free))], free[rng.integers(len(free))]
+        s, g = pl.cell_to_world(r0, c0), pl.cell_to_world(r1, c1)
+        if not (1.5 < math.hypot(g[0] - s[0], g[1] - s[1]) < 9.0) or max(map(abs, s + g)) > 8.5:
+            continue
+        path = pl.plan(*s, *g)
+        if path is None:
+            continue
+        env.reset(seed=seed0 + len(rows), options={"start": s, "goal": g,
+                                                    "yaw": float(rng.uniform(-math.pi, math.pi))})
+        core = NavCore(pol); core.set_path(path)          # xy only: no final-yaw phase
+        t, info, out = 0.0, {}, None
+        plen = sum(math.hypot(b[0] - a_[0], b[1] - a_[1]) for a_, b in zip(path[:-1], path[1:]))
+        while t < timeout_s:
+            x, y, yaw = float(env.d.qpos[0]), float(env.d.qpos[1]), env.yaw()
+            v = env.d.qvel
+            cmd = core.tick(t, x, y, yaw, env.scan, math.cos(yaw) * v[0] + math.sin(yaw) * v[1], float(v[5]))
+            if cmd.state in (SUCCEEDED, STUCK):
+                out = cmd.state; break
+            _, _, _, _, info = env.step(spec.cmd_to_action(cmd.vx, cmd.wz)); t += 0.1
+            if info["collision"] or info["tipped"]:
+                break
+        ok = out == SUCCEEDED
+        rows.append({"success": ok, "collision": bool(info.get("collision")), "tipped": bool(info.get("tipped")),
+                     "timeout": not ok and not info.get("collision") and not info.get("tipped"),
+                     "spl": (plen / max(env.path_len, plen)) if ok else 0.0, "steps": int(t * 10)})
+    return rows
+
+
 def summarize(rows):
     a = {k: float(np.mean([r[k] for r in rows])) for k in
          ("success", "collision", "tipped", "timeout", "spl")}
@@ -99,12 +147,19 @@ def main():
     ap.add_argument("--gap-seeds", type=int, default=10)
     ap.add_argument("--field", type=int, default=50)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--only-field", action="store_true", help="re-run F only, merge into --out")
     a = ap.parse_args()
     pol = Baseline() if a.baseline else Onnx(a.model)
     name = "baseline" if a.baseline else os.path.basename(a.model)
     t0 = time.time()
     res = {"policy": name, "date": time.strftime("%Y-%m-%d")}
 
+    if a.only_field:
+        res = json.load(open(a.out))
+        res["field"] = summarize(run_field(pol, a.field))
+        print("field", json.dumps(res["field"]), flush=True)
+        json.dump(res, open(a.out, "w"), indent=2)
+        return
     env = M20NavEnv(density=1.0, randomize=True)
     rows = [run_episode(env, pol, 100000 + i) for i in range(a.episodes)]
     res["G1"] = summarize(rows)
@@ -121,9 +176,7 @@ def main():
         res["G2"][f"{w:.1f}"] = summarize(rows)
         print("G2 gap", w, json.dumps(res["G2"][f"{w:.1f}"]), flush=True)
 
-    fenv = M20NavEnv(scene="field", randomize=True)
-    rows = [run_episode(fenv, pol, 300000 + i) for i in range(a.field)]
-    res["field"] = summarize(rows)
+    res["field"] = summarize(run_field(pol, a.field))
     print("field", json.dumps(res["field"]), flush=True)
     res["wall_s"] = round(time.time() - t0)
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)

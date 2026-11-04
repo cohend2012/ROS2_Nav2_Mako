@@ -62,7 +62,7 @@ def main():
             b = (bl or {}).get("G2", {}).get(w)
             L.append(f"| {w} | {pct(g['success'])} | {pct(g['collision'])} | "
                      + (f"{pct(b['success'])} | {pct(b['collision'])} |" if b else "— | — |"))
-        L += ["", "## Field scene (`oil_gas_field.xml`, random collision-free start/goal pairs)", "",
+        L += ["", "## Field scene as deployed (`oil_gas_field.xml`; standalone mode: A* path + NavCore + policy)", "",
               "| policy | n | success | collision | tipped | timeout | SPL |", "|---|---|---|---|---|---|---|"]
         for name, e in (("learned", ev), ("baseline", bl)):
             if e:
@@ -114,6 +114,24 @@ def main():
         L.append("")
     else:
         L += ["NOT RUN", ""]
+    if ev and bl:
+        g, b, f, fb = ev["G1"], bl["G1"], ev["field"], bl["field"]
+        L += ["## What the numbers say (read this before deploying)", "",
+              f"- **The learned policy is strongest in dense, unstructured clutter.** G1 success "
+              f"{pct(g['success'])} vs {pct(b['success'])} for the scripted baseline; most baseline "
+              f"failures are timeouts ({pct(b['timeout'])}), where it boxes itself in.",
+              f"- **It is not yet safer.** Collisions {pct(g['collision'])} vs {pct(b['collision'])}, "
+              f"plus {pct(g['tipped'])} tip-overs that the baseline never has.",
+              f"- **On the real site layout with a global path, the scripted baseline wins**: "
+              f"{pct(fb['success'])} vs {pct(f['success'])} ({int(round(f['collision'] * f['n']))} collisions, "
+              f"{int(round(f['tipped'] * f['n']))} tip-over in {f['n']}). When A* already gives a good path through an open "
+              "pad, a simple reactive tracker is enough; the learned policy has no edge there yet.",
+              "- **G2 cannot separate them.** Both pass every gap width down to 1.0 m, so the brief's \"strictly "
+              "better on gaps < 1.2 m\" bar is not demonstrated. The sweep needs narrower gaps or a dynamic obstacle.",
+              "- **Recommendation:** run G3 with `follow_path` against DWB on the owner box before relying on it. "
+              "Next training run: (1) add the site's long ground pipes to the procedural slots, (2) add a "
+              "tip-over/roll-rate penalty, (3) curriculum on near-contact pivots. The policy contract (spec.py) does "
+              "not change, so the ROS side needs no edits to ship v2.", ""]
     L += ["## Not measured here (owner box)", "",
           "- **G3**: the full MuJoCo + ROS stack batch with `M20_AI_CONTROLLER=follow_path`. It needs the "
           "m20_autonomy/m20_sim images and the drdds bridge, which are not buildable in this cloud "

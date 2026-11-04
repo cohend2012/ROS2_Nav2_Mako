@@ -1,0 +1,221 @@
+{
+  "request": "read all the gauges and return to where you started",
+  "backend": "offline",
+  "started": "2026-11-04T18:40:00",
+  "steps": [
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg302",
+      "status": "OK",
+      "detail": "12.0 bar (conf 0.83, OK)"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg102",
+      "status": "OK",
+      "detail": "31.12 psi (conf 0.83, OK)"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg301",
+      "status": "OK",
+      "detail": "140.19 psi (conf 0.83, OK)"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg101",
+      "status": "OK",
+      "detail": "72.63 psi (conf 0.83, OK)"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_ti201",
+      "status": "OK",
+      "detail": "84.9 degC (conf 0.81, OK)"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_fl401",
+      "status": "OK",
+      "detail": "3.28 bar (conf 0.85, OK)"
+    },
+    {
+      "action": "return_home",
+      "status": "OK",
+      "detail": "xy 0.18 m, yaw +0.09"
+    }
+  ],
+  "readings": [
+    {
+      "gauge": "gauge_pg302",
+      "readable": true,
+      "value": 12.0,
+      "units": "bar",
+      "confidence": 0.83,
+      "notes": "classical needle fit: needle 22.4 deg, spread 3.4 deg, face r=52px",
+      "attempts": 1,
+      "status": "OK",
+      "image": "docs/ai_nav/mission_g5/184001_gauge_pg302.png"
+    },
+    {
+      "gauge": "gauge_pg102",
+      "readable": true,
+      "value": 31.12,
+      "units": "psi",
+      "confidence": 0.83,
+      "notes": "classical needle fit: needle 141.0 deg, spread 3.5 deg, face r=38px",
+      "attempts": 1,
+      "status": "OK",
+      "image": "docs/ai_nav/mission_g5/184002_gauge_pg102.png"
+    },
+    {
+      "gauge": "gauge_pg301",
+      "readable": true,
+      "value": 140.19,
+      "units": "psi",
+      "confidence": 0.83,
+      "notes": "classical needle fit: needle 35.7 deg, spread 3.4 deg, face r=42px",
+      "attempts": 1,
+      "status": "OK",
+      "image": "docs/ai_nav/mission_g5/184003_gauge_pg301.png"
+    },
+    {
+      "gauge": "gauge_pg101",
+      "readable": true,
+      "value": 72.63,
+      "units": "psi",
+      "confidence": 0.83,
+      "notes": "classical needle fit: needle 28.9 deg, spread 3.4 deg, face r=38px",
+      "attempts": 1,
+      "status": "OK",
+      "image": "docs/ai_nav/mission_g5/184004_gauge_pg101.png"
+    },
+    {
+      "gauge": "gauge_ti201",
+      "readable": true,
+      "value": 84.9,
+      "units": "degC",
+      "confidence": 0.81,
+      "notes": "classical needle fit: needle 72.2 deg, spread 3.7 deg, face r=54px",
+      "attempts": 1,
+      "status": "OK",
+      "image": "docs/ai_nav/mission_g5/184007_gauge_ti201.png"
+    },
+    {
+      "gauge": "gauge_fl401",
+      "readable": true,
+      "value": 3.28,
+      "units": "bar",
+      "confidence": 0.85,
+      "notes": "classical needle fit: needle 136.3 deg, spread 3.0 deg, face r=40px",
+      "attempts": 1,
+      "status": "OK",
+      "image": "docs/ai_nav/mission_g5/184007_gauge_fl401.png"
+    }
+  ],
+  "home": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "plan": [
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg302"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg102"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg301"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_pg101"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_ti201"
+    },
+    {
+      "action": "read_gauge",
+      "target": "gauge_fl401"
+    },
+    {
+      "action": "return_home"
+    }
+  ],
+  "rationale": "offline keyword plan",
+  "success": true,
+  "detail": "ok",
+  "duration_s": 8.7,
+  "report_path": "docs/ai_nav/mission_g5/report_20261104_184009.json",
+  "sim": {
+    "sim_time_s": 144.3,
+    "wall_s": 8.7,
+    "collisions": 0,
+    "final_pose": [
+      -0.009,
+      0.155
+    ],
+    "home_error_m": 0.156
+  },
+  "G5": {
+    "rows": [
+      {
+        "gauge": "gauge_pg101",
+        "true": 72.5,
+        "read": 72.63,
+        "err_pct_fs": 0.13,
+        "status": "OK",
+        "within": true
+      },
+      {
+        "gauge": "gauge_pg102",
+        "true": 31.0,
+        "read": 31.12,
+        "err_pct_fs": 0.12,
+        "status": "OK",
+        "within": true
+      },
+      {
+        "gauge": "gauge_ti201",
+        "true": 85.0,
+        "read": 84.9,
+        "err_pct_fs": 0.07,
+        "status": "OK",
+        "within": true
+      },
+      {
+        "gauge": "gauge_pg301",
+        "true": 140.0,
+        "read": 140.19,
+        "err_pct_fs": 0.09,
+        "status": "OK",
+        "within": true
+      },
+      {
+        "gauge": "gauge_pg302",
+        "true": 12.0,
+        "read": 12.0,
+        "err_pct_fs": 0.0,
+        "status": "OK",
+        "within": true
+      },
+      {
+        "gauge": "gauge_fl401",
+        "true": 3.3,
+        "read": 3.28,
+        "err_pct_fs": 0.2,
+        "status": "OK",
+        "within": true
+      }
+    ],
+    "within": 6,
+    "of": 6,
+    "confident_wrong": 0,
+    "pass": true
+  }
+}

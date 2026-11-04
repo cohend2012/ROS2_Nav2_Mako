@@ -220,3 +220,9 @@ def test_carrot_on_two_point_path_advances():
     assert math.hypot(c1[0] + 1.5, c1[1] + 0.12) == pytest.approx(1.5, abs=0.1)
     assert c1[0] < c0[0] - 1.0
     assert t.remaining(-1.5, -0.12) == pytest.approx(math.hypot(4.5, 0.38), abs=0.15)
+
+
+def test_align_drift_returns_to_tracking():
+    c = NavCore(Fwd()); c.set_path([(0, 0), (2, 0)], goal_yaw=math.pi)
+    assert c.tick(0.0, 1.9, 0.0, 0.0, CLEAR).state == ALIGNING
+    assert c.tick(1.0, 1.4, 0.3, 1.0, CLEAR).state == TRACKING     # pivot drifted 0.67 m

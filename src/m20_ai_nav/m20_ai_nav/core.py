@@ -42,6 +42,7 @@ class NavCore:
         self.stop_range, self.front = stop_range, front_half_angle
         self.stuck_timeout, self.stuck_prog = stuck_timeout_s, stuck_min_progress
         self.align_kp = align_kp
+        self.realign_dist = 2.5 * xy_tol
         self.goal_yaw = None
         self.reset()
 
@@ -79,6 +80,11 @@ class NavCore:
             return Command(0.0, 0.0, STUCK, f"no {self.stuck_prog} m progress in "
                                             f"{self.stuck_timeout:.0f} s ({rem:.2f} m left)")
         # final approach: xy reached -> rotate in place to the goal heading
+        if self.aligning and dist_goal > self.realign_dist:
+            # skid-steer pivots scrub the base sideways (measured 0.41 m drift in the
+            # MuJoCo gauge mission): if aligning carried us off the goal, go back to
+            # tracking instead of finishing in the wrong place
+            self.aligning = False
         if dist_goal < self.xy_tol or self.aligning:
             self.aligning = True
             if self.goal_yaw is None:
