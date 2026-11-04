@@ -6,12 +6,14 @@ A plan is a JSON list of steps:
   {"action": "inspect",     "target": "<landmark>", "question": "..."}  # goto + describe
   {"action": "wait",        "seconds": 5}
   {"action": "return_home"}
+  {"action": "save_place",  "target": "kitchen"}    # remember the CURRENT pose by name
+  {"action": "run_routine", "target": "morning_round"}   # a saved mission; "" = default
 
 validate() is the grounding step (SayCan-style: the language model proposes, the
 robot's actual capabilities dispose). Unknown targets, reading a non-gauge, or an
 over-long plan are REJECTED before anything moves — never "best-effort" executed.
 """
-ACTIONS = ("goto", "read_gauge", "inspect", "wait", "return_home")
+ACTIONS = ("goto", "read_gauge", "inspect", "wait", "return_home", "save_place", "run_routine")
 MAX_STEPS = 40
 MAX_WAIT_S = 120.0
 
@@ -43,7 +45,14 @@ class PlanError(ValueError):
     pass
 
 
-def validate(plan, registry):
+def _slug(text):
+    import re
+    t = re.sub(r"^(the|a|an|my|our)\s+", "", text.strip().lower())
+    t = re.sub(r"[^a-z0-9]+", "_", t).strip("_")
+    return t[:40]
+
+
+def validate(plan, registry, _depth=0):
     """Returns a normalized list of steps (targets resolved to canonical names)."""
     if not isinstance(plan, dict) or not isinstance(plan.get("steps"), list):
         raise PlanError("plan must be an object with a 'steps' list")
@@ -66,6 +75,26 @@ def validate(plan, registry):
         if a == "return_home":
             out.append({"action": "return_home"})
             continue
+        if a == "save_place":
+            name = _slug(s.get("target") or "")
+            if not name:
+                raise PlanError(f"step {i}: save_place needs a name")
+            cur = registry.get(name)
+            if cur is not None and not cur.taught:
+                raise PlanError(f"step {i}: {name!r} is a surveyed landmark; pick another name")
+            alias = (s.get("target") or "").strip()
+            out.append({"action": "save_place", "target": name,
+                        "aliases": [alias] if alias and alias.lower() != name else []})
+            continue
+        if a == "run_routine":
+            if _depth > 0:
+                raise PlanError(f"step {i}: routines cannot call routines")
+            rname = registry.resolve_routine(s.get("target", ""))
+            if rname is None:
+                raise PlanError(f"step {i}: unknown routine {s.get('target')!r} "
+                                f"(known: {', '.join(registry.routines) or 'none'})")
+            out.extend(validate({"steps": registry.routines[rname]["steps"]}, registry, _depth + 1))
+            continue
         tgt = s.get("target")
         if not tgt:
             raise PlanError(f"step {i}: {a} needs a target")
@@ -79,4 +108,6 @@ def validate(plan, registry):
         if a == "inspect":
             step["question"] = s.get("question") or "Describe the condition of this equipment."
         out.append(step)
+    if len(out) > MAX_STEPS:
+        raise PlanError(f"expanded plan has {len(out)} steps (max {MAX_STEPS})")
     return out

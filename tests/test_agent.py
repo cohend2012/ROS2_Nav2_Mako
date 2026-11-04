@@ -213,3 +213,75 @@ def test_claude_backend_gauge_sends_image(reg):
     assert r["value"] == 40
     blocks = m.kw["messages"][0]["content"]
     assert blocks[0]["type"] == "image" and blocks[0]["source"]["media_type"] == "image/png"
+
+
+# ---------------- office features: teach places, routines, stop, unknown places ----------------
+OFFICE = os.path.join(ROOT, "src", "m20_agent", "config", "office_landmarks.yaml")
+
+
+def test_teach_place_persists_and_reloads(reg, tmp_path):
+    taught = str(tmp_path / "taught.yaml")
+    r = LandmarkRegistry.load(LM, taught)
+    io_ = FakeIO(); io_.p = (1.5, 2.5, 0.7)
+    rep = Executor(r, OfflineBackend(r), io_, log=lambda s: None).run("this is the kitchen")
+    assert rep["success"] and io_.calls == []                 # teaching never moves the robot
+    r2 = LandmarkRegistry.load(LM, taught)                    # survives a restart
+    assert r2.get("kitchen").approach == (1.5, 2.5, 0.7)
+    io2 = FakeIO()
+    rep = Executor(r2, OfflineBackend(r2), io2, log=lambda s: None).run("go to the kitchen and come back")
+    assert rep["success"] and io2.calls == ["kitchen", "home"]
+
+
+def test_cannot_overwrite_surveyed_landmark_by_voice(tmp_path):
+    r = LandmarkRegistry.load(LM, str(tmp_path / "t.yaml"))
+    with pytest.raises(PlanError, match="surveyed"):
+        validate({"steps": [{"action": "save_place", "target": "tank1"}]}, r)
+
+
+def test_start_the_mission_runs_default_routine():
+    r = LandmarkRegistry.load(OFFICE)
+    steps = validate(OfflineBackend(r).plan("start the mission"), r)
+    assert steps[-1] == {"action": "goto", "target": "dock"}
+    assert sum(s["action"] == "inspect" for s in steps) == len(r.of_type("room"))
+    steps = validate(OfflineBackend(r).plan("run the coffee run"), r)
+    assert [s["action"] for s in steps] == ["goto", "wait", "return_home"]
+
+
+def test_routines_cannot_nest(tmp_path):
+    r = LandmarkRegistry.load(OFFICE)
+    r.routines["loop"] = {"aliases": [], "description": "", "steps": [{"action": "run_routine", "target": "loop"}]}
+    with pytest.raises(PlanError, match="cannot call routines"):
+        validate({"steps": [{"action": "run_routine", "target": "loop"}]}, r)
+
+
+def test_unknown_place_refuses_and_explains(reg):
+    p = OfflineBackend(reg).plan("go to the kitchen and come back")
+    assert [s["action"] for s in p["steps"]] == ["wait"] and "teach" in p["rationale"]
+
+
+def test_stop_cancels_remaining_steps(reg):
+    class StopAfterFirst(FakeIO):
+        def navigate(self, x, y, yaw, label):
+            ok = super().navigate(x, y, yaw, label)
+            exe.stop()
+            return ok
+    io_ = StopAfterFirst(frame=png_of(40, 0, 100))
+    exe = Executor(reg, OfflineBackend(reg), io_, log=lambda s: None)
+    rep = exe.run("start the mission")
+    assert not rep["success"] and rep["detail"] == "stopped by operator"
+    assert len(io_.calls) == 1                                  # nothing after STOP, not even home
+    assert all(s["status"] == "CANCELLED" for s in rep["steps"][1:])
+
+
+def test_office_overlay_merges_footprint():
+    import subprocess, sys, tempfile, yaml as y
+    out = tempfile.mktemp(suffix=".yaml")
+    subprocess.run([sys.executable, os.path.join(ROOT, "tools", "nav", "apply_overlay.py"),
+                    os.path.join(ROOT, "src", "m20_navigation", "config", "nav2_params.yaml"),
+                    os.path.join(ROOT, "src", "m20_navigation", "config", "nav2_office_overlay.yaml"), out],
+                   check=True, capture_output=True)
+    p = y.safe_load(open(out))
+    for cm in ("local_costmap", "global_costmap"):
+        rp = p[cm][cm]["ros__parameters"]
+        assert "robot_radius" not in rp and rp["footprint"].startswith("[[0.46")
+    assert p["velocity_smoother"]["ros__parameters"]["max_velocity"][0] == 0.3

@@ -85,15 +85,46 @@ def run_episode(env, pol, seed, options=None):
             "spl": (l / max(p, l)) if s else 0.0, "steps": env.steps}
 
 
+def drive_navcore(env, pol, path, timeout_s=90.0):
+    """Drive one episode the way the ROS node does: NavCore (carrot, safety envelope,
+    blind-zone memory, pivot guard, stuck detection) + policy -> env.step(cmd)."""
+    from m20_ai_nav.core import NavCore, SUCCEEDED, STUCK
+    core = NavCore(pol); core.set_path(path)          # xy only: no final-yaw phase
+    t, info, out = 0.0, {}, None
+    plen = sum(math.hypot(b[0] - a_[0], b[1] - a_[1]) for a_, b in zip(path[:-1], path[1:]))
+    while t < timeout_s:
+        x, y, yaw = float(env.d.qpos[0]), float(env.d.qpos[1]), env.yaw()
+        v = env.d.qvel
+        cmd = core.tick(t, x, y, yaw, env.scan, math.cos(yaw) * v[0] + math.sin(yaw) * v[1], float(v[5]))
+        if cmd.state in (SUCCEEDED, STUCK):
+            out = cmd.state; break
+        _, _, _, _, info = env.step(spec.cmd_to_action(cmd.vx, cmd.wz)); t += 0.1
+        if info["collision"] or info["tipped"]:
+            break
+    ok = out == SUCCEEDED
+    return {"success": ok, "collision": bool(info.get("collision")), "tipped": bool(info.get("tipped")),
+            "timeout": not ok and not info.get("collision") and not info.get("tipped"),
+            "spl": (plen / max(env.path_len, plen)) if ok else 0.0, "steps": int(t * 10)}
+
+
+def run_office(pol, n, seed0=400000, door_range=(0.80, 1.20), n_people=None, timeout_s=120.0):
+    """Office gates: held-out procedural offices, A* path (office planner radius)
+    driven through NavCore, exactly like standalone/follow_path deployment."""
+    env = M20NavEnv(scene="office", randomize=True, seed=seed0)
+    rows = []
+    for i in range(n):
+        env.reset(seed=seed0 + i, options={"door_range": door_range, "n_people": n_people})
+        rows.append(drive_navcore(env, pol, env.tracker.path.tolist(), timeout_s))
+    return rows
+
+
 def run_field(pol, n, seed0=300000, timeout_s=90.0):
     """Field scene AS DEPLOYED (standalone mode): A* on the scene's occupancy grid
     gives the path, NavCore + the policy drive it. Start/goal are sampled from the
     planner's FREE space (>= 0.8 m from any obstacle) and must be connected. The ground
     pipes fence the pad, so a straight-line goal across one is unreachable for a
     wheeled robot, and no deployed mode ever asks the bare policy to do that."""
-    sys.path.insert(0, os.path.join(HERE, "..", "agent"))
-    from sim_mission import rasterize
-    from m20_ai_nav.core import NavCore, SUCCEEDED, STUCK
+    from m20_ai_nav.sim.raster import rasterize
     from m20_ai_nav.grid_planner import GridPlanner
     env = M20NavEnv(scene="field", randomize=True, max_steps=10 ** 9)
     env.reset(seed=seed0)
@@ -113,22 +144,7 @@ def run_field(pol, n, seed0=300000, timeout_s=90.0):
             continue
         env.reset(seed=seed0 + len(rows), options={"start": s, "goal": g,
                                                     "yaw": float(rng.uniform(-math.pi, math.pi))})
-        core = NavCore(pol); core.set_path(path)          # xy only: no final-yaw phase
-        t, info, out = 0.0, {}, None
-        plen = sum(math.hypot(b[0] - a_[0], b[1] - a_[1]) for a_, b in zip(path[:-1], path[1:]))
-        while t < timeout_s:
-            x, y, yaw = float(env.d.qpos[0]), float(env.d.qpos[1]), env.yaw()
-            v = env.d.qvel
-            cmd = core.tick(t, x, y, yaw, env.scan, math.cos(yaw) * v[0] + math.sin(yaw) * v[1], float(v[5]))
-            if cmd.state in (SUCCEEDED, STUCK):
-                out = cmd.state; break
-            _, _, _, _, info = env.step(spec.cmd_to_action(cmd.vx, cmd.wz)); t += 0.1
-            if info["collision"] or info["tipped"]:
-                break
-        ok = out == SUCCEEDED
-        rows.append({"success": ok, "collision": bool(info.get("collision")), "tipped": bool(info.get("tipped")),
-                     "timeout": not ok and not info.get("collision") and not info.get("tipped"),
-                     "spl": (plen / max(env.path_len, plen)) if ok else 0.0, "steps": int(t * 10)})
+        rows.append(drive_navcore(env, pol, path, timeout_s))
     return rows
 
 
@@ -148,12 +164,26 @@ def main():
     ap.add_argument("--field", type=int, default=50)
     ap.add_argument("--out", required=True)
     ap.add_argument("--only-field", action="store_true", help="re-run F only, merge into --out")
+    ap.add_argument("--office", type=int, default=0, help="office gates O1-O3 with N episodes (merge into --out)")
     a = ap.parse_args()
     pol = Baseline() if a.baseline else Onnx(a.model)
     name = "baseline" if a.baseline else os.path.basename(a.model)
     t0 = time.time()
     res = {"policy": name, "date": time.strftime("%Y-%m-%d")}
 
+    if a.office:
+        res = json.load(open(a.out)) if os.path.exists(a.out) else {"policy": name}
+        res["O1"] = summarize(run_office(pol, a.office))
+        print("O1", json.dumps(res["O1"]), flush=True)
+        res["O2"] = {}
+        for w in (0.80, 0.85, 0.90, 1.00):
+            res["O2"][f"{w:.2f}"] = summarize(run_office(pol, max(10, a.office // 4), seed0=500000,
+                                                         door_range=(w, w), n_people=0))
+            print("O2 door", w, json.dumps(res["O2"][f"{w:.2f}"]), flush=True)
+        res["O3"] = summarize(run_office(pol, max(10, a.office // 2), seed0=600000, n_people=3))
+        print("O3 people", json.dumps(res["O3"]), flush=True)
+        json.dump(res, open(a.out, "w"), indent=2)
+        return
     if a.only_field:
         res = json.load(open(a.out))
         res["field"] = summarize(run_field(pol, a.field))

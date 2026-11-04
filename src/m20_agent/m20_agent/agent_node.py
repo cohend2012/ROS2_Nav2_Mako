@@ -60,6 +60,11 @@ class RosRobotIO:
             return None
         return t.transform.translation.x, t.transform.translation.y, _yaw(t.transform.rotation)
 
+    def cancel(self):
+        gh = getattr(self, "_gh", None)
+        if gh is not None:
+            gh.cancel_goal_async()
+
     def _run(self, item):
         if not self.mission.wait_for_server(timeout_sec=5.0):
             return False, "mission server /m20/mission/run unavailable"
@@ -70,6 +75,7 @@ class RosRobotIO:
         gh = fut.result()
         if gh is None or not gh.accepted:
             return False, "mission rejected (robot not armed AUTONOMOUS/ASSISTED?)"
+        self._gh = gh
         res = gh.get_result_async()
         t0 = time.monotonic()
         while not res.done():
@@ -77,6 +83,7 @@ class RosRobotIO:
                 gh.cancel_goal_async()
                 return False, f"timeout after {self.timeout:.0f} s"
             time.sleep(0.2)
+        self._gh = None
         r = res.result().result
         return bool(r.success), r.detail
 
@@ -115,10 +122,11 @@ class AgentNode(Node):
         self.declare_parameter("landmarks", "")
         self.declare_parameter("report_dir", "")
         self.declare_parameter("frame", "map")
+        self.declare_parameter("taught_places", "")   # overlay file for "this is the kitchen"
         path = self.get_parameter("landmarks").value
         if not path:
             raise ValueError("landmarks:=<yaml> is required")
-        self.reg = LandmarkRegistry.load(path)
+        self.reg = LandmarkRegistry.load(path, self.get_parameter("taught_places").value or None)
         self.io = RosRobotIO(self, self.get_parameter("frame").value)
         log = lambda s: self.get_logger().info(s)  # noqa: E731
         self.exe = Executor(self.reg, make_backend(self.get_parameter("backend").value, self.reg),
@@ -130,7 +138,15 @@ class AgentNode(Node):
         self.get_logger().info(f"agent up: backend={self.exe.vlm.name}, "
                                f"{len(self.reg.names())} landmarks; send /m20/agent/command")
 
+    STOP_WORDS = ("stop", "halt", "cancel", "abort", "freeze", "pause", "e-stop", "estop")
+
     def on_cmd(self, msg):
+        words = msg.data.lower().strip().rstrip(".!").split()
+        if words and words[0] in self.STOP_WORDS and len(words) <= 3:
+            # STOP never goes through a model and never waits for the planner
+            self.get_logger().warn(f"STOP from operator: {msg.data!r}")
+            self.exe.stop()
+            return
         if not self.busy.acquire(blocking=False):
             self.get_logger().warn("mission already running; command ignored")
             return

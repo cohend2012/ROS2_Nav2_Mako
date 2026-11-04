@@ -226,3 +226,38 @@ def test_align_drift_returns_to_tracking():
     c = NavCore(Fwd()); c.set_path([(0, 0), (2, 0)], goal_yaw=math.pi)
     assert c.tick(0.0, 1.9, 0.0, 0.0, CLEAR).state == ALIGNING
     assert c.tick(1.0, 1.4, 0.3, 1.0, CLEAR).state == TRACKING     # pivot drifted 0.67 m
+
+
+class Pivot:
+    def __call__(self, obs): return np.array([0.0, 1.0])     # pure turn-in-place
+
+
+def test_footprint_guard_allows_partial_pivot_beside_wall():
+    """Wall 0.52 m to the left: a 0.6 s pivot (24 deg) keeps the corners clear —
+    allowed (the old circle rule blocked it and the robot never turned in offices)."""
+    c = NavCore(Pivot()); c.set_path([(0, 0), (5, 0)])
+    side = CLEAR.copy(); side[18] = 0.52
+    assert c.tick(0.0, 0.0, 0.0, 0.0, side).wz == pytest.approx(0.7)
+
+
+def test_footprint_guard_blocks_corner_strike():
+    """Obstacle at 40 deg, 0.50 m: just outside the front-left corner now, but a CCW
+    pivot swings the corner into it -> the guard picks a non-colliding command."""
+    c = NavCore(Pivot()); c.set_path([(0, 0), (5, 0)])
+    b = CLEAR.copy(); b[8] = 0.50                              # bin 8 = 40 deg
+    assert c._footprint_hits(0.0, 0.7, b)
+    cmd = c.tick(0.0, 0.0, 0.0, 0.0, b)
+    assert cmd.state == BLOCKED and not c._footprint_hits(cmd.vx, cmd.wz, b)
+
+
+def test_footprint_guard_lets_robot_through_a_door():
+    """0.85 m door straight ahead (jambs at +-0.425 m lateral, 0.6 m ahead): driving
+    straight through is clear for the 0.53 m-wide body."""
+    c = NavCore(Fwd()); c.set_path([(0, 0), (5, 0)])
+    b = CLEAR.copy()
+    for k in range(72):
+        a = k * 5.0
+        for (jx, jy) in ((0.6, 0.425), (0.6, -0.425), (0.9, 0.425), (0.9, -0.425)):
+            if abs(math.degrees(math.atan2(jy, jx)) % 360 - a) < 2.5:
+                b[k] = min(b[k], math.hypot(jx, jy))
+    assert not c._footprint_hits(0.4, 0.0, b)

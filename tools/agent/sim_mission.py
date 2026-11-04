@@ -42,6 +42,7 @@ from m20_ai_nav.core import NavCore, SUCCEEDED, STUCK  # noqa: E402
 from m20_ai_nav.grid_planner import GridPlanner  # noqa: E402
 from m20_ai_nav.policy import OnnxPolicy  # noqa: E402
 from m20_ai_nav.sim.env import M20NavEnv  # noqa: E402
+from m20_ai_nav.sim.raster import rasterize  # noqa: E402
 from m20_agent.executor import Executor, make_backend  # noqa: E402
 from m20_agent.landmarks import LandmarkRegistry  # noqa: E402
 
@@ -49,35 +50,11 @@ LANDMARKS = os.path.join(REPO, "src", "m20_agent", "config", "oil_gas_field_land
 TRUTH = os.path.join(REPO, "tools", "sim", "gauges", "truth.json")
 
 
-def rasterize(m, d, res=0.05, half=10.0, z_probe=(0.15, 0.4, 0.8)):
-    """Occupancy grid (0 free / 100 occupied) of world obstacle geoms, by testing cell
-    centres against each geom's true shape at a few heights (what a 3D-sliced map sees)."""
-    n = int(2 * half / res)
-    xs = -half + (np.arange(n) + 0.5) * res
-    X, Y = np.meshgrid(xs, xs)                    # rows = y, cols = x
-    occ = np.zeros((n, n), bool)
-    floor = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, "floor")
-    for g in range(m.ngeom):
-        if m.geom_bodyid[g] != 0 or g == floor:
-            continue
-        p, R, s = d.geom_xpos[g], d.geom_xmat[g].reshape(3, 3), m.geom_size[g]
-        for z in z_probe:
-            P = np.stack([X - p[0], Y - p[1], np.full_like(X, z - p[2])], -1) @ R   # geom frame
-            if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_BOX:
-                inside = (np.abs(P[..., 0]) <= s[0]) & (np.abs(P[..., 1]) <= s[1]) & (np.abs(P[..., 2]) <= s[2])
-            elif m.geom_type[g] == mujoco.mjtGeom.mjGEOM_CYLINDER:
-                inside = (np.hypot(P[..., 0], P[..., 1]) <= s[0]) & (np.abs(P[..., 2]) <= s[1])
-            else:
-                continue
-            occ |= inside
-    return np.where(occ, 100, 0).astype(np.int8).reshape(-1), n, n, res, -half, -half
-
-
 class SimRobotIO:
-    def __init__(self, env, policy_path, log=print, nav_timeout_s=120.0):
+    def __init__(self, env, policy_path, log=print, nav_timeout_s=120.0, plan_radius=0.55):
         self.env, self.log, self.timeout = env, log, nav_timeout_s
         self.core = NavCore(OnnxPolicy(policy_path))
-        self.planner = GridPlanner()
+        self.planner = GridPlanner(robot_radius=plan_radius, inflation_radius=max(0.8, plan_radius + 0.5))
         mujoco.mj_forward(env.m, env.d)
         self.planner.set_map(*rasterize(env.m, env.d))
         self.renderer = mujoco.Renderer(env.m, 240, 320)
@@ -176,13 +153,24 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--start", default="0,0,0")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
+                    help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
+                         "0.32 m planner clearance (= M20_SITE=office)")
     a = ap.parse_args()
+    if a.site == "office":
+        import yaml
+        lm_path = os.path.join(REPO, "src", "m20_agent", "config", "office_landmarks.yaml")
+        rec = {l["name"]: l for l in yaml.safe_load(open(lm_path))["landmarks"]}["reception"]["approach"]
+        if a.start == "0,0,0":
+            a.start = ",".join(str(v) for v in rec)
+        scene, plan_radius = "office.xml", 0.32
+    else:
+        lm_path, scene, plan_radius = LANDMARKS, "oil_gas_field_gauges.xml", 0.55
     sx, sy, syaw = (float(v) for v in a.start.split(","))
-    env = M20NavEnv(scene="oil_gas_field_gauges.xml", randomize=True, seed=a.seed,
-                    max_steps=10 ** 9)
+    env = M20NavEnv(scene=scene, randomize=True, seed=a.seed, max_steps=10 ** 9)
     env.reset(seed=a.seed, options={"start": (sx, sy), "yaw": syaw, "goal": (sx, sy)})
-    reg = LandmarkRegistry.load(LANDMARKS)
-    io_ = SimRobotIO(env, a.model)
+    reg = LandmarkRegistry.load(lm_path)
+    io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
     exe = Executor(reg, make_backend(a.backend, reg), io_, report_dir=a.out)
     t0 = time.time()
     rep = exe.run(a.request)
@@ -190,7 +178,7 @@ def main():
     rep["sim"] = {"sim_time_s": round(io_.t, 1), "wall_s": round(time.time() - t0, 1),
                   "collisions": io_.collisions, "final_pose": [round(x, 3), round(y, 3)],
                   "home_error_m": round(math.hypot(x - sx, y - sy), 3)}
-    if any(s["action"] == "read_gauge" for s in rep.get("plan", [])):
+    if a.site == "outdoor" and any(s["action"] == "read_gauge" for s in rep.get("plan", [])):
         rep["G5"] = score_g5(rep)
     with open(os.path.join(a.out, "trace.json"), "w") as f:
         json.dump(io_.trace, f)

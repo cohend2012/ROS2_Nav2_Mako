@@ -81,7 +81,8 @@ def agent(node, request, timeout, expected):
     rd = [x for x in r.get("readings", []) if "gauge" in x]
     val = rd[0]["value"] if rd else None
     home = math.hypot(node.pose[0] - r["home"][0], node.pose[1] - r["home"][1]) if r.get("home") else None
-    ok = r["success"] and val is not None and abs(val - expected) <= 5.0 and home is not None and home < 0.4
+    gauge_ok = (expected < 0) or (val is not None and abs(val - expected) <= 5.0)   # <0: no gauge
+    ok = r["success"] and gauge_ok and home is not None and home < 0.4
     return {"pass": bool(ok), "success": r["success"], "detail": r["detail"],
             "plan": [s["action"] + ":" + s.get("target", "") for s in r.get("plan", [])],
             "reading": val, "expected": expected,

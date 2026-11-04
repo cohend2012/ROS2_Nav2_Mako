@@ -35,3 +35,26 @@ landmarks:
   - {name: west_field, type: area, aliases: [W field, west field], position: [-6.0, -0.5], approach: [-6.0, -0.5, 3.1416]}
   - {name: north_lane, type: area, aliases: [N lane, north lane], position: [2.5, 3.5], approach: [2.5, 3.5, 1.5708]}
   - {name: east_field, type: area, aliases: [E field, east field], position: [6.5, 0.2], approach: [6.5, 0.2, 0.0]}
+
+# saved missions: "start the mission" runs default_routine
+routines:
+  morning_round:
+    aliases: [the mission, morning round, rounds, gauge round]
+    description: read every gauge (nearest-first order) and come back to the start
+    steps:
+      - {action: read_gauge, target: gauge_pg302}
+      - {action: read_gauge, target: gauge_pg102}
+      - {action: read_gauge, target: gauge_pg301}
+      - {action: read_gauge, target: gauge_pg101}
+      - {action: read_gauge, target: gauge_ti201}
+      - {action: read_gauge, target: gauge_fl401}
+      - {action: return_home}
+  site_patrol:
+    aliases: [patrol, site patrol, tour]
+    description: drive the perimeter areas and come back
+    steps:
+      - {action: goto, target: west_field}
+      - {action: goto, target: north_lane}
+      - {action: goto, target: east_field}
+      - {action: return_home}
+default_routine: morning_round

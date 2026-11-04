@@ -40,8 +40,17 @@ def _default_model():
     return os.path.join(share or STAGED_ROOT, "models", "m20_nav_policy.onnx")
 
 
-def _controller(mode, model, frame):
-    params = {"mode": mode, "model_path": model, "global_frame": frame}
+SITE_PARAMS = {
+    # outdoor pad: circular clearance (the pivot sweep is 0.53 m)
+    "outdoor": {"planner_robot_radius": 0.55},
+    # office: plan through doors on the half-width (0.265 + 0.05); the NavCore pivot
+    # guard stops turn-in-place whenever anything is inside the 0.53 m sweep
+    "office": {"planner_robot_radius": 0.32},
+}
+
+
+def _controller(mode, model, frame, site="outdoor"):
+    params = {"mode": mode, "model_path": model, "global_frame": frame, **SITE_PARAMS[site]}
     if _installed():
         return Node(package="m20_ai_nav", executable="ai_controller", name="m20_ai_controller",
                     output="screen", parameters=[params])
@@ -98,6 +107,11 @@ def _follow_path_params(params):
     # controller + 9 Nav2 processes on one box need longer for DDS discovery
     # (measured: /follow_path up 1.4 s before activation, still "not available")
     bt["wait_for_service_timeout"] = 10000
+    # BT action nodes give the server default_server_timeout (20 ms!) to ACK each
+    # goal; a Python server on a loaded CPU misses that (measured: office smoke with
+    # training running -> "Timed out ... acknowledge goal request for follow_path",
+    # every 1 Hz replan). The robot computer will be loaded too.
+    bt["default_server_timeout"] = 1000
     bt["default_nav_to_pose_bt_xml"] = _derived_bt("navigate_to_pose_w_replanning_and_recovery.xml")
     bt["default_nav_through_poses_bt_xml"] = _derived_bt(
         "navigate_through_poses_w_replanning_and_recovery.xml")
@@ -114,17 +128,25 @@ def _follow_path_params(params):
 
 def _setup(context):
     mode = LaunchConfiguration("mode").perform(context)
+    site = LaunchConfiguration("site").perform(context)
     params = LaunchConfiguration("params_file").perform(context)
     model = LaunchConfiguration("model_path").perform(context) or _default_model()
     frame = LaunchConfiguration("global_frame").perform(context)
+    if site not in SITE_PARAMS:
+        raise RuntimeError(f"site must be one of {sorted(SITE_PARAMS)}, got {site!r}")
     if mode not in ("follow_path", "standalone", "direct"):
         raise RuntimeError(f"mode must be follow_path|standalone|direct, got {mode!r}")
+    if site == "office" and mode == "direct":
+        # direct = no map, straight-line carrot: it cannot route through doors and
+        # walks into walls trying (office smoke 2026-11-04). Refuse, don't degrade.
+        raise RuntimeError("mode:=direct is not allowed with site:=office (no map -> cannot "
+                           "route through doors); use follow_path or standalone")
     if not os.path.exists(params):
         raise RuntimeError(f"params_file not found: {params}")
     if not os.path.exists(model):
         raise RuntimeError(f"policy model not found: {model}")
     out = [
-        _controller(mode, model, frame),
+        _controller(mode, model, frame, site),
         Node(package="nav2_velocity_smoother", executable="velocity_smoother",
              name="velocity_smoother", output="screen", parameters=[params],
              remappings=[("cmd_vel", "cmd_vel_nav"), ("cmd_vel_smoothed", "cmd_vel")]),
@@ -168,5 +190,7 @@ def generate_launch_description():
         DeclareLaunchArgument("params_file"),
         DeclareLaunchArgument("model_path", default_value=""),
         DeclareLaunchArgument("global_frame", default_value="map"),
+        DeclareLaunchArgument("site", default_value="outdoor",
+                              description="outdoor | office (pass the office-overlaid params_file too)"),
         OpaqueFunction(function=_setup),
     ])

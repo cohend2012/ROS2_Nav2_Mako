@@ -10,16 +10,35 @@ YAML schema (config/oil_gas_field_landmarks.yaml):
       approach: [x, y, yaw]      # where the robot stands to look at it (camera faces yaw)
       gauge: {units: psi, min: 0, max: 100}   # gauges only
 
+  routines:                      # saved missions ("start the mission")
+    morning_round:
+      aliases: [the mission, morning round, rounds]
+      description: read every gauge and come back
+      steps: [{action: read_gauge, target: gauge_pg101}, ..., {action: return_home}]
+  default_routine: morning_round # what "start the mission" means
+
+TAUGHT places ("this is the kitchen") are written to a separate overlay file
+(`taught_path`), never into the curated config: the operator can teach and
+re-teach places at runtime, but cannot overwrite a surveyed landmark by voice.
+
 `home` is NOT in the file: the executor records it at mission start (set_home).
 Runtime perception adds entries with add(); the registry is the agent's ONLY
 vocabulary for motion targets — a name that isn't here cannot be driven to.
 """
 import math
+import os
 from dataclasses import dataclass, field
 
 import yaml
 
-TYPES = ("gauge", "tank", "valve", "wellhead", "skid", "rack", "area", "home")
+TYPES = ("gauge", "tank", "valve", "wellhead", "skid", "rack", "area", "room", "dock",
+         "home")
+
+
+def _lm_from(d):
+    return Landmark(name=d["name"], type=d["type"], position=tuple(d["position"]),
+                    approach=tuple(d["approach"]), aliases=d.get("aliases", []),
+                    gauge=d.get("gauge"))
 
 
 @dataclass
@@ -30,6 +49,7 @@ class Landmark:
     approach: tuple
     aliases: list = field(default_factory=list)
     gauge: dict = None
+    taught: bool = False
 
     def summary(self):
         s = f"{self.name} ({self.type}) at ({self.position[0]:.1f}, {self.position[1]:.1f})"
@@ -44,19 +64,67 @@ class LandmarkRegistry:
     def __init__(self, frame="map"):
         self.frame = frame
         self._lm = {}
+        self.routines = {}
+        self.default_routine = None
+        self.taught_path = None
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path, taught_path=None):
         with open(path) as f:
             doc = yaml.safe_load(f)
         if not doc or "landmarks" not in doc:
             raise ValueError(f"{path}: no 'landmarks' list")
         reg = cls(doc.get("frame", "map"))
         for d in doc["landmarks"]:
-            reg.add(Landmark(name=d["name"], type=d["type"], position=tuple(d["position"]),
-                             approach=tuple(d["approach"]), aliases=d.get("aliases", []),
-                             gauge=d.get("gauge")))
+            reg.add(_lm_from(d))
+        for name, r in (doc.get("routines") or {}).items():
+            if not r.get("steps"):
+                raise ValueError(f"routine {name}: no steps")
+            reg.routines[name] = {"aliases": r.get("aliases", []), "steps": r["steps"],
+                                  "description": r.get("description", "")}
+        reg.default_routine = doc.get("default_routine")
+        if reg.default_routine and reg.default_routine not in reg.routines:
+            raise ValueError(f"default_routine {reg.default_routine!r} is not a routine")
+        reg.taught_path = taught_path
+        if taught_path and os.path.exists(taught_path):
+            with open(taught_path) as f:
+                for d in (yaml.safe_load(f) or {}).get("landmarks", []):
+                    lm = _lm_from(d); lm.taught = True
+                    if lm.name in reg._lm and not reg._lm[lm.name].taught:
+                        continue                  # curated config always wins
+                    reg.add(lm)
         return reg
+
+    def teach(self, name, x, y, yaw, aliases=(), type_="room"):
+        """Remember the robot's CURRENT pose as a named place ("this is the kitchen").
+        Stored as an approach pose (the place is where the robot stood). Persisted to
+        the taught overlay. Refuses to overwrite a curated (config-file) landmark."""
+        cur = self._lm.get(name)
+        if cur is not None and not cur.taught and cur.type != "home":
+            raise ValueError(f"{name!r} is a surveyed landmark; teach a different name")
+        self.add(Landmark(name, type_, (x, y), (x, y, yaw), aliases=list(aliases), taught=True))
+        if self.taught_path:
+            taught = [lm for lm in self._lm.values() if lm.taught]
+            doc = {"landmarks": [{"name": lm.name, "type": lm.type, "aliases": lm.aliases,
+                                  "position": [round(float(v), 3) for v in lm.position],
+                                  "approach": [round(float(v), 4) for v in lm.approach]}
+                                 for lm in taught]}
+            os.makedirs(os.path.dirname(os.path.abspath(self.taught_path)), exist_ok=True)
+            tmp = self.taught_path + ".tmp"
+            with open(tmp, "w") as f:
+                yaml.safe_dump(doc, f)
+            os.replace(tmp, self.taught_path)      # atomic: a crash never corrupts it
+        return self._lm[name]
+
+    def resolve_routine(self, text):
+        t = (text or "").strip().lower()
+        if t in ("", "mission", "the mission", "default", "routine") and self.default_routine:
+            return self.default_routine
+        for name, r in self.routines.items():
+            if t == name.lower() or t.replace(" ", "_") == name.lower() or \
+                    t in (a.lower() for a in r["aliases"]):
+                return name
+        return None
 
     def add(self, lm):
         if lm.type not in TYPES:
@@ -103,4 +171,11 @@ class LandmarkRegistry:
         return out
 
     def describe(self):
-        return "\n".join(lm.summary() for lm in self._lm.values())
+        out = "\n".join(lm.summary() for lm in self._lm.values())
+        if self.routines:
+            lines = []
+            for n, r in self.routines.items():
+                tag = ' (DEFAULT: what "the mission" means)' if n == self.default_routine else ""
+                lines.append(f"{n}{tag} aka {', '.join(r['aliases'])}: {r['description']}")
+            out += "\n\nSaved routines (use run_routine):\n" + "\n".join(lines)
+        return out

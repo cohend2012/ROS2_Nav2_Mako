@@ -48,7 +48,7 @@ class NavCore:
 
     # ---------- goal management ----------
     def reset(self):
-        self.mem = []              # [(t, world_xy[N,2])] short-term obstacle memory
+        self.memory = ObstacleMemory()   # short-term world-frame obstacle memory
         self.prev_bins = None
         self.last_action = np.zeros(2, np.float32)
         self._best = math.inf
@@ -95,6 +95,8 @@ class NavCore:
             wz = max(-spec.WZ_MAX, min(spec.WZ_MAX, self.align_kp * e))
             if abs(wz) < 0.2:
                 wz = math.copysign(0.2, e)        # bridge dead-zone boost needs >= 0.15
+            if self._footprint_hits(0.0, wz, bins):
+                return Command(0.0, 0.0, BLOCKED, "footprint guard: final heading align blocked")
             return Command(0.0, wz, ALIGNING, f"yaw err {e:+.2f}")
         cx, cy = self.tracker.carrot(x, y)
         bx, by = to_body(cx, cy, x, y, yaw)
@@ -104,17 +106,99 @@ class NavCore:
         self.last_action = a
         vx, wz = spec.action_to_cmd(a)
         state, detail = TRACKING, f"carrot ({bx:+.2f},{by:+.2f}) goal {dist_goal:.2f} m"
-        if vx > 0.0 and self._front_min(bins) < self.stop_range:
-            vx, state, detail = 0.0, BLOCKED, f"front {self._front_min(bins):.2f} m < stop_range"
+        vx, wz, blocked, why = shield(vx, wz, bins, self.stop_range, self.front)
+        if blocked:
+            state, detail = BLOCKED, why
         return Command(vx, wz, state, detail)
 
+    def _footprint_hits(self, vx, wz, bins):
+        return footprint_hits(vx, wz, bins)
+
     def _with_memory(self, t, x, y, yaw, bins):
-        """Blind-zone memory. The LiDAR returns NOTHING inside SCAN_MIN (0.5 m) and
-        the M20 body reaches 0.43-0.50 m, so an obstacle the robot creeps up to (or
-        pivots beside) turns into "clear" exactly when it matters (collision in the
-        sim mission, 2026-11-04). Near returns (< MEM_RANGE) are kept in the WORLD
-        frame for MEM_S seconds, re-projected into the current body-frame bins, and
-        min-pooled in, clamped to SCAN_MIN (= "as close as we can know")."""
+        return self.memory.update(t, x, y, yaw, bins)
+
+    def _front_min(self, bins):
+        return front_min(bins, self.front)
+
+
+# ---------------------------------------------------------------------------------
+# The SHIELD: shared by NavCore (deployment) and the training env (shielded RL), so
+# the policy learns inside exactly the safety layer it is deployed with.
+# ---------------------------------------------------------------------------------
+# M20 footprint at stance (vendor MJCF, measured): 0.91 m long x 0.53 m wide
+HALF_L, HALF_W, FOOT_PAD = 0.456, 0.264, 0.03
+FOOT_T = (0.15, 0.3, 0.45, 0.6)           # s: look-ahead samples for the guard
+
+
+def front_min(bins, half_angle=math.radians(35)):
+    n = len(bins)
+    k = int(math.ceil(half_angle / (2 * math.pi / n)))
+    return float(np.min(np.asarray(bins)[[i % n for i in range(-k, k + 1)]]))
+
+
+def footprint_hits(vx, wz, bins):
+    """True if moving at (vx, wz) for up to 0.6 s sweeps the padded footprint over
+    any scan/memory point within 2 m (unicycle model, body frame)."""
+    if vx == 0.0 and wz == 0.0:
+        return False
+    b = np.asarray(bins, float)
+    n = len(b)
+    near = b < 2.0
+    if not near.any():
+        return False
+    ang = np.nonzero(near)[0] * (2 * math.pi / n)
+    px, py = b[near] * np.cos(ang), b[near] * np.sin(ang)
+    hl, hw = HALF_L + FOOT_PAD, HALF_W + FOOT_PAD
+    for t in FOOT_T:
+        th = wz * t
+        if abs(wz) > 1e-6:
+            x, y = vx / wz * math.sin(th), vx / wz * (1 - math.cos(th))
+        else:
+            x, y = vx * t, 0.0
+        c, s_ = math.cos(th), math.sin(th)
+        qx, qy = c * (px - x) + s_ * (py - y), -s_ * (px - x) + c * (py - y)
+        if np.any((np.abs(qx) <= hl) & (np.abs(qy) <= hw)):
+            return True
+    return False
+
+
+def shield(vx, wz, bins, stop_range=0.60, front_half_angle=math.radians(35)):
+    """(vx, wz) -> (vx, wz, blocked, detail). 1) forward stop when anything in the
+    +-35 deg cone is inside stop_range; 2) footprint guard: if the command, played
+    forward 0.6 s, would put a sensed point inside the M20's real rectangle (pivots
+    swing the corners through a 0.53 m circle; a circle-only rule blocked every turn
+    beside a wall in the office smoke), take the first gentler command that is clear."""
+    blocked, detail = False, ""
+    if vx > 0.0 and front_min(bins, front_half_angle) < stop_range:
+        vx, blocked, detail = 0.0, True, f"front {front_min(bins, front_half_angle):.2f} m < stop_range"
+    if footprint_hits(vx, wz, bins):
+        cvx, cwz = 0.0, 0.0
+        for cvx, cwz in ((0.5 * vx, wz), (vx, 0.0), (0.0, 0.5 * wz), (-0.10, 0.0), (0.0, 0.0)):
+            if not footprint_hits(cvx, cwz, bins):
+                break
+        detail = f"footprint guard: ({vx:+.2f},{wz:+.2f}) -> ({cvx:+.2f},{cwz:+.2f})"
+        vx, wz, blocked = cvx, cwz, True
+    return vx, wz, blocked, detail
+
+
+class ObstacleMemory:
+    """Blind-zone memory. The LiDAR returns NOTHING inside SCAN_MIN (0.5 m) and the
+    M20 body reaches 0.46 m, so an obstacle the robot creeps up to (or pivots beside)
+    turns into "clear" exactly when it matters (collision in the sim mission,
+    2026-11-04). Near returns (< MEM_RANGE) are kept in the WORLD frame for MEM_S
+    seconds, re-projected into the current body-frame bins, and min-pooled in,
+    clamped to SCAN_MIN (= "as close as we can know")."""
+    MEM_RANGE = 1.5     # m: only near returns matter for the blind zone
+    MEM_S = 3.0         # s: long enough to pivot past an obstacle at 0.5 rad/s
+
+    def __init__(self):
+        self.mem = []
+
+    def reset(self):
+        self.mem = []
+
+    def update(self, t, x, y, yaw, bins):
+        bins = np.asarray(bins, np.float32)
         n = len(bins)
         w = 2 * math.pi / n
         near = bins < self.MEM_RANGE
@@ -137,12 +221,3 @@ class NavCore:
         out = bins.copy()
         np.minimum.at(out, idx, np.clip(d[keep], spec.SCAN_MIN, spec.SCAN_MAX).astype(np.float32))
         return out
-
-    MEM_RANGE = 1.5     # m: only near returns matter for the blind zone
-    MEM_S = 3.0         # s: long enough to pivot past an obstacle at 0.5 rad/s
-
-    def _front_min(self, bins):
-        n = len(bins)
-        k = int(math.ceil(self.front / (2 * math.pi / n)))
-        idx = [i % n for i in range(-k, k + 1)]
-        return float(np.min(np.asarray(bins)[idx]))

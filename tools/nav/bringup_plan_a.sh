@@ -34,6 +34,10 @@
 #   M20_AGENT=claude|cosmos|offline  start the language mission agent (/m20/agent/command).
 #       claude needs ANTHROPIC_API_KEY in the container env; cosmos needs
 #       M20_COSMOS_BASE_URL + M20_COSMOS_MODEL. Gauge reads need M20_CAMERA=1 on the sim.
+#   M20_SITE=office  indoor profile: Nav2 gets the real 0.91 x 0.53 m footprint (doors
+#       plannable), 0.35 m inflation and a 0.3 m/s cap (nav2_office_overlay.yaml, merged
+#       into the STAGED params only); the AI controller plans on 0.32 m clearance; the
+#       agent loads office_landmarks.yaml + a taught-places file. Default: outdoor.
 #   M20_STANDUP=1  spawn the sim FOLDED and rise via the commander-gated behavior
 #       engine (standup, TIER_VENDOR) BEFORE the bridge starts. Real standup on
 #       camera; joints logged for the replay render.
@@ -84,6 +88,20 @@ docker cp "$REPO/src/m20_navigation/config/pointcloud_to_laserscan.yaml"        
 docker cp "$REPO/tools/nav/nav_logger.py"                                         $C:/cfg/nav_logger.py
 docker cp "$REPO/tools/estimator.py"                                              $C:/cfg/estimator.py
 docker cp "$REPO/src/m20_missions/m20_missions/mission_server.py"                 $C:/cfg/mission_server.py
+SITE=${M20_SITE:-outdoor}
+case "$SITE" in outdoor|office) ;; *) echo "ERROR: M20_SITE must be outdoor|office (got '$SITE')"; exit 1;; esac
+if [ "$SITE" = "office" ] && [ "${M20_AI_CONTROLLER:-}" = "direct" ]; then
+  echo "ERROR: M20_AI_CONTROLLER=direct is refused indoors (no map -> cannot route through doors)"; exit 1
+fi
+LANDMARKS_FILE=oil_gas_field_landmarks.yaml
+if [ "$SITE" = "office" ]; then
+  echo "[1.1/7] office profile: merging nav2_office_overlay.yaml into the staged nav2_params"
+  docker cp "$REPO/src/m20_navigation/config/nav2_office_overlay.yaml" $C:/cfg/nav2_office_overlay.yaml
+  docker cp "$REPO/tools/nav/apply_overlay.py" $C:/cfg/apply_overlay.py
+  docker exec $C python3 /cfg/apply_overlay.py /cfg/nav2_params.yaml /cfg/nav2_office_overlay.yaml /cfg/nav2_params.yaml \
+    || { echo "ERROR: office overlay failed to merge"; exit 1; }
+  LANDMARKS_FILE=${M20_LANDMARKS:-office_landmarks.yaml}
+fi
 if [ -n "${M20_AI_CONTROLLER:-}${M20_AGENT:-}" ]; then
   echo "[1.2/7] M20-Brain: staging m20_ai_nav + m20_agent into $C:/cfg"
   case "${M20_AI_CONTROLLER:-}" in ""|follow_path|standalone|direct) ;; *)
@@ -241,7 +259,7 @@ sleep 6
 
 if [ -n "${M20_AI_CONTROLLER:-}" ]; then
   echo "[5/7] starting M20-Brain navigator mode=$M20_AI_CONTROLLER (logs -> /cfg/out/ai_nav.log)"
-  docker exec -d $C bash -lc "$SRC; ros2 launch /cfg/m20_ai_nav/launch/ai_nav.launch.py mode:=$M20_AI_CONTROLLER params_file:=/cfg/nav2_params.yaml model_path:=/cfg/m20_ai_nav/models/m20_nav_policy.onnx >/cfg/out/ai_nav.log 2>&1"
+  docker exec -d $C bash -lc "$SRC; ros2 launch /cfg/m20_ai_nav/launch/ai_nav.launch.py mode:=$M20_AI_CONTROLLER site:=$SITE params_file:=/cfg/nav2_params.yaml model_path:=/cfg/m20_ai_nav/models/m20_nav_policy.onnx >/cfg/out/ai_nav.log 2>&1"
 else
   echo "[5/7] starting Nav2 (logs -> /cfg/out/nav2.log; the 2026-07-17 lesson)"
   docker exec -d $C bash -lc "$SRC; ros2 launch nav2_bringup navigation_launch.py params_file:=/cfg/nav2_params.yaml use_sim_time:=false >/cfg/out/nav2.log 2>&1"
@@ -252,7 +270,7 @@ echo "[5.5/7] starting mission server (/m20/mission/run — tools/dev/m20 goto|m
 docker exec -d $C bash -lc "$SRC; python3 /cfg/mission_server.py >/cfg/out/mission.log 2>&1"
 if [ -n "${M20_AGENT:-}" ]; then
   echo "[5.6/7] starting M20-Brain agent backend=$M20_AGENT (send: tools/agent/say.sh '<request>')"
-  docker exec -d $C bash -lc "$SRC; cd /cfg/m20_agent && ANTHROPIC_API_KEY='${ANTHROPIC_API_KEY:-}' M20_COSMOS_BASE_URL='${M20_COSMOS_BASE_URL:-}' M20_COSMOS_MODEL='${M20_COSMOS_MODEL:-}' python3 -m m20_agent.agent_node --ros-args -p backend:=$M20_AGENT -p landmarks:=/cfg/m20_agent/config/oil_gas_field_landmarks.yaml -p report_dir:=/cfg/out/agent >/cfg/out/agent.log 2>&1"
+  docker exec -d $C bash -lc "$SRC; cd /cfg/m20_agent && ANTHROPIC_API_KEY='${ANTHROPIC_API_KEY:-}' M20_COSMOS_BASE_URL='${M20_COSMOS_BASE_URL:-}' M20_COSMOS_MODEL='${M20_COSMOS_MODEL:-}' python3 -m m20_agent.agent_node --ros-args -p backend:=$M20_AGENT -p landmarks:=/cfg/m20_agent/config/$LANDMARKS_FILE -p taught_places:=/cfg/out/agent/taught_places.yaml -p report_dir:=/cfg/out/agent >/cfg/out/agent.log 2>&1"
 fi
 
 if [ "${M20_STANDUP:-0}" != "1" ]; then

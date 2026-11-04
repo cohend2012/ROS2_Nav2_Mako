@@ -28,9 +28,36 @@ class OfflineBackend:
     def __init__(self, registry):
         self.reg = registry            # needs the live registry (not just its text)
 
+    TEACH = re.compile(r"(?:remember|save|mark|store)\s+(?:this|here|this\s+(?:place|spot|location|room))\s+"
+                       r"as\s+(?P<a>.+)|^(?:this|here)\s+is\s+(?P<b>.+)|^call\s+(?:this|here)\s+(?P<c>.+)")
+    ROUTINE = re.compile(r"\b(?:start|run|begin|do|execute|launch)\s+(?:the\s+|your\s+|my\s+)?"
+                         r"(?P<r>mission|routine|rounds?|patrol|[a-z0-9 _-]*?(?:round|routine|mission|patrol|tour))\b")
+
     def plan(self, request, registry_text=None):
-        q = request.lower()
+        q = request.lower().strip().rstrip(".!?")
         steps, notes = [], []
+        m = self.TEACH.search(q)
+        if m:
+            name = (m.group("a") or m.group("b") or m.group("c")).strip()
+            return {"steps": [{"action": "save_place", "target": name}],
+                    "rationale": f"offline: teach current pose as {name!r}"}
+        if self.reg.routines and re.search(r"\b(start|run|begin|do|execute|launch)\b", q):
+            keys = sorted(((k.lower(), n) for n, r in self.reg.routines.items()
+                           for k in [n, n.replace("_", " ")] + r["aliases"]), key=lambda kv: -len(kv[0]))
+            for k, n in keys:
+                if re.search(r"\b" + re.escape(k) + r"\b", q):
+                    return {"steps": [{"action": "run_routine", "target": n}],
+                            "rationale": f"offline: routine {n}"}
+        m = self.ROUTINE.search(q)
+        if m and self.reg.routines:
+            word = m.group("r").strip()
+            name = self.reg.resolve_routine(word) or self.reg.resolve_routine(
+                word.replace("the ", "")) or (self.reg.default_routine if word in
+                                              ("mission", "routine", "round", "rounds", "patrol") else None)
+            if name:
+                return {"steps": [{"action": "run_routine", "target": name}],
+                        "rationale": f"offline: routine {name}"}
+            notes.append(f"no routine called {word!r}")
         gauges = [lm.name for lm in self.reg.of_type("gauge")]
         if re.search(r"\b(all|every|each)\b.*\bgauges?\b|\bgauges\b", q):
             for g in self.reg.nearest_order(gauges, (0.0, 0.0)):
@@ -65,6 +92,17 @@ class OfflineBackend:
                         [lm.name for lm in (self.reg.get(x) for x in self.reg.names())
                          if lm.type not in ("gauge", "home")], (0.0, 0.0)):
                     steps.append({"action": "goto", "target": n})
+        # a destination the registry doesn't know: say so instead of doing only the
+        # part we understood (going straight "home" would look like success)
+        for m in re.finditer(r"\b(?:go|drive|head|walk|take me|navigate)\s+(?:back\s+)?to\s+(?:the\s+)?"
+                             r"([a-z0-9' _-]+?)(?:\s+and\b|,|$)", q):
+            place = m.group(1).strip()
+            if place in ("home", "start", "base", "where you started", "the start") or place.startswith("where"):
+                continue
+            if self.reg.resolve(place) is None and self.reg.resolve(place.replace(" ", "_")) is None:
+                return {"steps": [{"action": "wait", "seconds": 1}],
+                        "rationale": f"I don't know where '{place}' is. Drive me there and say "
+                                     f"'this is the {place}' to teach me."}
         if any(w in q for w in HOME_WORDS):
             steps.append({"action": "return_home"})
         if not steps:

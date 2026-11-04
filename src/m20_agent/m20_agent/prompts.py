@@ -11,6 +11,11 @@ Available actions:
 - inspect(target, question): drive to a landmark, take a photo, and answer the question about it.
 - wait(seconds): hold position (at most 120 s).
 - return_home: drive back to where this mission started.
+- save_place(target): remember the robot's CURRENT position under this name. Use it
+  when the operator says "this is the kitchen", "remember this spot as X", "call this X".
+  It does not move the robot.
+- run_routine(target): run a saved routine from the registry. "Start the mission",
+  "do your rounds" and similar mean the DEFAULT routine; pass target "" for it.
 
 Use only landmark names from the registry below, exactly as written. If the request \
 names something that is not in the registry, do not invent a target: return a plan \

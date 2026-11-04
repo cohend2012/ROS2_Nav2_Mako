@@ -31,11 +31,30 @@ OBST = [(-5.0, 4.0, 1.4), (-1.0, 4.5, 1.4), (-4.0, -1.0, 0.8), (0.0, 1.5, 0.55),
         (6.0, -1.0, 0.55), (5.0, 2.0, 0.15), (7.0, 2.0, 0.15)]
 
 
+def office_boxes(seed=7):
+    """The SAME fixed office as tools/sim/make_office_scene.py (seed 7), as 2D boxes
+    (x, y, hx, hy, yaw)."""
+    sys.path.insert(0, os.environ.get("M20_AI_NAV_SRC", "/ws/src/m20_ai_nav"))
+    from m20_ai_nav.sim import office
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "sim"))
+    rooms = ["kitchen", "meeting_room", "open_office", "server_room", "manager_office", "print_room"]
+    L = office.generate(np.random.default_rng(seed), n_people=0, room_names=rooms)
+    return [(b.x, b.y, b.hx, b.hy, b.yaw) for b in L.boxes]
+
+
 class FakeWorld(Node):
     def __init__(self):
         super().__init__("fake_world")
         self.declare_parameter("gauge_value", 64.0)
-        self.x = self.y = self.th = 0.0
+        self.declare_parameter("world", "oil")          # oil | office
+        self.declare_parameter("start_x", 0.0)
+        self.declare_parameter("start_y", 0.0)
+        self.world = self.get_parameter("world").value
+        self.boxes = office_boxes() if self.world == "office" else []
+        self.circles = [] if self.world == "office" else OBST
+        self.x = float(self.get_parameter("start_x").value)
+        self.y = float(self.get_parameter("start_y").value)
+        self.th = 0.0
         self.v = self.w = 0.0
         self.cmd = (0.0, 0.0)
         self.tfb = TransformBroadcaster(self)
@@ -86,7 +105,19 @@ class FakeWorld(Node):
         wa = self.th + ang
         dx, dy = np.cos(wa), np.sin(wa)
         r = np.full(n, np.inf)
-        for (cx, cy, cr) in OBST:
+        for (bx, by, hx, hy, byaw) in self.boxes:      # ray vs oriented box (slab test)
+            c, sn = math.cos(byaw), math.sin(byaw)
+            ox, oy = self.x - bx, self.y - by
+            lox, loy = c * ox + sn * oy, -sn * ox + c * oy
+            ldx, ldy = c * dx + sn * dy, -sn * dx + c * dy
+            with np.errstate(divide="ignore", invalid="ignore"):
+                t1x, t2x = (-hx - lox) / ldx, (hx - lox) / ldx
+                t1y, t2y = (-hy - loy) / ldy, (hy - loy) / ldy
+            tmin = np.maximum(np.minimum(t1x, t2x), np.minimum(t1y, t2y))
+            tmax = np.minimum(np.maximum(t1x, t2x), np.maximum(t1y, t2y))
+            ok = (tmax >= np.maximum(tmin, 0)) & (tmin > 0)
+            r = np.where(ok & (tmin < r), tmin, r)
+        for (cx, cy, cr) in self.circles:
             ox, oy = self.x - cx, self.y - cy
             b = ox * dx + oy * dy
             c = ox * ox + oy * oy - cr * cr
@@ -109,8 +140,12 @@ class FakeWorld(Node):
         xs = -half + (np.arange(n) + 0.5) * res
         X, Y = np.meshgrid(xs, xs)
         occ = np.zeros((n, n), bool)
-        for (cx, cy, cr) in OBST:
+        for (cx, cy, cr) in self.circles:
             occ |= np.hypot(X - cx, Y - cy) <= cr
+        for (bx, by, hx, hy, byaw) in self.boxes:
+            c, sn = math.cos(byaw), math.sin(byaw)
+            lx, ly = c * (X - bx) + sn * (Y - by), -sn * (X - bx) + c * (Y - by)
+            occ |= (np.abs(lx) <= hx) & (np.abs(ly) <= hy)
         g = OccupancyGrid(); g.header.frame_id = "map"
         g.header.stamp = self.get_clock().now().to_msg()
         g.info.resolution = res; g.info.width = g.info.height = n

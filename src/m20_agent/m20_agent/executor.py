@@ -33,6 +33,7 @@ class Executor:
         self.report_dir = report_dir
         self.continue_on_fail = continue_on_fail
         self.read_retries = read_retries
+        self.stop_requested = False
         self.log = log
 
     def run(self, request):
@@ -56,7 +57,12 @@ class Executor:
         self.log(f"[agent] plan ({self.vlm.name}): {json.dumps(steps)}")
         wants_home = any(s["action"] == "return_home" for s in steps)
         ok_all = True
+        self.stop_requested = False
         for i, s in enumerate(steps):
+            if self.stop_requested:
+                report["steps"].append({**s, "status": "CANCELLED"})
+                ok_all = False
+                continue
             if s["action"] == "return_home" and not ok_all:
                 pass                                     # always try to come back
             elif not ok_all and not self.continue_on_fail:
@@ -67,6 +73,8 @@ class Executor:
             self.log(f"[agent] step {i} {s['action']} {s.get('target', '')}: "
                      f"{'OK' if ok else 'FAILED'} {detail}")
             ok_all &= ok
+        if self.stop_requested:
+            return self._finish(report, False, "stopped by operator", t0)
         if wants_home and not any(r["action"] == "return_home" and r["status"] == "OK"
                                   for r in report["steps"]):
             ok_all = False
@@ -77,8 +85,25 @@ class Executor:
         x, y, yaw = lm.approach
         return self.io.navigate(x, y, yaw, name)
 
+    def stop(self):
+        """Operator STOP: cancel the motion in flight and skip every remaining step
+        (including return_home — stop means stop)."""
+        self.stop_requested = True
+        cancel = getattr(self.io, "cancel", None)
+        if cancel:
+            cancel()
+
     def _step(self, s, report):
         a = s["action"]
+        if a == "save_place":
+            p = self.io.pose()
+            if p is None:
+                return False, "no pose: cannot remember this place"
+            try:
+                lm = self.reg.teach(s["target"], *p, aliases=s.get("aliases", []))
+            except ValueError as e:
+                return False, str(e)
+            return True, f"remembered {lm.name} at ({p[0]:.2f}, {p[1]:.2f})"
         if a == "wait":
             return self.io.wait(s["seconds"])
         if a == "return_home":
