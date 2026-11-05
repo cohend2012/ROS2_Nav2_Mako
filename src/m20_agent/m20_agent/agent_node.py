@@ -28,7 +28,7 @@ from std_msgs.msg import String
 import tf2_ros
 
 from m20_msgs.action import RunMission
-from m20_msgs.msg import MissionItem
+from m20_msgs.msg import MissionItem, HealthReport
 
 from m20_agent.executor import Executor, make_backend
 from m20_agent.landmarks import LandmarkRegistry
@@ -132,11 +132,21 @@ class AgentNode(Node):
         self.exe = Executor(self.reg, make_backend(self.get_parameter("backend").value, self.reg),
                             self.io, self.get_parameter("report_dir").value or None, log=log)
         self.report_pub = self.create_publisher(String, "/m20/agent/report", 10)
+        self.health_pub = self.create_publisher(HealthReport, "/m20/health", 10)
+        self.create_timer(1.0, self._heartbeat)
         self.busy = threading.Lock()
         self.create_subscription(String, "/m20/agent/command", self.on_cmd, 10,
                                  callback_group=ReentrantCallbackGroup())
         self.get_logger().info(f"agent up: backend={self.exe.vlm.name}, "
                                f"{len(self.reg.names())} landmarks; send /m20/agent/command")
+
+    def _heartbeat(self):
+        h = HealthReport()
+        h.header.stamp = self.get_clock().now().to_msg()
+        h.node_name = self.get_name()
+        h.status = HealthReport.STATUS_OK
+        h.message = f"backend={self.exe.vlm.name}; {'mission running' if self.busy.locked() else 'idle'}"
+        self.health_pub.publish(h)
 
     STOP_WORDS = ("stop", "halt", "cancel", "abort", "freeze", "pause", "e-stop", "estop")
 

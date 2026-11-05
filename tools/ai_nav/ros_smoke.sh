@@ -24,6 +24,8 @@ RUN_TAG=${RUN_TAG:-}      # repeat index, so repeated runs keep separate logs/re
 [ "$SITE" = "outdoor" ] || OUTROOT="$OUTROOT/$SITE"
 [ -z "$VARIANT" ] || OUTROOT="$OUTROOT/$VARIANT"
 [ -z "$RUN_TAG" ] || OUTROOT="$OUTROOT/run$RUN_TAG"
+[ "${CM:-0}" != "1" ] || OUTROOT="$OUTROOT/cm"
+export CM MODEL_PATH BATCH BATCH_LEGS NAV_TIMEOUT
 mkdir -p "$OUTROOT"
 PARAMS_SRC="$REPO/src/m20_navigation/config/nav2_params.yaml"
 LM_FILE=oil_gas_field_landmarks.yaml
@@ -73,6 +75,14 @@ for MODE in $MODES; do
   set -e
   if [ $rc -eq 0 ]; then echo "mode=$MODE PASS"; else echo "mode=$MODE FAIL (rc=$rc) — logs: $OUTROOT/$MODE/"; fail=1; fi
 done
+if [ "${BATCH:-0}" != "0" ]; then
+  mkdir -p "$REPO/docs/ai_nav/office_batch"
+  for MODE in $MODES; do
+    [ -f "$OUTROOT/$MODE/batch.json" ] && cp "$OUTROOT/$MODE/batch.json" \
+      "$REPO/docs/ai_nav/office_batch/${VARIANT:-dwb}_${MODE}$([ "${CM:-0}" = "1" ] && echo _cm)_run${RUN_TAG:-0}.json"
+  done
+  exit $fail
+fi
 # summary for docs/ai_nav/RESULTS.md (tools/ai_nav/make_results.py)
 SUMMARY="$REPO/docs/ai_nav/smoke.json"; [ "$SITE" = "outdoor" ] || SUMMARY="$REPO/docs/ai_nav/smoke_$SITE.json"
 if [ -n "$VARIANT" ]; then mkdir -p "$REPO/docs/ai_nav/office_variants"; SUMMARY="$REPO/docs/ai_nav/office_variants/${VARIANT}_run${RUN_TAG:-0}.json"; fi

@@ -126,6 +126,35 @@ def _follow_path_params(params):
     return path
 
 
+def _cm_params():
+    try:
+        from ament_index_python.packages import get_package_share_directory
+        p = os.path.join(get_package_share_directory("m20_navigation"), "config", "collision_monitor.yaml")
+        if os.path.exists(p):
+            return p
+    except Exception:  # noqa: BLE001
+        pass
+    p = os.path.join(STAGED_ROOT, "..", "m20_navigation", "config", "collision_monitor.yaml")
+    if not os.path.exists(p):
+        raise RuntimeError("collision_monitor.yaml not found (m20_navigation/config)")
+    return p
+
+
+def _bt_timeouts(params):
+    """bt_navigator with the same server-timeout fixes as follow_path mode."""
+    import tempfile
+    import yaml
+    with open(params) as f:
+        p = yaml.safe_load(f)
+    bt = p.setdefault("bt_navigator", {}).setdefault("ros__parameters", {})
+    bt["wait_for_service_timeout"] = 10000
+    bt["default_server_timeout"] = 1000
+    fd, path = tempfile.mkstemp(prefix="m20_bt_", suffix=".yaml")
+    with os.fdopen(fd, "w") as f:
+        yaml.safe_dump(p, f)
+    return path
+
+
 def _setup(context):
     mode = LaunchConfiguration("mode").perform(context)
     site = LaunchConfiguration("site").perform(context)
@@ -134,8 +163,8 @@ def _setup(context):
     frame = LaunchConfiguration("global_frame").perform(context)
     if site not in SITE_PARAMS:
         raise RuntimeError(f"site must be one of {sorted(SITE_PARAMS)}, got {site!r}")
-    if mode not in ("follow_path", "standalone", "direct"):
-        raise RuntimeError(f"mode must be follow_path|standalone|direct, got {mode!r}")
+    if mode not in ("nav2", "follow_path", "standalone", "direct"):
+        raise RuntimeError(f"mode must be nav2|follow_path|standalone|direct, got {mode!r}")
     if site == "office" and mode == "direct":
         # direct = no map, straight-line carrot: it cannot route through doors and
         # walks into walls trying (office smoke 2026-11-04). Refuse, don't degrade.
@@ -143,15 +172,42 @@ def _setup(context):
                            "route through doors); use follow_path or standalone")
     if not os.path.exists(params):
         raise RuntimeError(f"params_file not found: {params}")
-    if not os.path.exists(model):
+    if mode != "nav2" and not os.path.exists(model):
         raise RuntimeError(f"policy model not found: {model}")
+    cm = LaunchConfiguration("collision_monitor").perform(context).lower() in ("1", "true", "yes")
+    smoothed = "cmd_vel_smoothed" if cm else "cmd_vel"
     out = [
-        _controller(mode, model, frame, site),
         Node(package="nav2_velocity_smoother", executable="velocity_smoother",
              name="velocity_smoother", output="screen", parameters=[params],
-             remappings=[("cmd_vel", "cmd_vel_nav"), ("cmd_vel_smoothed", "cmd_vel")]),
+             remappings=[("cmd_vel", "cmd_vel_nav"), ("cmd_vel_smoothed", smoothed)]),
     ]
+    if mode != "nav2":
+        out.insert(0, _controller(mode, model, frame, site))
     managed = ["velocity_smoother"]
+    if cm:
+        # last safety layer for EVERY mode: cmd_vel_smoothed -> collision_monitor -> cmd_vel
+        out.append(Node(package="nav2_collision_monitor", executable="collision_monitor",
+                        name="collision_monitor", output="screen",
+                        parameters=[_cm_params()]))
+        managed.append("collision_monitor")
+    if mode == "nav2":
+        # CLASSICAL Nav2 (controller_server from params_file: DWB / RPP / MPPI variants),
+        # launched here instead of nav2_bringup so the collision monitor can sit in the
+        # chain (Humble's navigation_launch.py has no slot for it)
+        out += [
+            Node(package="nav2_controller", executable="controller_server", output="screen",
+                 parameters=[params], remappings=[("cmd_vel", "cmd_vel_nav")]),
+            Node(package="nav2_planner", executable="planner_server", name="planner_server",
+                 output="screen", parameters=[params]),
+            Node(package="nav2_behaviors", executable="behavior_server", name="behavior_server",
+                 output="screen", parameters=[params]),
+            Node(package="nav2_bt_navigator", executable="bt_navigator", name="bt_navigator",
+                 output="screen", parameters=[_bt_timeouts(params)]),
+            Node(package="nav2_waypoint_follower", executable="waypoint_follower",
+                 name="waypoint_follower", output="screen", parameters=[params]),
+        ]
+        managed = ["controller_server", "planner_server", "behavior_server", "bt_navigator",
+                   "waypoint_follower"] + managed
     if mode == "follow_path":
         fp_params = _follow_path_params(params)
         out += [
@@ -190,6 +246,8 @@ def generate_launch_description():
         DeclareLaunchArgument("params_file"),
         DeclareLaunchArgument("model_path", default_value=""),
         DeclareLaunchArgument("global_frame", default_value="map"),
+        DeclareLaunchArgument("collision_monitor", default_value="false",
+                              description="true = Nav2 collision_monitor after the smoother (office: on)"),
         DeclareLaunchArgument("site", default_value="outdoor",
                               description="outdoor | office (pass the office-overlaid params_file too)"),
         OpaqueFunction(function=_setup),

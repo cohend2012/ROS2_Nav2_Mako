@@ -32,6 +32,7 @@ from nav_msgs.msg import Odometry, OccupancyGrid
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import String
 from nav2_msgs.action import FollowPath, NavigateToPose
+from m20_msgs.msg import HealthReport
 import tf2_ros
 
 from m20_ai_nav import spec
@@ -94,6 +95,8 @@ class AiController(Node):
                                        self.exec_navigate, goal_callback=self.on_goal,
                                        cancel_callback=lambda gh: CancelResponse.ACCEPT,
                                        callback_group=self.cb)
+        self.health_pub = self.create_publisher(HealthReport, "/m20/health", 10)
+        self.create_timer(1.0, self.heartbeat, callback_group=self.cb)
         self.active = None
         self._last_fp = None          # (gx, gy, t) of the last preempted follow_path goal
         self.get_logger().info(f"AI controller up: mode={self.mode} "
@@ -185,6 +188,18 @@ class AiController(Node):
             self.publish(0.0, 0.0)
             if self.active is gh:
                 self.active = None
+
+    def heartbeat(self):
+        """1 Hz HealthReport (docker/healthcheck.py; compose restarts us if it stops).
+        WARN while the scan is stale: the node is alive but cannot drive."""
+        h = HealthReport()
+        h.header.stamp = self.get_clock().now().to_msg()
+        h.node_name = self.get_name()
+        with self.lock:
+            age = time.monotonic() - self.scan_t if self.bins is not None else float("inf")
+        h.status = HealthReport.STATUS_OK if age < 2.0 else HealthReport.STATUS_WARN
+        h.message = f"{self.mode}; scan age {age:.1f}s; {'goal active' if self.active else 'idle'}"
+        self.health_pub.publish(h)
 
     def publish(self, vx, wz):
         t = Twist(); t.linear.x = float(vx); t.angular.z = float(wz)

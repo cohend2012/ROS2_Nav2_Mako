@@ -8,7 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-pip python3-colcon-common-extensions \
       ros-humble-nav2-bringup ros-humble-robot-localization \
       ros-humble-foxglove-bridge ros-humble-rosbridge-suite \
-      ros-humble-pointcloud-to-laserscan \
+      ros-humble-pointcloud-to-laserscan ros-humble-slam-toolbox \
+      ros-humble-nav2-collision-monitor ros-humble-nav2-smac-planner \
+      ros-humble-nav2-mppi-controller ros-humble-nav2-rotation-shim-controller \
+      ros-humble-nav2-regulated-pure-pursuit-controller ros-humble-rmw-cyclonedds-cpp \
       python3-yaml python3-pil python3-numpy \
     && rm -rf /var/lib/apt/lists/*
 
@@ -45,7 +48,13 @@ RUN source /opt/ros/humble/setup.bash && \
     colcon build --symlink-install && \
     rm -rf /var/lib/apt/lists/*
 
+# M20-Brain deployment pieces: params overlay tool, SLAM configs, service entries
+COPY tools/nav/apply_overlay.py /ws/tools/apply_overlay.py
+COPY tools/slam/localization_params.yaml tools/slam/mapper_params.yaml /ws/config/slam/
+COPY docker/nav_entry.sh /nav_entry.sh
+COPY docker/perception_entry.sh /perception_entry.sh
+COPY docker/agent_entry.sh /agent_entry.sh
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/healthcheck.py /healthcheck.py
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh /nav_entry.sh /perception_entry.sh /agent_entry.sh
 ENTRYPOINT ["/entrypoint.sh"]

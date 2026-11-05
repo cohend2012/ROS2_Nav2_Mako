@@ -78,5 +78,46 @@ services:
       - "ROBOT_ID=${ROBOT_ID:-}"
     # no ROS healthcheck: bridges don't publish HealthReport; process-level restart suffices
 
-  # navigation / perception services join here in Phases 2-3 (nav2 bringup, EKF,
-  # SLAM). GPU services on Jetson add: runtime: nvidia  (see OQ-13).
+  # ---------------- navigation + AI (docs/AI_NAV_RUNBOOK.md, docs/OFFICE_DEPLOYMENT.md) ----------------
+  # GPU services on Jetson add: runtime: nvidia  (see OQ-13).
+  perception:
+    <<: *stack
+    command: /perception_entry.sh
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+      - "M20_MAP=${M20_MAP:-}"                  # unset = MAPPING; office = localize on maps/office
+    volumes:
+      - ../maps:/maps
+    # third-party nodes (slam_toolbox, pointcloud_to_laserscan): process-level restart
+
+  nav:
+    <<: *stack
+    command: /nav_entry.sh
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+      - "M20_SITE=${M20_SITE:-outdoor}"         # office -> real footprint, 0.3 m/s, collision monitor
+      - "M20_NAV_MODE=${M20_NAV_MODE:-nav2}"    # nav2 (classical) | follow_path | standalone
+      - "M20_NAV_VARIANT=${M20_NAV_VARIANT:-dwb}"
+      - "M20_CM=${M20_CM:-}"
+      - "M20_MODEL=${M20_MODEL:-}"
+    # classical Nav2 nodes are lifecycle-managed with bonds; process-level restart here
+    depends_on: [perception]
+
+  agent:
+    <<: *stack
+    command: /agent_entry.sh
+    environment:
+      - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
+      - "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+      - "M20_AGENT=${M20_AGENT:-offline}"       # claude | cosmos | offline
+      - "M20_LANDMARKS=${M20_LANDMARKS:-oil_gas_field_landmarks.yaml}"
+      - "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}"
+      - "M20_COSMOS_BASE_URL=${M20_COSMOS_BASE_URL:-}"
+      - "M20_COSMOS_MODEL=${M20_COSMOS_MODEL:-}"
+      - "HEALTH_NODE=m20_agent"
+    volumes:
+      - ../data:/data                           # taught places + mission reports survive restarts
+    healthcheck: *hc
+    depends_on: [mission_server, nav]

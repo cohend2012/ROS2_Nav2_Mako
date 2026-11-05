@@ -13,17 +13,28 @@ AGENT_REQ=${AGENT_REQ:-"read the tank 1 gauge and return to where you started"};
 read -r SX SY <<<"$START"
 mkdir -p "$OUT"
 M20_AI_NAV_SRC="${AI_NAV_SRC:-/ws/src/m20_ai_nav}" M20_AGENT_SRC="${AGENT_SRC:-}" python3 "$SMOKE/fake_world.py" --ros-args -p gauge_value:=64.0 -p world:="$WORLD" -p start_x:="$SX" -p start_y:="$SY" >"$OUT/world.log" 2>&1 &
-if [ "$MODE" = "nav2" ]; then
-  # CLASSICAL reference: stock Nav2 (DWB) with the same params — the stack's default
+if [ "$MODE" = "nav2_stock" ]; then
+  # stock nav2_bringup navigation_launch.py (no collision monitor slot in Humble)
   ros2 launch nav2_bringup navigation_launch.py params_file:="$NAV2_PARAMS" use_sim_time:=false >"$OUT/ai_nav.log" 2>&1 &
 else
-  ros2 launch m20_ai_nav ai_nav.launch.py mode:="$MODE" site:="$SITE" params_file:="$NAV2_PARAMS" >"$OUT/ai_nav.log" 2>&1 &
+  # nav2 (classical) and the AI modes, optionally behind Nav2's collision_monitor (CM=1)
+  ros2 launch m20_ai_nav ai_nav.launch.py mode:="$MODE" site:="$SITE" params_file:="$NAV2_PARAMS" \
+    collision_monitor:="$([ "${CM:-0}" = "1" ] && echo true || echo false)" ${MODEL_PATH:+model_path:=$MODEL_PATH} \
+    >"$OUT/ai_nav.log" 2>&1 &
 fi
 ros2 run m20_missions mission_server >"$OUT/mission.log" 2>&1 &
 ros2 run m20_agent agent --ros-args -p backend:=offline -p landmarks:="$LANDMARKS" -p report_dir:="$OUT/agent" >"$OUT/agent.log" 2>&1 &
 sleep 15
 # controller state trace for forensics (TRACKING / ALIGNING / BLOCKED / STUCK + detail)
 ros2 topic echo /m20/ai_nav/state std_msgs/msg/String >"$OUT/state.log" 2>&1 &
+if [ "${BATCH:-0}" != "0" ]; then
+  # office BATCH gate: N door-to-door legs on one stack (office_batch.py)
+  python3 "$SMOKE/office_batch.py" "$LANDMARKS" "$OUT/batch.json" "${BATCH_LEGS:-10}" "${NAV_TIMEOUT:-240}" | tee "$OUT/batch.log"; B=${PIPESTATUS[0]}
+  PG=$(jobs -p)
+  for p in $PG; do kill -INT -- "-$p" 2>/dev/null; done; sleep 4
+  for p in $PG; do kill -KILL -- "-$p" 2>/dev/null; done; wait 2>/dev/null
+  exit $B
+fi
 python3 "$SMOKE/scenario.py" nav $NAV_GOAL ${NAV_TIMEOUT:-240} | tee "$OUT/nav.json"; N=${PIPESTATUS[0]}
 python3 "$SMOKE/scenario.py" agent "$AGENT_REQ" ${AGENT_TIMEOUT:-600} "$AGENT_EXPECT" | tee "$OUT/agent.json"; A=${PIPESTATUS[0]}
 # stop ONLY our own jobs (SIGINT lets ros2 launch shut its children down cleanly);

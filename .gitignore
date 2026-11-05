@@ -239,3 +239,7 @@ tools/ci/out/run_*/
 # M20-Brain run outputs (persistent but local)
 tools/ai_nav/ros_smoke/out/
 src/m20_ai_nav/models/*.onnx.tmp
+
+# compose agent volume: taught places + mission reports (host-local)
+data/*
+!data/.gitkeep
