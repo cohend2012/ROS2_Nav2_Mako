@@ -48,11 +48,19 @@ def nav(node, gx, gy, timeout):
     g = NavigateToPose.Goal(); g.pose.header.frame_id = "map"
     g.pose.pose.position.x, g.pose.pose.position.y = gx, gy
     g.pose.pose.orientation.w = 1.0
-    f = ac.send_goal_async(g)
-    spin_until(node, f.done, 10)
-    gh = f.result()
-    if gh is None or not gh.accepted:
-        return {"pass": False, "why": "goal rejected"}
+    # Nav2's bt_navigator REJECTS goals until its lifecycle is active; the action
+    # server exists before that, so a goal sent right after startup is refused.
+    # Retry for up to 60 s (both 'goal rejected' smoke failures were this).
+    t_end = time.time() + 60.0
+    while True:
+        f = ac.send_goal_async(g)
+        spin_until(node, f.done, 10)
+        gh = f.result()
+        if gh is not None and gh.accepted:
+            break
+        if time.time() > t_end:
+            return {"pass": False, "why": "goal rejected for 60 s (navigator never became active)"}
+        spin_until(node, lambda: False, 2.0)
     rf = gh.get_result_async()
     t0 = time.time()
     spin_until(node, rf.done, timeout)
