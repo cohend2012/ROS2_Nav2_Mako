@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-05 03:20",
+  "env": "runner=local, Linux-6.18.44-fc-v236-x86_64-with-glibc2.39",
+  "modes": {
+    "nav2": {
+      "nav": {
+        "pass": false,
+        "why": "no result in 240.0 s",
+        "pose": [
+          -5.085723377482842,
+          -1.226581597010204
+        ]
+      },
+      "agent": {
+        "pass": false,
+        "success": false,
+        "detail": "one or more steps failed",
+        "plan": [
+          "goto:kitchen",
+          "return_home:"
+        ],
+        "reading": null,
+        "expected": -1.0,
+        "home_err_m": 8.218
+      }
+    }
+  }
+}
