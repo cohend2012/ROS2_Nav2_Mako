@@ -261,3 +261,34 @@ def test_footprint_guard_lets_robot_through_a_door():
             if abs(math.degrees(math.atan2(jy, jx)) % 360 - a) < 2.5:
                 b[k] = min(b[k], math.hypot(jx, jy))
     assert not c._footprint_hits(0.4, 0.0, b)
+
+
+def test_guard_never_freezes_a_blocked_pivot_when_a_move_exists():
+    """Regression: a blocked pivot (vx=0) must not be replaced by (0,0) when backing
+    out is clear — (vx, 0) == (0, 0) used to be accepted as 'collision-free'."""
+    from m20_ai_nav.core import shield, footprint_hits
+    b = CLEAR.copy(); b[8] = 0.50                      # corner-strike obstacle at 40 deg
+    assert footprint_hits(0.0, 0.7, b)
+    vx, wz, blocked, _ = shield(0.0, 0.7, b)
+    assert blocked and (vx, wz) != (0.0, 0.0) and not footprint_hits(vx, wz, b)
+
+
+def test_pivot_aware_path_crosses_door_straight():
+    """Wall at y=2.5 with a 0.85 m door at x=2.5; start below-left, goal above-right.
+    Plain A* turns at the door; pivot-aware must run straight (along y) from >=0.3 m
+    before the wall to >=0.3 m after it, and only turn where clearance >= 0.6 m."""
+    res, n = 0.05, 100
+    g = np.zeros((n, n), np.int8)
+    row = int(2.5 / res)
+    g[row - 1:row + 1, :] = 100
+    d0, d1 = int((2.5 - 0.425) / res), int((2.5 + 0.425) / res)
+    g[row - 1:row + 1, d0:d1] = 0
+    pl = GridPlanner(robot_radius=0.32, inflation_radius=0.8, plan_res=0.1, pivot_clear=0.6)
+    pl.set_map(g.reshape(-1), n, n, res, 0.0, 0.0)
+    from m20_ai_nav.geometry import densify
+    p = pl.plan(0.8, 1.0, 4.6, 3.2)                           # goal just past the wall, far right
+    assert p is not None
+    q = densify(np.asarray(p))
+    band = [(x, y) for x, y in q if 2.5 - 0.6 < y < 2.5 + 0.6]  # the robot's length either side
+    xs = [x for x, y in band]
+    assert xs and max(xs) - min(xs) < 0.15                    # straight across the door

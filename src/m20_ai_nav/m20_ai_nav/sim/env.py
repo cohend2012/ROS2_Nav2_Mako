@@ -347,7 +347,8 @@ class M20NavEnv(gym.Env):
             self._t = 0.0
             self._place_people()
             mujoco.mj_forward(self.m, self.d)
-            pl = GridPlanner(robot_radius=self.OFFICE_PLAN_RADIUS, inflation_radius=0.8, plan_res=0.10)
+            pl = GridPlanner(robot_radius=self.OFFICE_PLAN_RADIUS, inflation_radius=0.8, plan_res=0.10,
+                             pivot_clear=0.6)
             pl.set_map(*rasterize(self.m, self.d, res=0.10))
             self.planner = pl
             # Sample INSIDE the building only (the raster spans 20 m, the office 14 m:
@@ -423,6 +424,7 @@ class M20NavEnv(gym.Env):
         """Park unused mocap slots; put each person on their path."""
         n = len(self.layout.people) if self.layout else 0
         self._pt = [0.0] * n
+        self._side = [0.0] * n
         for k, mid in enumerate(self.people_mocap):
             if k < n:
                 x, y = self._people_xy()[k]
@@ -431,19 +433,40 @@ class M20NavEnv(gym.Env):
                 self.d.mocap_pos[mid] = [60 + 3 * k, 60, 0.85]
 
     def _move_people(self, dt):
-        """People walk their paths but are POLITE: anyone within 0.9 m of the robot
-        stops (real people step around a robot; an unavoidable rear-ending by a
-        pedestrian would only teach the policy noise)."""
+        """People walk their paths and STEP ASIDE for the robot, like real people.
+        Within 1.5 m they slow to 0.3x and drift sideways (perpendicular to their path,
+        away from the robot) by up to 0.6 m; they never walk into the robot (< 0.8 m:
+        they stop). The first model froze people within 0.9 m: a person and the robot
+        then waited for each other forever in the corridor (office forensics)."""
         if not self.layout or not self.layout.people:
             return
-        rx, ry = self.d.qpos[0], self.d.qpos[1]
-        cur = self._people_xy()
+        rx, ry = float(self.d.qpos[0]), float(self.d.qpos[1])
+        if not hasattr(self, "_side") or len(self._side) != len(self.layout.people):
+            self._side = [0.0] * len(self.layout.people)
+        base = self._people_xy()
         for k, p in enumerate(self.layout.people):
-            if math.hypot(cur[k][0] - rx, cur[k][1] - ry) > 0.9:
+            bx, by = base[k]
+            pts = np.asarray(p.path, float)
+            tx, ty = pts[-1] - pts[0]
+            tl = math.hypot(tx, ty) or 1.0
+            nx, ny = -ty / tl, tx / tl                       # path normal
+            px, py = bx + nx * self._side[k], by + ny * self._side[k]
+            dist = math.hypot(px - rx, py - ry)
+            if dist < 1.5:
+                away = 1.0 if (px - rx) * nx + (py - ry) * ny >= 0 else -1.0
+                self._side[k] = float(np.clip(self._side[k] + away * 0.6 * dt, -0.6, 0.6))
+                if dist > 0.8:
+                    self._pt[k] += 0.3 * dt
+            else:
+                self._side[k] *= max(0.0, 1.0 - 0.5 * dt)    # drift back to their lane
                 self._pt[k] += dt
         for k, (x, y) in enumerate(self._people_xy()):
             if k < len(self.people_mocap):
-                self.d.mocap_pos[self.people_mocap[k]] = [x, y, 0.85]
+                pts = np.asarray(self.layout.people[k].path, float)
+                tx, ty = pts[-1] - pts[0]
+                tl = math.hypot(tx, ty) or 1.0
+                self.d.mocap_pos[self.people_mocap[k]] = [x - ty / tl * self._side[k],
+                                                          y + tx / tl * self._side[k], 0.85]
 
     def step(self, action):
         action = np.clip(np.asarray(action, np.float32), -1, 1)

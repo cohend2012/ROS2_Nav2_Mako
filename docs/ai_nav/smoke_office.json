@@ -1,35 +1,13 @@
 {
-  "date": "2026-11-04 20:44",
+  "date": "2026-11-05 00:05",
   "env": "runner=local, Linux-6.18.44-fc-v233-x86_64-with-glibc2.39",
   "modes": {
-    "follow_path": {
-      "nav": {
-        "pass": false,
-        "why": "no result in 150.0 s",
-        "pose": [
-          3.9046417098522532,
-          -2.8366070434690314
-        ]
-      },
-      "agent": {
-        "pass": true,
-        "success": true,
-        "detail": "ok",
-        "plan": [
-          "goto:meeting_room",
-          "return_home:"
-        ],
-        "reading": null,
-        "expected": -1.0,
-        "home_err_m": 0.015
-      }
-    },
-    "standalone": {
+    "nav2": {
       "nav": {
         "pass": true,
         "status": 4,
-        "final_err_m": 0.132,
-        "duration_s": 64.8
+        "final_err_m": 0.164,
+        "duration_s": 81.3
       },
       "agent": {
         "pass": true,

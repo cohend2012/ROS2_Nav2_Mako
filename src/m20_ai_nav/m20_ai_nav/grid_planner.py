@@ -22,10 +22,14 @@ OCC_THRESH = 65
 
 class GridPlanner:
     def __init__(self, robot_radius=0.55, inflation_radius=1.2, cost_scale=8.0,
-                 unknown_cost=0.5, plan_res=0.10):
+                 unknown_cost=0.5, plan_res=0.10, pivot_clear=None, straight_ext=0.6):
         self.rr, self.ir = robot_radius, inflation_radius
         self.cost_scale, self.unknown_cost, self.plan_res = cost_scale, unknown_cost, plan_res
         self.cost = None
+        # pivot_clear (office profile: 0.6 m): a path may only TURN where the robot can
+        # pivot. Narrow stretches (doors) are crossed on a straight line that extends
+        # straight_ext beyond them on both sides; see _pivot_aware().
+        self.pivot_clear, self.straight_ext = pivot_clear, straight_ext
 
     def set_map(self, data, width, height, resolution, origin_x, origin_y):
         g = np.asarray(data, np.int16).reshape(height, width)
@@ -82,6 +86,61 @@ class GridPlanner:
 
     def plan(self, sx, sy, gx, gy):
         """Returns a list of (x, y) world points start->goal, or None if no path."""
+        path = self._astar(sx, sy, gx, gy)
+        if path is None or self.pivot_clear is None:
+            return path
+        return self._pivot_aware(path, gx, gy)
+
+    def _clear(self, x, y):
+        r, c = self.world_to_cell(x, y)
+        if not (0 <= r < self.h and 0 <= c < self.w):
+            return 0.0
+        return float(self.dist[r, c])
+
+    def _line_ok(self, a, b, min_clear):
+        n = max(2, int(math.hypot(b[0] - a[0], b[1] - a[1]) / (self.res * 0.5)))
+        return all(self._clear(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n) > min_clear
+                   for k in range(n + 1))
+
+    def _pivot_aware(self, path, gx, gy, depth=0):
+        """Cross every narrow stretch STRAIGHT. A 0.91 m-long skid-steer body cannot
+        turn while it is between door jambs (corners sweep 0.53 m); plain A* turns
+        right at the door exit, so the carrot pulls the robot round while it is still
+        in the doorway (office forensics 2026-11-04: stuck/clipping exactly there).
+        For each run of points with clearance < pivot_clear: take the run's axis, add
+        straight_ext of straight line before and after it (into open space), and let
+        A* reconnect start -> entry and exit -> goal."""
+        clear = [self._clear(*p) for p in path]
+        narrow = [c < self.pivot_clear for c in clear]
+        i = next((k for k, v in enumerate(narrow) if v), None)
+        if i is None or depth > 6:
+            return path
+        j = i
+        while j + 1 < len(path) and narrow[j + 1]:
+            j += 1
+        a, b = path[max(0, i - 1)], path[min(len(path) - 1, j + 1)]
+        ux, uy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(ux, uy)
+        if L < 1e-6 or i == 0 or j == len(path) - 1:
+            # starts/ends inside a narrow spot: nothing to straighten safely
+            rest = self._pivot_aware(path[j + 1:], gx, gy, depth + 1) if j + 1 < len(path) else []
+            return path[:j + 1] + rest
+        ux, uy = ux / L, uy / L
+        for ext in (self.straight_ext, 0.45, 0.3):
+            entry = (a[0] - ux * ext, a[1] - uy * ext)
+            exit_ = (b[0] + ux * ext, b[1] + uy * ext)
+            if (self._clear(*entry) > self.pivot_clear and self._clear(*exit_) > self.pivot_clear
+                    and self._line_ok(entry, exit_, self.rr)):
+                head = self._astar(path[0][0], path[0][1], *entry)
+                tail = self._astar(*exit_, gx, gy)
+                if head is None or tail is None:
+                    continue
+                straight = [entry, exit_]
+                tail = self._pivot_aware(tail, gx, gy, depth + 1)
+                return head + straight + tail
+        return path                                   # could not straighten: keep A*
+
+    def _astar(self, sx, sy, gx, gy):
         if self.cost is None:
             raise RuntimeError("plan() before set_map(): no map received")
         s = self.world_to_cell(sx, sy); g = self.world_to_cell(gx, gy)

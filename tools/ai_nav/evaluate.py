@@ -85,11 +85,11 @@ def run_episode(env, pol, seed, options=None):
             "spl": (l / max(p, l)) if s else 0.0, "steps": env.steps}
 
 
-def drive_navcore(env, pol, path, timeout_s=90.0):
+def drive_navcore(env, pol, path, timeout_s=90.0, lookahead=1.5, stuck_s=12.0):
     """Drive one episode the way the ROS node does: NavCore (carrot, safety envelope,
     blind-zone memory, pivot guard, stuck detection) + policy -> env.step(cmd)."""
     from m20_ai_nav.core import NavCore, SUCCEEDED, STUCK
-    core = NavCore(pol); core.set_path(path)          # xy only: no final-yaw phase
+    core = NavCore(pol, lookahead=lookahead, stuck_timeout_s=stuck_s); core.set_path(path)  # xy only
     t, info, out = 0.0, {}, None
     plen = sum(math.hypot(b[0] - a_[0], b[1] - a_[1]) for a_, b in zip(path[:-1], path[1:]))
     while t < timeout_s:
@@ -107,14 +107,18 @@ def drive_navcore(env, pol, path, timeout_s=90.0):
             "spl": (plen / max(env.path_len, plen)) if ok else 0.0, "steps": int(t * 10)}
 
 
-def run_office(pol, n, seed0=400000, door_range=(0.80, 1.20), n_people=None, timeout_s=120.0):
+OFFICE_LOOKAHEAD, OFFICE_STUCK_S = 0.9, 20.0   # = the office site profile
+
+
+def run_office(pol, n, seed0=400000, door_range=(0.80, 1.20), n_people=None, timeout_s=120.0,
+               lookahead=OFFICE_LOOKAHEAD, stuck_s=OFFICE_STUCK_S):
     """Office gates: held-out procedural offices, A* path (office planner radius)
     driven through NavCore, exactly like standalone/follow_path deployment."""
     env = M20NavEnv(scene="office", randomize=True, seed=seed0)
     rows = []
     for i in range(n):
         env.reset(seed=seed0 + i, options={"door_range": door_range, "n_people": n_people})
-        rows.append(drive_navcore(env, pol, env.tracker.path.tolist(), timeout_s))
+        rows.append(drive_navcore(env, pol, env.tracker.path.tolist(), timeout_s, lookahead, stuck_s))
     return rows
 
 

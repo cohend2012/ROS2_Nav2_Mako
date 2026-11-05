@@ -13,7 +13,12 @@ AGENT_REQ=${AGENT_REQ:-"read the tank 1 gauge and return to where you started"};
 read -r SX SY <<<"$START"
 mkdir -p "$OUT"
 M20_AI_NAV_SRC="${AI_NAV_SRC:-/ws/src/m20_ai_nav}" M20_AGENT_SRC="${AGENT_SRC:-}" python3 "$SMOKE/fake_world.py" --ros-args -p gauge_value:=64.0 -p world:="$WORLD" -p start_x:="$SX" -p start_y:="$SY" >"$OUT/world.log" 2>&1 &
-ros2 launch m20_ai_nav ai_nav.launch.py mode:="$MODE" site:="$SITE" params_file:="$NAV2_PARAMS" >"$OUT/ai_nav.log" 2>&1 &
+if [ "$MODE" = "nav2" ]; then
+  # CLASSICAL reference: stock Nav2 (DWB) with the same params — the stack's default
+  ros2 launch nav2_bringup navigation_launch.py params_file:="$NAV2_PARAMS" use_sim_time:=false >"$OUT/ai_nav.log" 2>&1 &
+else
+  ros2 launch m20_ai_nav ai_nav.launch.py mode:="$MODE" site:="$SITE" params_file:="$NAV2_PARAMS" >"$OUT/ai_nav.log" 2>&1 &
+fi
 ros2 run m20_missions mission_server >"$OUT/mission.log" 2>&1 &
 ros2 run m20_agent agent --ros-args -p backend:=offline -p landmarks:="$LANDMARKS" -p report_dir:="$OUT/agent" >"$OUT/agent.log" 2>&1 &
 sleep 15

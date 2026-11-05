@@ -176,9 +176,15 @@ def shield(vx, wz, bins, stop_range=0.60, front_half_angle=math.radians(35)):
         # gentler variants, then backing arcs (reverse while turning lets a boxed-in
         # robot get out where straight reversing and pivoting are both blocked)
         sgn = 1.0 if wz >= 0 else -1.0
-        for cvx, cwz in ((0.5 * vx, wz), (vx, 0.0), (0.0, 0.5 * wz), (-0.10, 0.0),
-                         (-0.10, 0.3 * sgn), (-0.10, -0.3 * sgn), (0.0, 0.0)):
-            if not footprint_hits(cvx, cwz, bins):
+        cands = [(0.5 * vx, wz), (vx, 0.0), (0.0, 0.5 * wz), (0.0, 0.25 * wz), (-0.10, 0.0),
+                 (-0.10, 0.3 * sgn), (-0.10, -0.3 * sgn), (0.05, 0.3 * sgn), (0.05, -0.3 * sgn)]
+        # NEVER pick "stop" while a moving alternative exists: for a pivot (vx=0) the
+        # variant (vx, 0) IS (0, 0), which trivially "doesn't collide" — the guard used
+        # to freeze every blocked pivot until STUCK (found in the v2 office forensics).
+        cvx, cwz = 0.0, 0.0
+        for a_, b_ in cands:
+            if (abs(a_) > 1e-6 or abs(b_) > 1e-6) and not footprint_hits(a_, b_, bins):
+                cvx, cwz = a_, b_
                 break
         detail = f"footprint guard: ({vx:+.2f},{wz:+.2f}) -> ({cvx:+.2f},{cwz:+.2f})"
         vx, wz, blocked = cvx, cwz, True
