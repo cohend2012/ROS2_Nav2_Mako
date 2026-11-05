@@ -50,6 +50,31 @@ LANDMARKS = os.path.join(REPO, "src", "m20_agent", "config", "oil_gas_field_land
 TRUTH = os.path.join(REPO, "tools", "sim", "gauges", "truth.json")
 
 
+class PursuitDriver:
+    """Classical path follower for the MuJoCo harness, the same law as Nav2's Regulated
+    Pure Pursuit (the robot's office/field classical controller): curvature to the carrot
+    k = 2 sin(a) / L, speed regulated down by curvature and by obstacle proximity,
+    rotate-in-place when the carrot is behind. Slots in where the learned policy goes
+    (obs -> action); NavCore's shield and footprint guard still apply on top."""
+    V, W_MAX, ROT_TH, R_MIN = 0.35, 0.6, 0.9, 0.6
+
+    def __call__(self, obs):
+        n = spec.N_BINS
+        scan = obs[:n] * spec.SCAN_MAX
+        d, s_, c = obs[2 * n:2 * n + 3]
+        L = max(0.3, float(d) * spec.GOAL_MAX)
+        a = math.atan2(s_, c)
+        if abs(a) > self.ROT_TH:                               # carrot behind: turn first
+            return spec.cmd_to_action(0.0, math.copysign(0.5, a))
+        k = 2.0 * math.sin(a) / L
+        r = 1.0 / max(1e-3, abs(k))                            # turning radius
+        v = self.V * min(1.0, r / self.R_MIN)                  # curvature regulation
+        front = float(min(scan[i % n] for i in range(-7, 8)))
+        v *= max(0.25, min(1.0, (front - 0.5) / 1.0))           # proximity regulation
+        w = max(-self.W_MAX, min(self.W_MAX, v * k))
+        return spec.cmd_to_action(v, w)
+
+
 class SimRobotIO:
     def __init__(self, env, policy_path, log=print, nav_timeout_s=120.0, plan_radius=0.55):
         self.env, self.log, self.timeout = env, log, nav_timeout_s
@@ -65,13 +90,15 @@ class SimRobotIO:
         self.t = 0.0
         self.collisions = 0
         self.trace = []
-        self.events = []                  # (label, t_start, t_end, ok, detail) per leg
+        self.events = []
+        self.cmds = []                    # (vx, wz) sent each 0.1 s tick                  # (label, t_start, t_end, ok, detail) per leg
 
     def pose(self):
         d = self.env.d
         return float(d.qpos[0]), float(d.qpos[1]), self.env.yaw()
 
     def _drive(self, vx, wz):
+        self.cmds.append((round(float(vx), 3), round(float(wz), 3)))
         env = self.env
         _, _, _, _, info = env.step(spec.cmd_to_action(vx, wz))
         self.t += 1.0 / spec.CONTROL_HZ
@@ -170,6 +197,20 @@ def score_g5(report, tol=0.05):
             "pass": within >= 5 and wrong_ok == 0}
 
 
+def smoothness(cmds):
+    """How 'wild' the driving is: command jumps per tick and time spent saturated."""
+    c = np.asarray(cmds, float)
+    if len(c) < 2:
+        return {}
+    dv, dw = np.abs(np.diff(c[:, 0])), np.abs(np.diff(c[:, 1]))
+    mov = np.abs(c[:, 0]) > 0.02
+    return {"mean_abs_dwz_per_tick": round(float(dw.mean()), 3),
+            "mean_abs_dvx_per_tick": round(float(dv.mean()), 3),
+            "wz_reversals_per_min": round(float(np.sum(np.diff(np.sign(c[:, 1])) != 0) / (len(c) / 600)), 1),
+            "pct_time_wz_saturated": round(100 * float(np.mean(np.abs(c[:, 1]) >= 0.65)), 1),
+            "pct_time_driving": round(100 * float(mov.mean()), 1)}
+
+
 def score_found(report, tol_m=0.6, tol_fs=0.05):
     """find_gauges: each true plate matched to a found gauge (< tol_m), reading compared
     as a fraction of full scale (the offline reader's unit when no scale is on file)."""
@@ -207,6 +248,8 @@ def main():
     ap.add_argument("--hide-gauges", action="store_true",
                     help="remove every gauge from the landmark file first (find_gauges missions); "
                          "found gauges are scored against truth.json")
+    ap.add_argument("--driver", default="learned", choices=["learned", "pursuit"],
+                    help="pursuit: classical Regulated-Pure-Pursuit law instead of the ONNX policy")
     ap.add_argument("--video", help="record the mission live to this .mp4 (tools/agent/mission_video.py)")
     ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
                     help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
@@ -236,6 +279,8 @@ def main():
                                                           clear=0.9, bounds=BOUNDS)
     else:
         io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
+    if a.driver == "pursuit":
+        io_.core.policy = PursuitDriver()
     video = None
     if a.video:
         sys.path.insert(0, HERE)
@@ -257,6 +302,7 @@ def main():
         rep["G6"] = score_found(rep)
     with open(os.path.join(a.out, "trace.json"), "w") as f:
         json.dump(io_.trace, f)
+    rep["sim"]["smoothness"] = smoothness(io_.cmds)
     with open(os.path.join(a.out, "events.json"), "w") as f:
         json.dump(io_.events, f)
     with open(rep["report_path"], "w") as f:

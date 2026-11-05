@@ -34,8 +34,34 @@ def _turn(io, yaw):
     return bool(p) and io.navigate(p[0], p[1], yaw, "look")[0]
 
 
-def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, headings=8,
-                    should_stop=lambda: False):
+HALF_FOV = math.radians(28)          # horizontal half-FOV of the 320x240, 45 deg-vertical camera
+
+
+def _look_headings(io, n, look_range):
+    """The headings worth turning to from here, in ONE sweep starting at the current
+    heading (no back-and-forth). A heading is skipped when the LiDAR sees nothing within
+    `look_range` across the camera's view there: no surface, no gauge to spot."""
+    p = io.pose()
+    yaw0 = p[2] if p else 0.0
+    step = 2 * math.pi / n
+    out = []
+    for k in range(n):
+        h = math.atan2(math.sin(yaw0 + k * step), math.cos(yaw0 + k * step))
+        if look_range:
+            seen = False
+            for j in range(-6, 7):
+                hit = io.range_along(h - yaw0 + j * HALF_FOV / 6, 0.0)
+                if hit is not None and hit[0] <= look_range:
+                    seen = True
+                    break
+            if not seen:
+                continue
+        out.append(h)
+    return out
+
+
+def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, headings=6,
+                    should_stop=lambda: False, look_range=4.5):
     """Returns {"candidates", "sightings", "gauges": [record], "rejected", "unreached"}.
     Each saved record: name, position, viewing_spot, hits, reading (vlm.read_gauge dict)
     and status OK / NEEDS_REVIEW / UNREADABLE. Nothing that wasn't confirmed up close is
@@ -51,8 +77,8 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
             unreached += 1
             log(f"[find] survey point {i} unreachable: {why}")
             continue
-        for k in range(headings):
-            _turn(io, math.atan2(math.sin(2 * math.pi * k / headings), math.cos(2 * math.pi * k / headings)))
+        for yaw_k in _look_headings(io, headings, look_range):
+            _turn(io, yaw_k)
             png = io.capture()
             if png is None:
                 continue
