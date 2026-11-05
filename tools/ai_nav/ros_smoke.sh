@@ -19,7 +19,11 @@ MODES=${MODES:-"direct standalone follow_path"}
 RUNNER=${RUNNER:-docker}
 SITE=${SITE:-outdoor}
 OUTROOT="$REPO/tools/ai_nav/ros_smoke/out"
+VARIANT=${VARIANT:-}      # classical office variant (src/m20_navigation/config/office_variants/)
+RUN_TAG=${RUN_TAG:-}      # repeat index, so repeated runs keep separate logs/results
 [ "$SITE" = "outdoor" ] || OUTROOT="$OUTROOT/$SITE"
+[ -z "$VARIANT" ] || OUTROOT="$OUTROOT/$VARIANT"
+[ -z "$RUN_TAG" ] || OUTROOT="$OUTROOT/run$RUN_TAG"
 mkdir -p "$OUTROOT"
 PARAMS_SRC="$REPO/src/m20_navigation/config/nav2_params.yaml"
 LM_FILE=oil_gas_field_landmarks.yaml
@@ -28,8 +32,13 @@ if [ "$SITE" = "office" ]; then
   # office: real footprint overlay, fixed office world, reception -> meeting room
   # (0.85 m door) for the nav goal, "go to the meeting room and come back" for the agent
   PARAMS_SRC="$OUTROOT/nav2_params_office.yaml"
+  VFILE=""
+  if [ -n "$VARIANT" ] && [ "$VARIANT" != "dwb" ]; then
+    VFILE="$REPO/src/m20_navigation/config/office_variants/$VARIANT.yaml"
+    [ -f "$VFILE" ] || { echo "ERROR: no office variant $VARIANT ($VFILE)"; exit 1; }
+  fi
   python3 "$REPO/tools/nav/apply_overlay.py" "$REPO/src/m20_navigation/config/nav2_params.yaml" \
-    "$REPO/src/m20_navigation/config/nav2_office_overlay.yaml" "$PARAMS_SRC"
+    "$REPO/src/m20_navigation/config/nav2_office_overlay.yaml" $VFILE "$PARAMS_SRC"
   LM_FILE=office_landmarks.yaml
   export WORLD=office
   read -r RX RY MX MY < <(python3 -c "
@@ -66,6 +75,7 @@ for MODE in $MODES; do
 done
 # summary for docs/ai_nav/RESULTS.md (tools/ai_nav/make_results.py)
 SUMMARY="$REPO/docs/ai_nav/smoke.json"; [ "$SITE" = "outdoor" ] || SUMMARY="$REPO/docs/ai_nav/smoke_$SITE.json"
+if [ -n "$VARIANT" ]; then mkdir -p "$REPO/docs/ai_nav/office_variants"; SUMMARY="$REPO/docs/ai_nav/office_variants/${VARIANT}_run${RUN_TAG:-0}.json"; fi
 python3 - "$OUTROOT" "$SUMMARY" "$RUNNER" $MODES <<'PY'
 import json, os, sys, time, platform
 root, out, runner, modes = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]

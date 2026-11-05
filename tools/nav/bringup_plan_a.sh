@@ -38,6 +38,8 @@
 #       plannable), 0.35 m inflation and a 0.3 m/s cap (nav2_office_overlay.yaml, merged
 #       into the STAGED params only); the AI controller plans on 0.32 m clearance; the
 #       agent loads office_landmarks.yaml + a taught-places file. Default: outdoor.
+#   M20_NAV_VARIANT=dwb|shim_rpp|lattice_rpp|mppi  (with M20_SITE=office) classical
+#       Nav2 variant layered on the office overlay (config/office_variants/README.md).
 #   M20_STANDUP=1  spawn the sim FOLDED and rise via the commander-gated behavior
 #       engine (standup, TIER_VENDOR) BEFORE the bridge starts. Real standup on
 #       camera; joints logged for the replay render.
@@ -98,7 +100,14 @@ if [ "$SITE" = "office" ]; then
   echo "[1.1/7] office profile: merging nav2_office_overlay.yaml into the staged nav2_params"
   docker cp "$REPO/src/m20_navigation/config/nav2_office_overlay.yaml" $C:/cfg/nav2_office_overlay.yaml
   docker cp "$REPO/tools/nav/apply_overlay.py" $C:/cfg/apply_overlay.py
-  docker exec $C python3 /cfg/apply_overlay.py /cfg/nav2_params.yaml /cfg/nav2_office_overlay.yaml /cfg/nav2_params.yaml \
+  VARIANT_CFG=""
+  if [ -n "${M20_NAV_VARIANT:-}" ] && [ "$M20_NAV_VARIANT" != "dwb" ]; then
+    VF="$REPO/src/m20_navigation/config/office_variants/$M20_NAV_VARIANT.yaml"
+    [ -f "$VF" ] || { echo "ERROR: M20_NAV_VARIANT=$M20_NAV_VARIANT: no $VF (see office_variants/README.md)"; exit 1; }
+    docker cp "$VF" $C:/cfg/nav2_office_variant.yaml; VARIANT_CFG=/cfg/nav2_office_variant.yaml
+    echo "[1.1/7] classical variant: $M20_NAV_VARIANT"
+  fi
+  docker exec $C bash -lc "$SRC; python3 /cfg/apply_overlay.py /cfg/nav2_params.yaml /cfg/nav2_office_overlay.yaml $VARIANT_CFG /cfg/nav2_params.yaml" \
     || { echo "ERROR: office overlay failed to merge"; exit 1; }
   LANDMARKS_FILE=${M20_LANDMARKS:-office_landmarks.yaml}
 fi

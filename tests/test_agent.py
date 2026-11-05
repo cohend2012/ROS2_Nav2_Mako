@@ -285,3 +285,20 @@ def test_office_overlay_merges_footprint():
         rp = p[cm][cm]["ros__parameters"]
         assert "robot_radius" not in rp and rp["footprint"].startswith("[[0.46")
     assert p["velocity_smoother"]["ros__parameters"]["max_velocity"][0] == 0.3
+
+
+def test_overlay_stacks_variants_and_rejects_unknown_nodes(tmp_path):
+    import importlib.util
+    spec_ = importlib.util.spec_from_file_location("apply_overlay", os.path.join(ROOT, "tools", "nav", "apply_overlay.py"))
+    ao = importlib.util.module_from_spec(spec_); spec_.loader.exec_module(ao)
+    base = {"controller_server": {"ros__parameters": {"FollowPath": {"plugin": "dwb", "max_vel_x": 0.4}}}}
+    ao.merge(base, {"controller_server": {"ros__parameters": {"FollowPath": {
+        "plugin": "mppi", "CostCritic": {"enabled": True}}}}})            # new nested block: allowed
+    fp = base["controller_server"]["ros__parameters"]["FollowPath"]
+    assert fp["plugin"] == "mppi" and fp["CostCritic"] == {"enabled": True} and fp["max_vel_x"] == 0.4
+    with pytest.raises(KeyError, match="node section"):
+        ao.merge(base, {"controler_server": {"ros__parameters": {}}})     # typo'd NODE: refused
+    for v in ("shim_rpp", "lattice_rpp", "mppi"):                         # every shipped variant parses
+        import yaml as y
+        doc = y.safe_load(open(os.path.join(ROOT, "src", "m20_navigation", "config", "office_variants", v + ".yaml")))
+        assert "controller_server" in doc or "planner_server" in doc

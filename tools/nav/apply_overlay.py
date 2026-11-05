@@ -2,13 +2,39 @@
 """Deep-merge a YAML overlay onto a ROS params file (null in the overlay DELETES a key).
 
     python3 tools/nav/apply_overlay.py base.yaml overlay.yaml out.yaml
-Used by bringup for M20_SITE=office (src/m20_navigation/config/nav2_office_overlay.yaml).
-Fails loudly if an overlay path doesn't exist in the base, except for explicitly NEW
-leaf keys (e.g. footprint). A typo in a node name must not silently do nothing.
+    python3 tools/nav/apply_overlay.py base.yaml over1.yaml [over2.yaml ...] out.yaml
+Used by bringup for M20_SITE=office (+ M20_NAV_VARIANT=<name> for the classical
+variants in src/m20_navigation/config/office_variants/). Overlays apply in order.
+Fails loudly if an overlay names a NODE section that is not in the base (a typo in a
+node name must not silently do nothing); new nested parameter blocks inside an
+existing node are allowed (a new controller plugin brings its own sub-params).
+"{share:<pkg>}" in any string is replaced by that package's installed share dir.
 """
 import sys
 
 import yaml
+
+
+def share_dir(pkg):
+    try:
+        from ament_index_python.packages import get_package_share_directory
+        return get_package_share_directory(pkg)
+    except Exception:  # noqa: BLE001 — no ament index: search the prefix path
+        import os
+        for pre in os.environ.get("AMENT_PREFIX_PATH", "").split(os.pathsep):
+            d = os.path.join(pre, "share", pkg)
+            if pre and os.path.isdir(d):
+                return d
+        raise KeyError(f"{{share:{pkg}}}: package not found (source ROS first)")
+
+
+def expand(v):
+    import re
+    if isinstance(v, str):
+        return re.sub(r"\{share:([A-Za-z0-9_]+)\}", lambda m: share_dir(m.group(1)), v)
+    if isinstance(v, list):
+        return [expand(x) for x in v]
+    return v
 
 
 def merge(base, over, path=""):
@@ -18,10 +44,14 @@ def merge(base, over, path=""):
             base.pop(k, None)
         elif isinstance(v, dict):
             if k not in base:
-                raise KeyError(f"overlay section {p} not in base params (typo?)")
+                if path == "":
+                    raise KeyError(f"overlay node section {p} not in base params (typo?)")
+                base[k] = {}
+            if not isinstance(base[k], dict):
+                base[k] = {}
             merge(base[k], v, p)
         else:
-            base[k] = v
+            base[k] = expand(v)
     return base
 
 
@@ -31,12 +61,13 @@ class NoAlias(yaml.SafeDumper):
 
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4:
         sys.exit(__doc__)
     base = yaml.safe_load(open(sys.argv[1]))
-    over = yaml.safe_load(open(sys.argv[2]))
-    yaml.dump(merge(base, over), open(sys.argv[3], "w"), Dumper=NoAlias, sort_keys=False)
-    print(f"merged {sys.argv[2]} -> {sys.argv[3]}")
+    for o in sys.argv[2:-1]:
+        merge(base, yaml.safe_load(open(o)))
+    yaml.dump(base, open(sys.argv[-1], "w"), Dumper=NoAlias, sort_keys=False)
+    print(f"merged {' + '.join(sys.argv[2:-1])} -> {sys.argv[-1]}")
 
 
 if __name__ == "__main__":
