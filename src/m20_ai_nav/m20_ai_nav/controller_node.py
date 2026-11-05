@@ -54,6 +54,7 @@ class AiController(Node):
         p("stop_range", 0.60); p("stuck_timeout_s", 12.0); p("replan_period_s", 1.0)
         p("scan_timeout_s", 0.5)
         p("planner_robot_radius", 0.55)   # standalone A* lethal radius; office profile: 0.32
+        p("planner_pivot_clear", 0.0)     # >0 (office: 0.6): cross narrow passages STRAIGHT
         g = lambda n: self.get_parameter(n).value  # noqa: E731
         self.mode = g("mode")
         if self.mode not in MODES:
@@ -79,7 +80,8 @@ class AiController(Node):
         self.planner = None
         if self.mode == "standalone":
             self.planner = GridPlanner(robot_radius=g("planner_robot_radius"),
-                                       inflation_radius=max(0.8, g("planner_robot_radius") + 0.5))
+                                       inflation_radius=max(0.8, g("planner_robot_radius") + 0.5),
+                                       pivot_clear=g("planner_pivot_clear") or None)
             latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL,
                                  reliability=ReliabilityPolicy.RELIABLE)
             self.map_ok = False

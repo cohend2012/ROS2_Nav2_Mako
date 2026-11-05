@@ -45,7 +45,8 @@ SITE_PARAMS = {
     "outdoor": {"planner_robot_radius": 0.55},
     # office: plan through doors on the half-width (0.265 + 0.05); the NavCore pivot
     # guard stops turn-in-place whenever anything is inside the 0.53 m sweep
-    "office": {"planner_robot_radius": 0.32},
+    "office": {"planner_robot_radius": 0.32, "planner_pivot_clear": 0.6,
+               "lookahead": 0.9, "stuck_timeout_s": 20.0},
 }
 
 
