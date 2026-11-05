@@ -89,6 +89,15 @@ class RosRobotIO:
                                   i.origin.position.x, i.origin.position.y)
         return survey_viewpoints(self._planner, p[:2], spacing=spacing, clear=clear)
 
+    def view_poses(self):
+        """find_gauges: planned views of every mapped surface (gauge_finder.view_plan)."""
+        from m20_agent.gauge_finder import view_plan
+        p = self.pose()
+        if self._map is None or p is None:
+            return None
+        self.survey_viewpoints()                       # builds self._planner from /map
+        return view_plan(self._planner, p[:2]) or None
+
     def _scan_hit(self, bearing):
         sc, p = self._scan, self.pose()
         if sc is None or p is None:

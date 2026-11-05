@@ -143,6 +143,18 @@ def front_min(bins, half_angle=math.radians(35)):
     return float(np.min(np.asarray(bins)[[i % n for i in range(-k, k + 1)]]))
 
 
+def front_box(bins, side_margin=0.10):
+    """Distance ahead to the nearest point INSIDE the robot's own lane: |y| <= half width
+    + side_margin, x > 0 (Nav2 collision_monitor's stop polygon, not a cone). A +-35 deg
+    cone saw both jambs of a 0.85 m door and stopped the robot in every doorway."""
+    b = np.asarray(bins, float)
+    n = len(b)
+    ang = np.arange(n) * (2 * math.pi / n)
+    x, y = b * np.cos(ang), b * np.sin(ang)
+    lane = (x > 0) & (np.abs(y) <= HALF_W + side_margin)
+    return float(x[lane].min()) if lane.any() else float("inf")
+
+
 def footprint_hits(vx, wz, bins):
     """True if moving at (vx, wz) for up to 0.6 s sweeps the padded footprint over
     any scan/memory point within 2 m (unicycle model, body frame)."""
@@ -171,13 +183,18 @@ def footprint_hits(vx, wz, bins):
 
 def shield(vx, wz, bins, stop_range=0.60, front_half_angle=math.radians(35)):
     """(vx, wz) -> (vx, wz, blocked, detail). 1) forward stop when anything in the
-    +-35 deg cone is inside stop_range; 2) footprint guard: if the command, played
+    robot's lane (front_box) is inside stop_range (front_half_angle is unused, kept for
+    callers); 2) footprint guard: if the command, played
     forward 0.6 s, would put a sensed point inside the M20's real rectangle (pivots
     swing the corners through a 0.53 m circle; a circle-only rule blocked every turn
     beside a wall in the office smoke), take the first gentler command that is clear."""
     blocked, detail = False, ""
-    if vx > 0.0 and front_min(bins, front_half_angle) < stop_range:
-        vx, blocked, detail = 0.0, True, f"front {front_min(bins, front_half_angle):.2f} m < stop_range"
+    # creeping (<= 0.10 m/s) may close to 6 cm of the nose (collision_monitor's stop
+    # polygon); faster motion keeps the full stop_range. The footprint guard below still
+    # vetoes any command whose swept body would touch a point.
+    lim = min(stop_range, HALF_L + 0.06) if 0.0 < vx <= 0.10 else stop_range
+    if vx > 0.0 and front_box(bins) < lim:
+        vx, blocked, detail = 0.0, True, f"front {front_box(bins):.2f} m < {lim:.2f} m"
     if footprint_hits(vx, wz, bins):
         cvx, cwz = 0.0, 0.0
         # gentler variants, then backing arcs (reverse while turning lets a boxed-in

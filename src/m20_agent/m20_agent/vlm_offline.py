@@ -15,12 +15,16 @@ Anything it cannot match becomes a 1 s wait plus a rationale. It never guesses a
 Gauge reading: classical needle fit (gauge_dial.read_dial) on the camera frame.
 """
 import io
+import math
 import re
 
 import numpy as np
 
 from m20_agent.gauge_dial import read_dial
 
+STOP = {"the", "a", "an", "read", "what", "does", "say", "says", "gauge", "gauges", "on", "at",
+        "of", "is", "me", "tell", "check", "please", "and", "come", "back", "to", "dial", "value",
+        "reading", "go", "oil"}
 HOME_WORDS = ("return", "come back", "where you started", "go home", "back home",
               "back to start", "return home")
 
@@ -86,15 +90,43 @@ class OfflineBackend:
                 if pos >= 0 and lm.name not in [s for _, s in seen]:
                     seen.append((pos, lm.name))
                     text = text[:pos] + "#" * len(key) + text[pos + len(key):]
-            for _, name in sorted(seen):
+            gauge_word = re.search(r"\b(gauges?|dials?|meters?|reading|pressure|temperature)\b", q)
+            driving = re.search(r"\b(go to|drive to|move to)\b", q)
+            for k, (pos, name) in enumerate(sorted(seen)):
                 lm = self.reg.get(name)
-                if lm.type == "gauge" and not re.search(r"\b(go to|drive to|move to)\b", q):
+                if lm.type != "gauge" and gauge_word and not driving:
+                    # "the gauge ON the pipe rack": the gauge nearest that landmark
+                    g = min(self.reg.of_type("gauge"), default=None,
+                            key=lambda g: math.hypot(g.position[0] - lm.position[0],
+                                                     g.position[1] - lm.position[1]))
+                    if g is not None and math.hypot(g.position[0] - lm.position[0],
+                                                    g.position[1] - lm.position[1]) < 3.0:
+                        if g.name not in [st.get("target") for st in steps]:
+                            steps.append({"action": "read_gauge", "target": g.name})
+                        notes.append(f"the gauge at {lm.name} is {g.name}")
+                        continue
+                if lm.type == "gauge" and not driving:
                     steps.append({"action": "read_gauge", "target": name})
                 elif re.search(r"\b(inspect|look at|check)\b", q):
                     steps.append({"action": "inspect", "target": name,
                                   "question": "Describe the condition of this equipment."})
                 else:
                     steps.append({"action": "goto", "target": name})
+            if not steps and gauge_word:
+                # described, not named ("the oil pipe gauge"): best word overlap with a
+                # gauge's name/aliases, only if ONE gauge wins outright
+                words = set(re.findall(r"[a-z0-9]+", q)) - STOP
+                def score(g):
+                    keys = set(re.findall(r"[a-z0-9]+", " ".join([g.name] + list(g.aliases)).lower())) - STOP
+                    return sum(1 for w in words for k in keys if w == k or (len(w) > 3 and (w.startswith(k) or k.startswith(w))))
+                ranked = sorted(self.reg.of_type("gauge"), key=score, reverse=True)
+                if ranked and score(ranked[0]) > 0 and (len(ranked) == 1 or score(ranked[0]) > score(ranked[1])):
+                    steps.append({"action": "read_gauge", "target": ranked[0].name})
+                    notes.append(f"'{q}' best matches {ranked[0].name} ({', '.join(ranked[0].aliases[:2])})")
+                elif ranked and score(ranked[0]) > 0:
+                    tied = [g.name for g in ranked if score(g) == score(ranked[0])]
+                    return {"steps": [{"action": "wait", "seconds": 1}],
+                            "rationale": f"Which gauge do you mean: {', '.join(tied)}?"}
             if not steps and re.search(r"\b(patrol|tour|survey)\b", q):
                 for n in self.reg.nearest_order(
                         [lm.name for lm in (self.reg.get(x) for x in self.reg.names())
@@ -102,9 +134,12 @@ class OfflineBackend:
                     steps.append({"action": "goto", "target": n})
         # a destination the registry doesn't know: say so instead of doing only the
         # part we understood (going straight "home" would look like success)
-        for m in re.finditer(r"\b(?:go|drive|head|walk|take me|navigate)\s+(?:back\s+)?to\s+(?:the\s+)?"
-                             r"([a-z0-9' _-]+?)(?:\s+and\b|,|$)", q):
+        for m in re.finditer(r"\b(?:(?:go|drive|head|walk|take me|navigate)\s+(?:back\s+)?to|find|where(?:'s| is))"
+                             r"\s+(?:the\s+)?([a-z0-9' _-]+?)(?:\s+and\b|,|\?|$)", q):
             place = m.group(1).strip()
+            if re.search(r"\b(gauges?|dials?|meters?)\b", place) or any(
+                    st["action"] in ("find_gauges", "read_gauge") for st in steps):
+                continue                               # a gauge task, not a place
             if place in ("home", "start", "base", "where you started", "the start") or place.startswith("where"):
                 continue
             if self.reg.resolve(place) is None and self.reg.resolve(place.replace(" ", "_")) is None:
@@ -113,6 +148,10 @@ class OfflineBackend:
                                      f"'this is the {place}' to teach me."}
         if any(w in q for w in HOME_WORDS):
             steps.append({"action": "return_home"})
+        if not steps and re.search(r"\b(gauge|dial|meter)\b", q) and not gauges:
+            return {"steps": [{"action": "wait", "seconds": 1}],
+                    "rationale": "No gauges are on this map yet. Say 'find the gauges' and I'll "
+                                 "search for them first."}
         if not steps:
             notes.append("offline planner found no known landmark or task in the request")
             steps = [{"action": "wait", "seconds": 1}]

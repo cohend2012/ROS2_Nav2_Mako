@@ -423,3 +423,54 @@ def test_executor_find_gauges_needs_capable_io(reg):
     rep = Executor(reg, OfflineBackend(reg), FakeIO(), log=lambda *_: None).run("find the gauges")
     assert not rep["success"]
     assert "cannot search" in rep["steps"][0]["detail"]
+
+
+@pytest.mark.parametrize("req,target", [
+    ("read the oil pipe gauge", "gauge_fl401"),
+    ("what does the flow gauge on the pipe rack say", "gauge_fl401"),
+    ("read the gauge on tank 1", "gauge_pg101"),
+])
+def test_offline_gauge_by_description(reg, req, target):
+    steps = validate(OfflineBackend(reg).plan(req), reg)
+    assert steps == [{"action": "read_gauge", "target": target}]
+
+
+def test_offline_find_unknown_place_explains(reg):
+    raw = OfflineBackend(reg).plan("find the kitchen")
+    assert [s["action"] for s in validate(raw, reg)] == ["wait"]
+    assert "don't know where 'kitchen'" in raw["rationale"]
+
+
+def test_offline_ambiguous_gauge_asks(reg):
+    raw = OfflineBackend(reg).plan("read the pressure gauge")
+    assert [s["action"] for s in validate(raw, reg)] == ["wait"] and "Which gauge" in raw["rationale"]
+
+
+def test_view_plan_sees_every_face_including_thin_racks():
+    """Planned views (no spinning) must look head-on at all 4 faces of a box AND both
+    faces of a 0.1 m thin rack: the rack's two faces used to be merged into one."""
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT, "src", "m20_ai_nav"))
+    from m20_ai_nav.grid_planner import GridPlanner
+    from m20_agent.gauge_finder import view_plan
+    res, n = 0.05, 240                                   # 12 x 12 m
+    g = np.zeros((n, n), np.int8)
+    g[[0, -1], :] = 100; g[:, [0, -1]] = 100             # yard fence
+    g[100:140, 60:100] = 100                             # 2 x 2 m box centred (-2, 0)
+    g[118:120, 150:200] = 100                            # 0.1 m thick, 2.5 m rack at y=-0.05
+    pl = GridPlanner(robot_radius=0.4, inflation_radius=0.8)
+    pl.set_map(g.reshape(-1), n, n, res, -6.0, -6.0)
+    views = view_plan(pl, (0.0, -4.0), bounds=(-5.5, 5.5, -5.5, 5.5))
+    assert 0 < len(views) < 40
+
+    def seen(px, py, nx, ny):
+        for x, y, yaw in views:
+            dx, dy = px - x, py - y
+            d = math.hypot(dx, dy)
+            rel = abs(math.atan2(math.sin(math.atan2(dy, dx) - yaw), math.cos(math.atan2(dy, dx) - yaw)))
+            if 1.0 <= d <= 2.9 and rel <= math.radians(20) and -(dx * nx + dy * ny) / d >= math.cos(math.radians(45)):
+                return True
+        return False
+    for face in [(-2.0, -1.0, 0, -1), (-2.0, 1.0, 0, 1), (-3.0, 0.0, -1, 0), (-1.0, 0.0, 1, 0),
+                 (2.75, -0.1, 0, -1), (2.75, 0.0, 0, 1)]:          # rack: south AND north face
+        assert seen(*face), f"no view of face {face}"

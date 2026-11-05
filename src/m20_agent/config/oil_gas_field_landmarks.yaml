@@ -16,7 +16,7 @@ landmarks:
      position: [-3.49, -1.0], approach: [-2.29, -1.0, 3.1416], gauge: {units: psi, min: 0, max: 200}}
   - {name: gauge_pg302, type: gauge, aliases: [PG-302, skid 2 gauge],
      position: [0.0, 1.09], approach: [0.0, -0.11, 1.5708], gauge: {units: bar, min: 0, max: 16}}
-  - {name: gauge_fl401, type: gauge, aliases: [FL-401, pipe rack gauge, rack gauge],
+  - {name: gauge_fl401, type: gauge, aliases: [FL-401, pipe rack gauge, rack gauge, flow gauge, flow meter, pipeline gauge, pipe gauge],
      position: [5.0, 1.89], approach: [5.0, 0.69, 1.5708], gauge: {units: bar, min: 0, max: 10}}
   # --- equipment ------------------------------------------------------------------
   - {name: tank1, type: tank, aliases: [tank 1, storage tank 1, west tank],

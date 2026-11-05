@@ -123,3 +123,46 @@ mission with 8 look headings swept once, skipping headings with no LiDAR surface
   default has always been classical Nav2. The learned driver stays experimental: it isn't used
   for missions until it is < 15 % of the time > 0.3 m off route and < 40 % saturated, with 0
   collisions, on this mission across ≥ 3 seeds.
+
+## No more spinning: planned views (2026-11-05, current default)
+Spinning 8 headings at 29 grid points (~230 turns) was mostly wasted: gauges are on
+equipment, and the map already shows where every surface is. `gauge_finder.view_plan`
+picks views that see each mapped surface head-on: 1.0–2.8 m away, within ±18° of the image
+centre, ≤ 40° off the face, with clear line of sight. It's a greedy set cover, toured
+nearest-first. The robot drives to each view, makes one short turn to face it, and takes ONE
+photo. 42 views on this site; the plan takes 0.4 s.
+
+| Seed | Found / read | Collisions | Time | > 0.3 m off route | At full turn rate |
+|---|---|---|---|---|---|
+| 3 | 6/6, 6/6 | 0 | 14.4 min | 2.3 % | 20 % |
+| 5 | 6/6, 6/6 | 0 | 14.5 min | 2.0 % | 19 % |
+| 7 | 6/6, 6/6 | 0 | 13.6 min | 1.8 % | 19 % |
+
+That's down from 20.2 min (spin + learned driver) and 16.7 min (spin + classical driver).
+Bugs found on the way:
+- The two faces of a 0.1 m rack beam were merged as "duplicates", so the face with FL-401
+  on it was never planned. Samples now merge only if they face the same way.
+- Arriving at a fixed heading made the planner loop round for a straight approach (2× the
+  path). Drive there first, then turn.
+- The first plan accepted views with the dial 17° off-centre at 2.7 m (marginal for the
+  detector). The coverage rule is tighter now.
+
+## Other requests
+| Request | Site | What happens |
+|---|---|---|
+| "find the kitchen and come back" | office | `goto kitchen → return_home`, 1.0 min, 0 collisions |
+| "find the kitchen" | oil site | doesn't move: "I don't know where 'kitchen' is. Drive me there and say 'this is the kitchen' to teach me." |
+| "read the oil pipe gauge and come back" | oil site | resolves to FL-401 (flow gauge on the pipe rack), reads 3.3 bar (true 3.3), 1.6 min |
+| "what does the gauge on tank 1 say" | oil site | the gauge nearest tank 1 → PG-101 |
+| "read the pressure gauge" | oil site | asks "Which gauge do you mean: gauge_pg101, gauge_pg102?" |
+| "read the oil pipe gauge" | office (no gauges mapped) | "No gauges are on this map yet. Say 'find the gauges' and I'll search for them first." |
+
+The kitchen run showed three more problems, now fixed:
+1. The front stop was a ±35° cone, which saw both door jambs and stopped the robot in
+   doorways. It's now a lane box (body width + 0.10 m), like Nav2's collision_monitor. At
+   ≤ 0.10 m/s it may close to 6 cm; the footprint guard still vetoes contact.
+2. Pure pursuit near a wall: w = v·k vanished as v was regulated down, so the robot crept
+   into the jamb without turning. At low speed it now steers by the angle (RPP's rotate-to-heading idea).
+3. office.xml's people never moved, and one stood in the kitchen doorway forever. The robot
+   correctly stopped 6 cm short and gave up. People now step aside (`--people step-aside`,
+   the default); `--people static` keeps the old blocked-doorway case.

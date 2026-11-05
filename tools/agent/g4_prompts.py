@@ -40,6 +40,8 @@ CASES = [
     ("Read the tank 2 gauge, wait 10 seconds, read it again, then go home.", {"gauge_pg102"}, set(), True, False),
     ("Patrol the west field, north lane and east field.", set(), {"west_field", "north_lane", "east_field"}, False, False),
     ("Find the kitchen.", set(), set(), False, True),   # not on this site: must not move
+    ("Read the oil pipe gauge.", {"gauge_fl401"}, set(), False, False),
+    ("What does the gauge on tank 1 say?", {"gauge_pg101"}, set(), False, False),
     ("Search the site for gauges you don't know about yet, read them, and come back.",
      set(), set(), True, False, True),                  # find_gauges (no prior positions)
 ]

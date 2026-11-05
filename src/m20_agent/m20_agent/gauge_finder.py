@@ -158,3 +158,119 @@ def survey_viewpoints(planner, start_xy, spacing=3.0, clear=0.9, bounds=None):
         nxt = min(pts, key=lambda p: math.hypot(p[0] - cur[0], p[1] - cur[1]))
         order.append(nxt); pts.remove(nxt); cur = nxt
     return order
+
+
+def view_plan(planner, start_xy, bounds=None, rng=(1.0, 2.8), half_fov_deg=18.0,
+              max_incidence_deg=40.0, cand_step=0.5, clear=0.75, n_headings=16,
+              surf_step=0.2, target=0.97, min_gain=3):
+    """Views that SEE EVERY MAPPED SURFACE instead of spinning everywhere. Gauges are
+    mounted on equipment, and equipment is what the map's occupied cells are. So:
+      surfaces : occupied cells with free space beside them, each with an outward normal
+      views    : (free spot >= `clear` from obstacles, heading) pairs
+      covers   : a surface sample is covered by a view when it is `rng` m away, inside
+                 the central +-half_fov of the camera, seen within `max_incidence` of
+                 face-on (the detector needs that), with clear line of sight
+    Greedy set cover (most new surface first) until `target` of what any view can see is
+    covered, then nearest-neighbour tour from start. Returns [(x, y, yaw)]: drive there,
+    ARRIVE facing yaw, take one photo. No in-place 360s."""
+    dist = np.where(np.isinf(planner.dist), 9.0, planner.dist)
+    h, w = dist.shape
+    res = planner.res
+    occ = dist <= 1e-6
+    free = ~occ
+    border = occ & (np.roll(free, 1, 0) | np.roll(free, -1, 0) | np.roll(free, 1, 1) | np.roll(free, -1, 1))
+    gy, gx = np.gradient(np.minimum(dist, 1.0))
+    sk = max(1, int(round(surf_step / res)))
+    rr, cc = np.nonzero(border)
+    keep = (rr % sk == 0) | (cc % sk == 0)
+    rr, cc = rr[keep], cc[keep]
+    S, N = [], []
+    for r, c in zip(rr, cc):
+        x, y = planner.cell_to_world(r, c)
+        if bounds and not (bounds[0] - 1 <= x <= bounds[1] + 1 and bounds[2] - 1 <= y <= bounds[3] + 1):
+            continue
+        # outward normal: mean gradient over the free neighbours
+        nb = [(r + dr, c + dc) for dr in (-1, 0, 1) for dc in (-1, 0, 1)
+              if 0 <= r + dr < h and 0 <= c + dc < w and free[r + dr, c + dc]]
+        vx = sum(gx[a, b] for a, b in nb); vy = sum(gy[a, b] for a, b in nb)
+        L = math.hypot(vx, vy)
+        if L > 0.3 * len(nb) * 0.5:
+            S.append((x, y)); N.append((vx / L, vy / L))
+            continue
+        # thin object (a rack beam, a post): free space on both sides and the gradient
+        # cancels. Give it one face per open side instead of dropping it.
+        for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if 0 <= r + dr < h and 0 <= c + dc < w and free[r + dr, c + dc]:
+                S.append((x, y)); N.append((float(dc), float(dr)))
+    if not S:
+        return []
+    S, N = np.array(S), np.array(N)
+    # thin surface samples to ~surf_step spacing
+    order, kept = np.lexsort((S[:, 1], S[:, 0])), []
+    for i in order:
+        # a duplicate is close AND facing the same way: the two faces of a thin rack beam
+        # are 0.1 m apart but opposite (the gauge is on one of them)
+        if all(abs(S[i, 0] - S[j, 0]) > surf_step * 0.9 or abs(S[i, 1] - S[j, 1]) > surf_step * 0.9
+               or N[i] @ N[j] < 0.5 for j in kept[-80:]):
+            kept.append(i)
+    S, N = S[kept], N[kept]
+
+    def los(x0, y0, x1, y1):
+        n = max(2, int(math.hypot(x1 - x0, y1 - y0) / (res * 0.7)))
+        t = np.linspace(0.0, 1.0, n)[:-1]
+        xs, ys = x0 + t * (x1 - x0), y0 + t * (y1 - y0)
+        r_ = ((ys - planner.oy) / res).astype(int); c_ = ((xs - planner.ox) / res).astype(int)
+        ok = (r_ >= 0) & (r_ < h) & (c_ >= 0) & (c_ < w)
+        # stop checking in the last 0.25 m (the surface cell itself and its neighbours)
+        tail = np.hypot(x1 - xs, y1 - ys) < 0.25
+        return not np.any(occ[r_[ok & ~tail], c_[ok & ~tail]])
+
+    step = max(1, int(round(cand_step / res)))
+    hfov, minc = math.radians(half_fov_deg), math.cos(math.radians(max_incidence_deg))
+    views = []                                           # (x, y, yaw, covered index set)
+    for r0 in range(step // 2, h, step):
+        for c0 in range(step // 2, w, step):
+            if dist[r0, c0] < clear:
+                continue
+            x, y = planner.cell_to_world(r0, c0)
+            if bounds and not (bounds[0] <= x <= bounds[1] and bounds[2] <= y <= bounds[3]):
+                continue
+            dx, dy = S[:, 0] - x, S[:, 1] - y
+            d = np.hypot(dx, dy)
+            facing = -(dx * N[:, 0] + dy * N[:, 1]) / np.maximum(d, 1e-6)   # cos incidence
+            near = np.nonzero((d >= rng[0]) & (d <= rng[1]) & (facing >= minc))[0]
+            near = [i for i in near if los(x, y, S[i, 0], S[i, 1])]
+            if not near:
+                continue
+            ang = np.arctan2(dy[near], dx[near])
+            for k in range(n_headings):
+                yaw = -math.pi + 2 * math.pi * k / n_headings
+                rel = np.abs(np.arctan2(np.sin(ang - yaw), np.cos(ang - yaw)))
+                cov = {near[j] for j in np.nonzero(rel <= hfov)[0]}
+                if len(cov) >= min_gain:
+                    views.append((x, y, yaw, cov))
+    if not views:
+        return []
+    coverable = set().union(*(v[3] for v in views))
+    reach = {}
+
+    def reachable(v):
+        key = (round(v[0], 2), round(v[1], 2))
+        if key not in reach:
+            reach[key] = planner.plan(start_xy[0], start_xy[1], v[0], v[1]) is not None
+        return reach[key]
+    chosen, seen = [], set()
+    while len(seen) < target * len(coverable):
+        best = max(views, key=lambda v: len(v[3] - seen))
+        gain = len(best[3] - seen)
+        if gain < min_gain:
+            break
+        views.remove(best)
+        if not reachable(best):
+            continue
+        chosen.append(best[:3]); seen |= best[3]
+    tour, cur = [], start_xy
+    while chosen:
+        nxt = min(chosen, key=lambda v: math.hypot(v[0] - cur[0], v[1] - cur[1]))
+        tour.append(nxt); chosen.remove(nxt); cur = nxt[:2]
+    return tour

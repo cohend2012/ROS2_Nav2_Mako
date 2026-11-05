@@ -66,19 +66,26 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
     Each saved record: name, position, viewing_spot, hits, reading (vlm.read_gauge dict)
     and status OK / NEEDS_REVIEW / UNREADABLE. Nothing that wasn't confirmed up close is
     saved as a gauge."""
-    vps = io.survey_viewpoints()
-    log(f"[find] {len(vps)} survey viewpoints")
+    # Preferred: planned VIEWS of every mapped surface (arrive facing it, one photo each).
+    # Fallback: grid survey points with a look-around sweep at each.
+    views = io.view_poses() if hasattr(io, "view_poses") else None
+    vps = views if views else io.survey_viewpoints()
+    log(f"[find] {len(vps)} {'planned views' if views else 'survey viewpoints'}")
     clusters, sightings, unreached = GaugeClusters(radius=0.6, min_hits=1), 0, 0
-    for i, (vx, vy) in enumerate(vps):
+    for i, vp in enumerate(vps):
         if should_stop():
             break
-        ok, why = io.navigate(vx, vy, None, f"survey_{i}")
+        # Drive to the spot (any heading), THEN one short turn to the view heading: arriving
+        # at a fixed heading made the planner loop in for a straight approach (2x the path).
+        ok, why = io.navigate(vp[0], vp[1], None, f"survey_{i}")
         if not ok:
             unreached += 1
             log(f"[find] survey point {i} unreachable: {why}")
             continue
-        for yaw_k in _look_headings(io, headings, look_range):
-            _turn(io, yaw_k)
+        looks = [vp[2]] if views else _look_headings(io, headings, look_range)
+        for yaw_k in looks:
+            if yaw_k is not None:
+                _turn(io, yaw_k)
             png = io.capture()
             if png is None:
                 continue

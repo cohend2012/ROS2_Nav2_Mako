@@ -56,7 +56,7 @@ class PursuitDriver:
     k = 2 sin(a) / L, speed regulated down by curvature and by obstacle proximity,
     rotate-in-place when the carrot is behind. Slots in where the learned policy goes
     (obs -> action); NavCore's shield and footprint guard still apply on top."""
-    V, W_MAX, ROT_TH, R_MIN = 0.35, 0.6, 0.9, 0.6
+    V, W_MAX, ROT_TH, R_MIN = 0.35, 0.6, 0.6, 0.6
 
     def __call__(self, obs):
         n = spec.N_BINS
@@ -71,7 +71,14 @@ class PursuitDriver:
         v = self.V * min(1.0, r / self.R_MIN)                  # curvature regulation
         front = float(min(scan[i % n] for i in range(-7, 8)))
         v *= max(0.25, min(1.0, (front - 0.5) / 1.0))           # proximity regulation
-        w = max(-self.W_MAX, min(self.W_MAX, v * k))
+        if front < 0.75:
+            v = min(v, 0.08)                                    # creep: doorways, tight spots
+        w = v * k
+        if v < 0.15 and abs(a) > 0.05:
+            # slowed near walls (doorways): pure pursuit's w = v*k would vanish with v,
+            # so the robot creeps into the wall without turning. Steer by the angle.
+            w = math.copysign(max(abs(w), min(0.5, 1.2 * abs(a))), a)
+        w = max(-self.W_MAX, min(self.W_MAX, w))
         return spec.cmd_to_action(v, w)
 
 
@@ -92,14 +99,54 @@ class SimRobotIO:
         self.trace = []
         self.events = []
         self.cmds = []                    # (vx, wz) sent each 0.1 s tick
-        self.xte = []                     # distance from the planned path, each driving tick                  # (label, t_start, t_end, ok, detail) per leg
+        self.xte = []                     # distance from the planned path, each driving tick
+        self.people_step_aside = True                  # (label, t_start, t_end, ok, detail) per leg
 
     def pose(self):
         d = self.env.d
         return float(d.qpos[0]), float(d.qpos[1]), self.env.yaw()
 
+    def _step_aside(self, dt=0.1, near=1.3, speed=0.6):
+        """Fixed scenes (office.xml) park people where the generator put them, e.g. in the
+        kitchen doorway, frozen forever. Real people move out of the way: a person the
+        robot comes within `near` m of walks off to free floor >= 1 m away from the robot
+        and from its route (the first of 8 directions that is clear), at walking pace."""
+        env = self.env
+        if getattr(env, "layout", None) is not None or not env.people_mocap:
+            return
+        x, y, _ = self.pose()
+        if not hasattr(self, "_aside"):
+            self._aside = {}
+        for mid in env.people_mocap:
+            px, py = env.d.mocap_pos[mid][:2]
+            if mid not in self._aside and math.hypot(px - x, py - y) < near:
+                route = getattr(self, "route", None)
+                base = math.atan2(py - y, px - x)
+                for dist_, k in [(dd, kk) for dd in (1.2, 1.8, 2.5)
+                                 for kk in (4, -4, 3, -3, 5, -5, 2, -2, 6, -6, 1, -1, 0, 7, -7, 8)]:
+                    a = base + k * math.pi / 8                  # sideways first
+                    tx, ty = px + dist_ * math.cos(a), py + dist_ * math.sin(a)
+                    r, c = self.planner.world_to_cell(tx, ty)
+                    ok = (0 <= r < self.planner.h and 0 <= c < self.planner.w and
+                          self.planner.dist[r, c] > 0.35 and math.hypot(tx - x, ty - y) > 1.0
+                          and self.planner._line_ok((px, py), (tx, ty), 0.25))
+                    if ok and route is not None:
+                        ok = float(np.min(np.hypot(route[:, 0] - tx, route[:, 1] - ty))) > 0.75
+                    if ok:
+                        self._aside[mid] = (tx, ty)
+                        break
+            if mid in self._aside:
+                tx, ty = self._aside[mid]
+                d = math.hypot(tx - px, ty - py)
+                if d > 0.02:
+                    stp = min(d, speed * dt)
+                    env.d.mocap_pos[mid][0] = px + stp * (tx - px) / d
+                    env.d.mocap_pos[mid][1] = py + stp * (ty - py) / d
+
     def _drive(self, vx, wz):
         self.cmds.append((round(float(vx), 3), round(float(wz), 3)))
+        if self.people_step_aside:
+            self._step_aside()
         env = self.env
         _, _, _, _, info = env.step(spec.cmd_to_action(vx, wz))
         self.t += 1.0 / spec.CONTROL_HZ
@@ -125,6 +172,7 @@ class SimRobotIO:
         self.core.set_path(path, goal_yaw=gyaw)
         self.env.goal = np.array([gx, gy])
         ref = self._dense(path)
+        self.route = ref
         self.leg = {"plan_m": round(float(np.sum(np.hypot(*np.diff(ref, axis=0).T))), 2),
                     "driven_m": 0.0, "max_xte_m": 0.0}
         t_end = self.t + self.timeout
@@ -284,6 +332,10 @@ def main():
                     help="pursuit (default): classical Regulated-Pure-Pursuit law, = what Nav2 runs on "
                          "the robot; learned: the ONNX policy (experimental: 33%% of the time > 0.3 m "
                          "off the planned route, 72%% at full turn rate)")
+    ap.add_argument("--search", default="views", choices=["views", "spin"],
+                    help="find_gauges: planned surface views (default) or grid points + look-around")
+    ap.add_argument("--people", default="step-aside", choices=["step-aside", "static"],
+                    help="fixed scenes: people walk out of the robot's way (default) or stand still")
     ap.add_argument("--video", help="record the mission live to this .mp4 (tools/agent/mission_video.py)")
     ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
                     help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
@@ -311,16 +363,28 @@ def main():
         io_ = FinderIO(env, a.model, plan_radius=plan_radius)
         io_.survey_viewpoints = lambda: survey_viewpoints(io_.planner, (sx, sy), spacing=2.0,
                                                           clear=0.9, bounds=BOUNDS)
+        if a.search == "views":
+            from m20_agent.gauge_finder import view_plan
+            io_.view_poses = lambda: view_plan(io_.planner, (sx, sy), bounds=BOUNDS)
     else:
         io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
+    io_.people_step_aside = a.people == "step-aside"
     if a.driver == "pursuit":                  # RPP-style: short look-ahead (Nav2 office 0.5-0.8 m)
         io_.core = NavCore(PursuitDriver(), lookahead=0.6, stuck_timeout_s=20.0)
     video = None
     if a.video:
         sys.path.insert(0, HERE)
         from mission_video import MissionVideo
-        n_pts = len(io_.survey_viewpoints()) if hasattr(io_, "survey_viewpoints") else None
-        video = MissionVideo(io_, reg, a.video, total_points=n_pts, driver=a.driver)
+        n_pts = (len(io_.view_poses()) if hasattr(io_, "view_poses") else
+                 len(io_.survey_viewpoints()) if hasattr(io_, "survey_viewpoints") else None)
+        bounds = None
+        if a.site == "office":
+            xs, ys = np.nonzero(io_.planner.dist.T <= 1e-6)       # occupied cells
+            wx = io_.planner.ox + (xs + 0.5) * io_.planner.res
+            wy = io_.planner.oy + (ys + 0.5) * io_.planner.res
+            bounds = (wx.min() - 0.5, wx.max() + 0.5, wy.min() - 0.5, wy.max() + 0.5)
+        video = MissionVideo(io_, reg, a.video, total_points=n_pts, driver=a.driver,
+                             request=a.request, bounds=bounds, indoor=a.site == "office")
     exe = Executor(reg, make_backend(a.backend, reg), io_, report_dir=a.out)
     t0 = time.time()
     rep = exe.run(a.request)

@@ -24,8 +24,11 @@ MAP_BOUNDS = (-8.0, 8.0, -3.2, 7.0)
 
 
 class MissionVideo:
-    def __init__(self, io, registry, path, every=5, fps=30, total_points=None, driver=""):
+    def __init__(self, io, registry, path, every=5, fps=30, total_points=None, driver="",
+                 request="", bounds=None, indoor=False):
         self.io, self.reg, self.every, self.driver = io, registry, every, driver
+        self.request, self.indoor = request, indoor
+        self.bounds = bounds or MAP_BOUNDS
         env = io.env
         env.m.vis.global_.offwidth = max(env.m.vis.global_.offwidth, LEFT_W)
         env.m.vis.global_.offheight = max(env.m.vis.global_.offheight, H)
@@ -61,7 +64,7 @@ class MissionVideo:
         mujoco.mj_forward(env.m, env.d)
         data, w, h, res, ox, oy = rasterize(env.m, env.d)
         occ = np.asarray(data).reshape(h, w) >= 50
-        x0, x1, y0, y1 = MAP_BOUNDS
+        x0, x1, y0, y1 = self.bounds
         self.mw = W - LEFT_W - 20
         self.ppm = self.mw / (x1 - x0)
         self.mh = int((y1 - y0) * self.ppm)
@@ -81,7 +84,7 @@ class MissionVideo:
         self.base = img
 
     def to(self, x, y):
-        x0, x1, y0, y1 = MAP_BOUNDS
+        x0, x1, y0, y1 = self.bounds
         return (x - x0) * self.ppm, (y1 - y) * self.ppm
 
     # ---------------------------------------------------------------- phase
@@ -90,6 +93,11 @@ class MissionVideo:
         moving = getattr(self.io, "in_nav", False)
         if lab is None:
             return "Planning"
+        if lab.startswith("survey_") and hasattr(self.io, "view_poses"):
+            i = int(lab.split("_")[1]) + 1
+            of = f"/{self.total_points}" if self.total_points else ""
+            return (f"SURVEY: driving to view {i}{of}" if moving else
+                    f"SURVEY: photo at view {i}{of} (one look, no spin)")
         if lab.startswith("survey_"):
             i = int(lab.split("_")[1]) + 1
             of = f"/{self.total_points}" if self.total_points else ""
@@ -99,6 +107,12 @@ class MissionVideo:
             return (f"READ: driving to {lab}" if moving else f"READ: aiming + reading {lab}")
         if lab == "home":
             return "RETURN HOME" if moving else "BACK HOME"
+        if lab.endswith("_aim"):
+            return f"AIMING at {lab[:-4]}"
+        if moving:
+            return f"GOING TO {lab.upper()}"
+        if lab in [l.name for l in self.reg.of_type("gauge")]:
+            return f"READING {lab}"
         return lab
 
     # ---------------------------------------------------------------- frame
@@ -113,7 +127,10 @@ class MissionVideo:
         da = (az - self.az + 180) % 360 - 180
         self.az += 0.08 * da                                     # smooth the chase camera
         self.cam.lookat[:] = [x, y, z]
-        self.cam.distance, self.cam.azimuth, self.cam.elevation = 3.2, self.az, -28
+        if self.indoor:                       # over the walls, not through them
+            self.cam.distance, self.cam.azimuth, self.cam.elevation = 4.0, self.az, -62
+        else:
+            self.cam.distance, self.cam.azimuth, self.cam.elevation = 3.2, self.az, -28
         self.chase.update_scene(d, camera=self.cam)
         left = Image.fromarray(self.chase.render())
 
@@ -147,7 +164,7 @@ class MissionVideo:
         dr.text((16, 8), f"t = {int(t // 60):02d}:{int(t % 60):02d}  robot time", fill=(255, 255, 255), font=self.font)
         dr.text((300, 8), self.phase(), fill=(255, 210, 90), font=self.font)
         n_g = len(self.reg.of_type("gauge"))
-        dr.text((16, 36), f"request: \"find the gauges and come back\"   driver: {self.driver}   gauges saved: {n_g}   "
+        dr.text((16, 36), f"request: \"{self.request}\"   driver: {self.driver}   gauges saved: {n_g}   "
                 f"cmd vx {vx:+.2f} m/s  wz {wz:+.2f} rad/s   (video 15x speed)",
                 fill=(190, 190, 190), font=self.small)
         dr.text((LEFT_W + 10, 64), "robot camera", fill=(190, 190, 190), font=self.small)
