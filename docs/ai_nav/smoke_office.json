@@ -1,23 +1,25 @@
 {
-  "date": "2026-11-05 02:35",
+  "date": "2026-11-05 02:49",
   "env": "runner=local, Linux-6.18.44-fc-v236-x86_64-with-glibc2.39",
   "modes": {
     "nav2": {
       "nav": {
-        "pass": false,
-        "why": "goal rejected"
+        "pass": true,
+        "status": 4,
+        "final_err_m": 0.112,
+        "duration_s": 154.2
       },
       "agent": {
-        "pass": true,
-        "success": true,
-        "detail": "ok",
+        "pass": false,
+        "success": false,
+        "detail": "one or more steps failed",
         "plan": [
           "goto:kitchen",
           "return_home:"
         ],
         "reading": null,
         "expected": -1.0,
-        "home_err_m": 0.154
+        "home_err_m": 3.955
       }
     }
   }

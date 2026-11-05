@@ -6,10 +6,20 @@ things) and `ai_nav/RESULTS.md` (measured numbers, including the office gates).
 
 ## 0. Honest status
 - **Recommended indoor configuration: classical Nav2 (DWB) + `M20_SITE=office` + the
-  agent.** Verified on real ROS 2 Humble + Nav2 in the office world: reception → meeting
-  room through a **0.85 m door** (0.16 m final error), plus the agent mission. With the
-  outdoor params (0.45 m circle), the same run fails: DWB "Failed to make progress" at
-  the door, repeatedly. The office profile is what makes doors possible.
+  agent.** On real ROS 2 Humble + Nav2 in the office world, with the office profile:
+  - reception → meeting room through a **0.85 m door** passed every time it was given
+    enough time (0.11-0.17 m final error, 137-161 s);
+  - the agent's "go to the kitchen and come back" passed in 2 of 3 attempts. The third
+    reached the kitchen, then DWB failed to make progress 12 times on the way back and
+    stuck 4 m from home.
+  - With the outdoor params (0.45 m circle) the door is impassable: DWB fails to make
+    progress, repeatedly.
+  So the office profile is what makes doors possible, but **classical is not yet
+  reliable either: it is slow (~150 s for ~15 m) and recovery-heavy at doors.**
+  Before relying on it, tune on the real map: Nav2's Smac lattice planner with the
+  shipped diff-drive primitives (`nav2_smac_planner/sample_primitives/.../diff`; needs
+  a 0.05 m global costmap), DWB/RPP tuned for 0.3 m/s, and a progress checker sized
+  for door manoeuvres.
 - **The learned controller indoors is EXPERIMENTAL.** It is gated, not assumed; the
   numbers are in `ai_nav/RESULTS.md` (office section). Use it only after it beats the
   classical run in your office, as step E below.
