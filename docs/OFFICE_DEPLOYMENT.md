@@ -77,6 +77,8 @@ bash tools/agent/say.sh "this is the kitchen"
 bash tools/agent/say.sh "remember this spot as the meeting room"
 bash tools/agent/say.sh "call this the dock"
 ```
+**Teach only spots with at least 0.85 m clear on every side**, where the robot can turn in
+place. Places squeezed against furniture (0.5 m) made Nav2 time out while parking.
 Taught places are saved to `/cfg/out/agent/taught_places.yaml` and survive restarts.
 They can never overwrite a surveyed landmark. For your real office, start from an
 empty landmark file or copy `office_landmarks.yaml` and replace its rooms.

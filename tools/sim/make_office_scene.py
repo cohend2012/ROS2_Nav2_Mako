@@ -58,7 +58,13 @@ def to_xml(L):
     return "\n".join(lines)
 
 
-def free_point_near(pl, x, y, clear=0.6, max_r=3.0):
+# Named places must be spots where the robot can TURN IN PLACE: corner sweep 0.53 m +
+# margin. At 0.50-0.54 m (the first generation, on a 0.1 m grid) Nav2 timed out parking
+# at the meeting room / open office poses (office batch gate, 2026-11-05).
+PLACE_CLEAR = 0.85
+
+
+def free_point_near(pl, x, y, clear=PLACE_CLEAR, max_r=3.0):
     r0, c0 = pl.world_to_cell(x, y)
     best = None
     rad = int(max_r / pl.res)
@@ -88,8 +94,8 @@ def main():
         open(os.path.join(d, "office.xml"), "w").write(xml)
     m = mujoco.MjModel.from_xml_path(os.path.join(a.out_dir, "office.xml"))
     dd = mujoco.MjData(m); mujoco.mj_forward(m, dd)
-    pl = GridPlanner(robot_radius=0.32, inflation_radius=0.8)
-    pl.set_map(*rasterize(m, dd, res=0.10))
+    pl = GridPlanner(robot_radius=0.32, inflation_radius=0.8, plan_res=0.05)
+    pl.set_map(*rasterize(m, dd, res=0.05))
     cy, cw = L.corridor
     lms = []
     for room in L.rooms:
@@ -99,7 +105,7 @@ def main():
         lms.append({"name": room.name, "type": "room", "aliases": ALIASES.get(room.name, []),
                     "position": [round(room.inside[0], 2), round(room.inside[1], 2)],
                     "approach": [round(px, 2), round(py, 2), round(yaw, 3)]})
-        ox, oy = free_point_near(pl, dx, cy, clear=0.6)  # corridor spot outside its door
+        ox, oy = free_point_near(pl, dx, cy)              # corridor spot outside its door
         lms.append({"name": room.name + "_door", "type": "area",
                     "aliases": [room.name.replace("_", " ") + " door"],
                     "position": [round(dx, 2), round(room.door[1], 2)],

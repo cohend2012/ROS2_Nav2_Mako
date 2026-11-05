@@ -14,9 +14,9 @@ landmarks:
   - -4.6
   - -3.95
   approach:
-  - -4.55
-  - -3.95
-  - -1.124
+  - -4.38
+  - -3.57
+  - -1.022
 - name: kitchen_door
   type: area
   aliases:
@@ -25,9 +25,9 @@ landmarks:
   - -6.01
   - -0.9
   approach:
-  - -6.05
-  - 0.25
-  - -1.536
+  - -6.03
+  - 0.28
+  - -1.558
 - name: meeting_room
   type: room
   aliases:
@@ -38,9 +38,9 @@ landmarks:
   - 2.4
   - -3.95
   approach:
-  - 2.95
-  - -4.05
-  - -2.328
+  - 3.28
+  - -3.92
+  - -2.29
 - name: meeting_room_door
   type: area
   aliases:
@@ -49,9 +49,9 @@ landmarks:
   - 5.93
   - -0.9
   approach:
-  - 5.95
-  - 0.25
-  - -1.59
+  - 5.93
+  - 0.28
+  - -1.569
 - name: open_office
   type: room
   aliases:
@@ -62,9 +62,9 @@ landmarks:
   - -5.44
   - 4.2
   approach:
-  - -5.45
-  - 4.25
-  - 1.579
+  - -4.77
+  - 4.48
+  - 1.362
 - name: open_office_door
   type: area
   aliases:
@@ -73,9 +73,9 @@ landmarks:
   - -5.43
   - 1.4
   approach:
-  - -5.45
-  - 0.25
-  - 1.551
+  - -5.42
+  - 0.28
+  - 1.573
 - name: server_room
   type: room
   aliases:
@@ -86,9 +86,9 @@ landmarks:
   - -1.43
   - 4.2
   approach:
-  - -1.45
-  - 4.15
-  - 1.896
+  - -1.42
+  - 4.28
+  - 1.875
 - name: server_room_door
   type: area
   aliases:
@@ -97,9 +97,9 @@ landmarks:
   - -0.52
   - 1.4
   approach:
-  - -0.55
-  - 0.25
-  - 1.548
+  - -0.53
+  - 0.28
+  - 1.569
 - name: manager_office
   type: room
   aliases:
@@ -110,9 +110,9 @@ landmarks:
   - 4.01
   - 4.2
   approach:
-  - 4.05
-  - 4.15
-  - 1.153
+  - 4.18
+  - 4.18
+  - 1.119
 - name: manager_office_door
   type: area
   aliases:
@@ -121,9 +121,9 @@ landmarks:
   - 2.83
   - 1.4
   approach:
-  - 2.85
-  - 0.25
-  - 1.589
+  - 2.83
+  - 0.28
+  - 1.567
 - name: reception
   type: area
   aliases:
@@ -131,11 +131,11 @@ landmarks:
   - entrance
   - lobby
   position:
-  - -5.95
-  - 0.25
+  - -5.97
+  - 0.28
   approach:
-  - -5.95
-  - 0.25
+  - -5.97
+  - 0.28
   - 0.0
 - name: dock
   type: dock
@@ -144,11 +144,11 @@ landmarks:
   - charging station
   - base
   position:
-  - 6.05
-  - 0.25
+  - 6.03
+  - 0.28
   approach:
-  - 6.05
-  - 0.25
+  - 6.03
+  - 0.28
   - 3.141592653589793
 routines:
   office_round:

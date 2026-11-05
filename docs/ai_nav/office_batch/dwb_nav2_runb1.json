@@ -1,0 +1,78 @@
+{
+  "passed": 6,
+  "of": 10,
+  "pass": false,
+  "mean_leg_time_s": 62.2,
+  "legs": [
+    {
+      "status": "SUCCEEDED",
+      "time_s": 17.5,
+      "final_err_m": 0.167,
+      "leg": "reception->kitchen",
+      "ok": true
+    },
+    {
+      "status": "TIMEOUT",
+      "time_s": 242.5,
+      "final_err_m": 8.594,
+      "leg": "kitchen->meeting_room",
+      "ok": false
+    },
+    {
+      "status": "TIMEOUT",
+      "time_s": 242.5,
+      "final_err_m": 2.084,
+      "leg": "meeting_room->open_office",
+      "ok": false
+    },
+    {
+      "status": "SUCCEEDED",
+      "time_s": 162.2,
+      "final_err_m": 0.176,
+      "leg": "open_office->server_room",
+      "ok": true
+    },
+    {
+      "status": "SUCCEEDED",
+      "time_s": 41.2,
+      "final_err_m": 0.178,
+      "leg": "server_room->manager_office",
+      "ok": true
+    },
+    {
+      "status": "SUCCEEDED",
+      "time_s": 50.2,
+      "final_err_m": 0.17,
+      "leg": "manager_office->reception",
+      "ok": true
+    },
+    {
+      "status": "SUCCEEDED",
+      "time_s": 17.5,
+      "final_err_m": 0.172,
+      "leg": "reception->kitchen",
+      "ok": true
+    },
+    {
+      "status": "SUCCEEDED",
+      "time_s": 84.6,
+      "final_err_m": 0.17,
+      "leg": "kitchen->meeting_room",
+      "ok": true
+    },
+    {
+      "status": "TIMEOUT",
+      "time_s": 242.5,
+      "final_err_m": 11.896,
+      "leg": "meeting_room->open_office",
+      "ok": false
+    },
+    {
+      "status": "TIMEOUT",
+      "time_s": 242.5,
+      "final_err_m": 8.703,
+      "leg": "open_office->server_room",
+      "ok": false
+    }
+  ]
+}

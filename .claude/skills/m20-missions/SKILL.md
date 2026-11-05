@@ -20,6 +20,11 @@ The report (JSON + every gauge frame) goes to `/cfg/out/agent/` (sim) or `data/a
 (compose).
 
 ## Teach places (no file editing)
+**Teach only where the robot can turn around:** at least 0.85 m clear on every side.
+The corners sweep 0.53 m in a turn. Places with 0.50-0.54 m of clearance made
+Nav2 time out while parking (office batch gate). Not in a doorway, not tight against a
+desk.
+
 Drive the robot to the spot, then: `"this is the kitchen"` / `"remember this spot as the
 meeting room"` / `"call this the dock"`. Places go to `taught_places.yaml`, survive
 restarts, and can never overwrite a surveyed landmark.
