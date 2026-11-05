@@ -46,7 +46,7 @@ controller_server:
       use_rotate_to_heading: false
       allow_reversing: false
       use_collision_detection: true
-      max_allowed_time_to_collision_up_to_carrot: 1.5
+      max_allowed_time_to_collision_up_to_carrot: 1.0
       use_regulated_linear_velocity_scaling: true
       use_cost_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 0.6
@@ -55,3 +55,12 @@ controller_server:
       cost_scaling_gain: 1.0
       inflation_cost_scaling_factor: 5.0
       max_robot_pose_search_dist: 10.0
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      # RPP's footprint collision check on a 0.10 m grid with 0.03 m padding flagged
+      # "collision ahead" at every 0.85 m door (0.16 m a side): 176-292 detections,
+      # then 'patience exceeded' (office smoke 2026-11-05). Finer grid, no padding;
+      # the inflation layer still adds clearance cost.
+      resolution: 0.05
+      footprint_padding: 0.0
