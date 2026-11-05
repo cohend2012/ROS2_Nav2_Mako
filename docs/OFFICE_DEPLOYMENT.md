@@ -5,9 +5,16 @@ people will actually ask it to do. Companion to `AI_NAV_RUNBOOK.md` (how to run
 things) and `ai_nav/RESULTS.md` (measured numbers, including the office gates).
 
 ## 0. Honest status
-- **Software: office-ready in simulation.** There is an office profile, an
-  office-trained policy, a footprint-aware safety shield, taught places, routines and
-  STOP. All of it is gated in MuJoCo offices and on real ROS 2 Humble + Nav2.
+- **Recommended indoor configuration: classical Nav2 (DWB) + `M20_SITE=office` + the
+  agent.** Verified on real ROS 2 Humble + Nav2 in the office world: reception → meeting
+  room through a **0.85 m door** (0.16 m final error), plus the agent mission. With the
+  outdoor params (0.45 m circle), the same run fails: DWB "Failed to make progress" at
+  the door, repeatedly. The office profile is what makes doors possible.
+- **The learned controller indoors is EXPERIMENTAL.** It is gated, not assumed; the
+  numbers are in `ai_nav/RESULTS.md` (office section). Use it only after it beats the
+  classical run in your office, as step E below.
+- **Also verified:** the footprint-aware safety shield, door-straight path planning,
+  taught places, routines and STOP (unit tests plus the ROS smoke).
 - **Hardware: not connected yet.** The bridge's real-robot backend (`VendorSDK` in
   `m20_locomotion_bridge/bridge_node.py`) is still the Phase-0 stub. On the real M20
   the whole stack runs and nothing moves. That is safe, but it isn't a deployment.
