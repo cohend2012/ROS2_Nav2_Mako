@@ -65,6 +65,7 @@ class SimRobotIO:
         self.t = 0.0
         self.collisions = 0
         self.trace = []
+        self.events = []                  # (label, t_start, t_end, ok, detail) per leg
 
     def pose(self):
         d = self.env.d
@@ -79,6 +80,14 @@ class SimRobotIO:
         return info
 
     def navigate(self, gx, gy, gyaw, label):
+        t0 = self.t
+        self.cur_label, self.in_nav = label, True
+        ok, why = self._navigate(gx, gy, gyaw, label)
+        self.in_nav = False
+        self.events.append((label, round(t0, 1), round(self.t, 1), bool(ok), why))
+        return ok, why
+
+    def _navigate(self, gx, gy, gyaw, label):
         x, y, _ = self.pose()
         path = self.planner.plan_pose(x, y, gx, gy, gyaw)
         if path is None:
@@ -198,6 +207,7 @@ def main():
     ap.add_argument("--hide-gauges", action="store_true",
                     help="remove every gauge from the landmark file first (find_gauges missions); "
                          "found gauges are scored against truth.json")
+    ap.add_argument("--video", help="record the mission live to this .mp4 (tools/agent/mission_video.py)")
     ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
                     help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
                          "0.32 m planner clearance (= M20_SITE=office)")
@@ -226,9 +236,17 @@ def main():
                                                           clear=0.9, bounds=BOUNDS)
     else:
         io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
+    video = None
+    if a.video:
+        sys.path.insert(0, HERE)
+        from mission_video import MissionVideo
+        n_pts = len(io_.survey_viewpoints()) if hasattr(io_, "survey_viewpoints") else None
+        video = MissionVideo(io_, reg, a.video, total_points=n_pts)
     exe = Executor(reg, make_backend(a.backend, reg), io_, report_dir=a.out)
     t0 = time.time()
     rep = exe.run(a.request)
+    if video:
+        video.close()
     x, y, _ = io_.pose()
     rep["sim"] = {"sim_time_s": round(io_.t, 1), "wall_s": round(time.time() - t0, 1),
                   "collisions": io_.collisions, "final_pose": [round(x, 3), round(y, 3)],
@@ -239,6 +257,8 @@ def main():
         rep["G6"] = score_found(rep)
     with open(os.path.join(a.out, "trace.json"), "w") as f:
         json.dump(io_.trace, f)
+    with open(os.path.join(a.out, "events.json"), "w") as f:
+        json.dump(io_.events, f)
     with open(rep["report_path"], "w") as f:
         json.dump(rep, f, indent=2)
     print(json.dumps({k: rep[k] for k in ("success", "detail", "sim") if k in rep}, indent=1))

@@ -79,3 +79,22 @@ full scale, all OK, 0 false positives, 29/29 survey points reached, 0 collisions
 ended back within 0.25 m of the start. Files are in `demo_seed3/`: `find_gauges_map.png`
 (path, hidden truth vs found), `find_gauges_photos.png` (the up-close frames the readings
 came from), `report.json`, and `taught.yaml` (the gauges it saved).
+
+### How long it takes (seed 3, from `events.json`, robot time)
+| Phase | Time |
+|---|---|
+| Survey: driving to 29 points | 4.1 min |
+| Survey: looking around (8 in-place turns × 29 points) | 12.8 min |
+| Going back to read the 6 gauges | 2.7 min |
+| Return home | 0.6 min |
+| **Total** | **20.2 min** |
+
+Looking around takes most of the survey. Fewer headings (the camera covers 60°, so 6
+are enough), or skipping headings where the LiDAR sees nothing within ~4 m, would roughly
+halve it.
+
+Video, recorded live from the physics:
+```bash
+MUJOCO_GL=osmesa python3 tools/agent/sim_mission.py --hide-gauges --seed 3 \
+    --request "find the gauges and come back to where you started" --out <dir> --video <dir>/mission.mp4
+```
