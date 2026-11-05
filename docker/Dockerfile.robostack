@@ -32,10 +32,17 @@ COPY src/m20_missions src/m20_missions
 COPY src/m20_navigation src/m20_navigation
 COPY src/m20_ai_nav src/m20_ai_nav
 COPY src/m20_agent src/m20_agent
+# NO --symlink-install: conda's setuptools rejects colcon's 'develop --editable'
+# ("option --editable not recognized"), and a deploy image should copy anyway.
+# NO '| tail': a pipe hid this exact failure once (Engineering Rule 1). Every package
+# must be installed, checked explicitly.
 RUN source /opt/ros/humble/setup.bash && \
-    colcon build --symlink-install --cmake-args -DPython_EXECUTABLE=/opt/conda/envs/ros/bin/python \
-      -DPython3_EXECUTABLE=/opt/conda/envs/ros/bin/python 2>&1 | tail -3 && \
-    test -f install/m20_navigation/share/m20_navigation/config/collision_monitor.yaml
+    colcon build --cmake-args -DPython_EXECUTABLE=/opt/conda/envs/ros/bin/python \
+      -DPython3_EXECUTABLE=/opt/conda/envs/ros/bin/python && \
+    for p in m20_msgs m20_missions m20_navigation m20_ai_nav m20_agent; do \
+      test -d install/$p || { echo "MISSING PACKAGE $p"; exit 1; }; done && \
+    test -f install/m20_navigation/share/m20_navigation/config/collision_monitor.yaml && \
+    test -f install/m20_ai_nav/share/m20_ai_nav/models/m20_nav_policy.onnx
 COPY tools/nav/apply_overlay.py /ws/tools/apply_overlay.py
 COPY tools/slam/localization_params.yaml tools/slam/mapper_params.yaml /ws/config/slam/
 COPY docker/nav_entry.sh /nav_entry.sh

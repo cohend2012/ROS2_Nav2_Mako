@@ -5,8 +5,13 @@
 #                  office_landmarks.yaml) or an absolute path (e.g. /data/my_office.yaml)
 #   /data          taught places ("this is the kitchen") + mission reports, persisted
 set -euo pipefail
+# ROS setup files are not nounset-safe (AMENT_TRACE_SETUP_FILES etc.): under set -u
+# they abort the script SILENTLY. Relax -u only while sourcing (found in the
+# container verification build, 2026-11-05).
+set +u
 source /opt/ros/humble/setup.bash
 source /ws/install/setup.bash
+set -u
 LM=${M20_LANDMARKS:-oil_gas_field_landmarks.yaml}
 case "$LM" in /*) ;; *) LM="$(ros2 pkg prefix m20_agent)/share/m20_agent/config/$LM" ;; esac
 [ -f "$LM" ] || { echo "[agent] landmark file not found: $LM"; exit 1; }

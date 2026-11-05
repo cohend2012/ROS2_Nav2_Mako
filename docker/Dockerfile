@@ -46,6 +46,11 @@ RUN source /opt/ros/humble/setup.bash && \
     apt-get update && rosdep update && \
     rosdep install --from-paths src --ignore-src -y || true && \
     colcon build --symlink-install && \
+    for p in m20_msgs m20_commander m20_locomotion_bridge m20_missions m20_behaviors \
+             m20_navigation m20_ai_nav m20_agent m20_station m20_bringup; do \
+      test -d install/$p || { echo "MISSING PACKAGE $p"; exit 1; }; done && \
+    test -f install/m20_ai_nav/share/m20_ai_nav/models/m20_nav_policy.onnx && \
+    test -f install/m20_navigation/share/m20_navigation/config/collision_monitor.yaml && \
     rm -rf /var/lib/apt/lists/*
 
 # M20-Brain deployment pieces: params overlay tool, SLAM configs, service entries

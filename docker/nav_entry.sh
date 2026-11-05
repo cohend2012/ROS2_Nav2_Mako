@@ -7,8 +7,13 @@
 #   M20_CM          1|0 collision_monitor after the smoother (default: 1 in the office)
 #   M20_MODEL       ONNX policy for AI modes (default: the package's m20_nav_policy.onnx)
 set -euo pipefail
+# ROS setup files are not nounset-safe (AMENT_TRACE_SETUP_FILES etc.): under set -u
+# they abort the script SILENTLY. Relax -u only while sourcing (found in the
+# container verification build, 2026-11-05).
+set +u
 source /opt/ros/humble/setup.bash
 source /ws/install/setup.bash
+set -u
 CFG="$(ros2 pkg prefix m20_navigation)/share/m20_navigation/config"
 SITE=${M20_SITE:-outdoor}; MODE=${M20_NAV_MODE:-nav2}; VARIANT=${M20_NAV_VARIANT:-dwb}
 if [ -z "${M20_CM:-}" ]; then
