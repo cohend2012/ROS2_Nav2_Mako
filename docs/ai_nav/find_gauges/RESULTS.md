@@ -98,3 +98,28 @@ Video, recorded live from the physics:
 MUJOCO_GL=osmesa python3 tools/agent/sim_mission.py --hide-gauges --seed 3 \
     --request "find the gauges and come back to where you started" --out <dir> --video <dir>/mission.mp4
 ```
+
+## Driving quality: learned policy vs classical pursuit (2026-11-05)
+The learned driver's video looked wild, and the numbers agree. Both runs below are the same
+mission with 8 look headings swept once, skipping headings with no LiDAR surface within 4.5 m.
+"Off route" is measured against the path planned at the start of each leg, not the 1 Hz replan
+(a replan starts from wherever the robot already is, so it would hide wandering).
+
+| Driver | Seed | Found / read | Collisions | > 0.3 m off route | Driven ÷ planned | At full turn rate | Time |
+|---|---|---|---|---|---|---|---|
+| **pursuit** (RPP law, 0.6 m look-ahead) | 3 | 6/6, 6/6 | 0 | 9 % | 1.17 | 26 % | 16.7 min |
+| **pursuit** | 5 | 6/6, 6/6 | 0 | 10 % | 1.16 | 25 % | 17.6 min |
+| learned v1 (1.5 m carrot) | 3 | 5/6, 5/6 | 2 | 33 % | 1.29 | 73 % | 13.1 min |
+| learned v1 | 5 | 6/6, 6/6 | 0 | 33 % | 1.35 | 72 % | 14.4 min |
+
+- The learned policy drives "bang-bang", at full turn rate about 3/4 of the time. With a
+  1.5 m carrot it cuts every corner of the A* path, so it spends a third of its time more than
+  0.3 m off the route. Smoothing its output wouldn't fix that: it wanders, it isn't only jerky.
+- With a 1.5 m look-ahead, the pursuit law was as bad (44 % off route, 3 collisions). With
+  0.6 m (Nav2 RPP's range) it stays on route. Look-ahead, not the learning, is most of the gap.
+- 6 headings instead of 8 cut the survey to ~12.7 min but lost a gauge per run: a dial at the
+  edge of the frame isn't detected. 8 headings is the default.
+- **Decision:** `sim_mission.py` now drives with `--driver pursuit` by default. On the robot the
+  default has always been classical Nav2. The learned driver stays experimental: it isn't used
+  for missions until it is < 15 % of the time > 0.3 m off route and < 40 % saturated, with 0
+  collisions, on this mission across ≥ 3 seeds.

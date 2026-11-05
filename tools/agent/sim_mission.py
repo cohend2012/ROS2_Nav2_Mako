@@ -91,7 +91,8 @@ class SimRobotIO:
         self.collisions = 0
         self.trace = []
         self.events = []
-        self.cmds = []                    # (vx, wz) sent each 0.1 s tick                  # (label, t_start, t_end, ok, detail) per leg
+        self.cmds = []                    # (vx, wz) sent each 0.1 s tick
+        self.xte = []                     # distance from the planned path, each driving tick                  # (label, t_start, t_end, ok, detail) per leg
 
     def pose(self):
         d = self.env.d
@@ -111,7 +112,9 @@ class SimRobotIO:
         self.cur_label, self.in_nav = label, True
         ok, why = self._navigate(gx, gy, gyaw, label)
         self.in_nav = False
-        self.events.append((label, round(t0, 1), round(self.t, 1), bool(ok), why))
+        leg = getattr(self, "leg", {})
+        leg["driven_m"] = round(leg.get("driven_m", 0.0), 2)
+        self.events.append((label, round(t0, 1), round(self.t, 1), bool(ok), why, leg))
         return ok, why
 
     def _navigate(self, gx, gy, gyaw, label):
@@ -121,6 +124,9 @@ class SimRobotIO:
             return False, f"A*: no path to {label}"
         self.core.set_path(path, goal_yaw=gyaw)
         self.env.goal = np.array([gx, gy])
+        ref = self._dense(path)
+        self.leg = {"plan_m": round(float(np.sum(np.hypot(*np.diff(ref, axis=0).T))), 2),
+                    "driven_m": 0.0, "max_xte_m": 0.0}
         t_end = self.t + self.timeout
         last_plan = self.t
         while self.t < t_end:
@@ -128,8 +134,14 @@ class SimRobotIO:
                 last_plan = self.t
                 new = self.planner.plan_pose(*self.pose()[:2], gx, gy, gyaw)
                 if new is not None:
-                    self.core.update_path(new)
+                    self.core.update_path(new)   # off-path is scored vs the ORIGINAL plan
             x, y, yaw = self.pose()
+            xte = float(np.min(np.hypot(ref[:, 0] - x, ref[:, 1] - y)))   # off the plan
+            self.xte.append(xte)
+            self.leg["max_xte_m"] = max(self.leg["max_xte_m"], round(xte, 2))
+            if self.trace and len(self.trace) > 1:
+                self.leg["driven_m"] += math.hypot(self.trace[-1][1] - self.trace[-2][1],
+                                                   self.trace[-1][2] - self.trace[-2][2])
             v = self.env.d.qvel
             vxm = math.cos(yaw) * v[0] + math.sin(yaw) * v[1]
             cmd = self.core.tick(self.t, x, y, yaw, self.env.scan, vxm, float(v[5]))
@@ -146,6 +158,11 @@ class SimRobotIO:
             if info["tipped"]:
                 return False, "tipped over"
         return False, f"timeout ({self.timeout:.0f} s) to {label}"
+
+    @staticmethod
+    def _dense(path, step=0.05):
+        from m20_ai_nav.geometry import densify
+        return np.asarray(densify(np.asarray(path, float)[:, :2], step), float)
 
     def _back_off(self, vx_at_contact):
         """Nav2's BackUp recovery equivalent: leave the contact before the next leg
@@ -211,6 +228,21 @@ def smoothness(cmds):
             "pct_time_driving": round(100 * float(mov.mean()), 1)}
 
 
+def path_tracking(io_):
+    """Does the robot drive the route it planned? Off-path distance while driving legs,
+    and driven distance vs planned length (1.0 = exactly the plan)."""
+    x = np.asarray(io_.xte, float)
+    legs = [e[5] for e in io_.events if len(e) > 5 and e[5].get("plan_m", 0) > 0.5]
+    if not len(x):
+        return {}
+    return {"xte_median_m": round(float(np.median(x)), 3), "xte_p95_m": round(float(np.percentile(x, 95)), 3),
+            "xte_max_m": round(float(x.max()), 3),
+            "pct_time_over_0_3m_off_path": round(100 * float(np.mean(x > 0.3)), 1),
+            "driven_over_planned": round(sum(l["driven_m"] for l in legs) /
+                                         max(1e-6, sum(l["plan_m"] for l in legs)), 2),
+            "legs": len(legs)}
+
+
 def score_found(report, tol_m=0.6, tol_fs=0.05):
     """find_gauges: each true plate matched to a found gauge (< tol_m), reading compared
     as a fraction of full scale (the offline reader's unit when no scale is on file)."""
@@ -248,8 +280,10 @@ def main():
     ap.add_argument("--hide-gauges", action="store_true",
                     help="remove every gauge from the landmark file first (find_gauges missions); "
                          "found gauges are scored against truth.json")
-    ap.add_argument("--driver", default="learned", choices=["learned", "pursuit"],
-                    help="pursuit: classical Regulated-Pure-Pursuit law instead of the ONNX policy")
+    ap.add_argument("--driver", default="pursuit", choices=["pursuit", "learned"],
+                    help="pursuit (default): classical Regulated-Pure-Pursuit law, = what Nav2 runs on "
+                         "the robot; learned: the ONNX policy (experimental: 33%% of the time > 0.3 m "
+                         "off the planned route, 72%% at full turn rate)")
     ap.add_argument("--video", help="record the mission live to this .mp4 (tools/agent/mission_video.py)")
     ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
                     help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
@@ -279,14 +313,14 @@ def main():
                                                           clear=0.9, bounds=BOUNDS)
     else:
         io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
-    if a.driver == "pursuit":
-        io_.core.policy = PursuitDriver()
+    if a.driver == "pursuit":                  # RPP-style: short look-ahead (Nav2 office 0.5-0.8 m)
+        io_.core = NavCore(PursuitDriver(), lookahead=0.6, stuck_timeout_s=20.0)
     video = None
     if a.video:
         sys.path.insert(0, HERE)
         from mission_video import MissionVideo
         n_pts = len(io_.survey_viewpoints()) if hasattr(io_, "survey_viewpoints") else None
-        video = MissionVideo(io_, reg, a.video, total_points=n_pts)
+        video = MissionVideo(io_, reg, a.video, total_points=n_pts, driver=a.driver)
     exe = Executor(reg, make_backend(a.backend, reg), io_, report_dir=a.out)
     t0 = time.time()
     rep = exe.run(a.request)
@@ -303,6 +337,7 @@ def main():
     with open(os.path.join(a.out, "trace.json"), "w") as f:
         json.dump(io_.trace, f)
     rep["sim"]["smoothness"] = smoothness(io_.cmds)
+    rep["sim"]["path_tracking"] = path_tracking(io_)
     with open(os.path.join(a.out, "events.json"), "w") as f:
         json.dump(io_.events, f)
     with open(rep["report_path"], "w") as f:

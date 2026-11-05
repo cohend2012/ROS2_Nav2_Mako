@@ -60,7 +60,7 @@ def _look_headings(io, n, look_range):
     return out
 
 
-def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, headings=6,
+def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, headings=8,
                     should_stop=lambda: False, look_range=4.5):
     """Returns {"candidates", "sightings", "gauges": [record], "rejected", "unreached"}.
     Each saved record: name, position, viewing_spot, hits, reading (vlm.read_gauge dict)

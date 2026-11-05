@@ -24,8 +24,8 @@ MAP_BOUNDS = (-8.0, 8.0, -3.2, 7.0)
 
 
 class MissionVideo:
-    def __init__(self, io, registry, path, every=5, fps=30, total_points=None):
-        self.io, self.reg, self.every = io, registry, every
+    def __init__(self, io, registry, path, every=5, fps=30, total_points=None, driver=""):
+        self.io, self.reg, self.every, self.driver = io, registry, every, driver
         env = io.env
         env.m.vis.global_.offwidth = max(env.m.vis.global_.offwidth, LEFT_W)
         env.m.vis.global_.offheight = max(env.m.vis.global_.offheight, H)
@@ -147,7 +147,7 @@ class MissionVideo:
         dr.text((16, 8), f"t = {int(t // 60):02d}:{int(t % 60):02d}  robot time", fill=(255, 255, 255), font=self.font)
         dr.text((300, 8), self.phase(), fill=(255, 210, 90), font=self.font)
         n_g = len(self.reg.of_type("gauge"))
-        dr.text((16, 36), f"request: \"find the gauges and come back\"   gauges saved: {n_g}   "
+        dr.text((16, 36), f"request: \"find the gauges and come back\"   driver: {self.driver}   gauges saved: {n_g}   "
                 f"cmd vx {vx:+.2f} m/s  wz {wz:+.2f} rad/s   (video 15x speed)",
                 fill=(190, 190, 190), font=self.small)
         dr.text((LEFT_W + 10, 64), "robot camera", fill=(190, 190, 190), font=self.small)
