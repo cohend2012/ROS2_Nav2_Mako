@@ -1,0 +1,601 @@
+{
+ "date": "2026-11-05",
+ "policy": "m20_nav_policy.onnx (v1)",
+ "reader": "offline classical (fraction of scale)",
+ "seeds": [
+  {
+   "seed": 1,
+   "viewpoints": 29,
+   "viewpoints_unreachable": 1,
+   "sightings": 30,
+   "candidates": 5,
+   "rejected_up_close": 0,
+   "gauges_saved": 5,
+   "unreached": 0,
+   "found": 5,
+   "of": 6,
+   "false_positives": 0,
+   "read_within_5pct": 5,
+   "confident_wrong": 0,
+   "sim_time_s": 1180.0,
+   "wall_s": 131.3,
+   "rows": [
+    {
+     "gauge": "gauge_pg101",
+     "found": true,
+     "as": "found_gauge_5",
+     "pos_err_m": 0.01,
+     "true_frac": 0.725,
+     "read_frac": 0.73,
+     "err_pct_fs": 0.5,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg102",
+     "found": true,
+     "as": "found_gauge_4",
+     "pos_err_m": 0.01,
+     "true_frac": 0.31,
+     "read_frac": 0.31,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_ti201",
+     "found": true,
+     "as": "found_gauge_2",
+     "pos_err_m": 0.01,
+     "true_frac": 0.5667,
+     "read_frac": 0.57,
+     "err_pct_fs": 0.33,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg301",
+     "found": true,
+     "as": "found_gauge_1",
+     "pos_err_m": 0.01,
+     "true_frac": 0.7,
+     "read_frac": 0.7,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg302",
+     "found": true,
+     "as": "found_gauge_3",
+     "pos_err_m": 0.01,
+     "true_frac": 0.75,
+     "read_frac": 0.75,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_fl401",
+     "found": false,
+     "as": null,
+     "pos_err_m": null,
+     "true_frac": 0.33,
+     "read_frac": null,
+     "err_pct_fs": null,
+     "status": "NOT FOUND"
+    }
+   ],
+   "missed": [
+    "gauge_fl401"
+   ],
+   "not_read": [],
+   "max_err_pct_fs": 0.5,
+   "log": [
+    "[find] survey point 22 unreachable: no 0.25 m progress in 12 s (0.31 m left)"
+   ]
+  },
+  {
+   "seed": 2,
+   "viewpoints": 29,
+   "viewpoints_unreachable": 0,
+   "sightings": 30,
+   "candidates": 6,
+   "rejected_up_close": 0,
+   "gauges_saved": 6,
+   "unreached": 0,
+   "found": 6,
+   "of": 6,
+   "false_positives": 0,
+   "read_within_5pct": 6,
+   "confident_wrong": 0,
+   "sim_time_s": 1108.2,
+   "wall_s": 133.5,
+   "rows": [
+    {
+     "gauge": "gauge_pg101",
+     "found": true,
+     "as": "found_gauge_4",
+     "pos_err_m": 0.01,
+     "true_frac": 0.725,
+     "read_frac": 0.73,
+     "err_pct_fs": 0.5,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg102",
+     "found": true,
+     "as": "found_gauge_3",
+     "pos_err_m": 0.01,
+     "true_frac": 0.31,
+     "read_frac": 0.31,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_ti201",
+     "found": true,
+     "as": "found_gauge_6",
+     "pos_err_m": 0.01,
+     "true_frac": 0.5667,
+     "read_frac": 0.57,
+     "err_pct_fs": 0.33,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg301",
+     "found": true,
+     "as": "found_gauge_1",
+     "pos_err_m": 0.01,
+     "true_frac": 0.7,
+     "read_frac": 0.7,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg302",
+     "found": true,
+     "as": "found_gauge_2",
+     "pos_err_m": 0.01,
+     "true_frac": 0.75,
+     "read_frac": 0.75,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_fl401",
+     "found": true,
+     "as": "found_gauge_5",
+     "pos_err_m": 0.01,
+     "true_frac": 0.33,
+     "read_frac": 0.33,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    }
+   ],
+   "missed": [],
+   "not_read": [],
+   "max_err_pct_fs": 0.5,
+   "log": []
+  },
+  {
+   "seed": 3,
+   "viewpoints": 29,
+   "viewpoints_unreachable": 0,
+   "sightings": 36,
+   "candidates": 6,
+   "rejected_up_close": 0,
+   "gauges_saved": 6,
+   "unreached": 0,
+   "found": 6,
+   "of": 6,
+   "false_positives": 0,
+   "read_within_5pct": 6,
+   "confident_wrong": 0,
+   "sim_time_s": 1178.8,
+   "wall_s": 137.6,
+   "rows": [
+    {
+     "gauge": "gauge_pg101",
+     "found": true,
+     "as": "found_gauge_5",
+     "pos_err_m": 0.01,
+     "true_frac": 0.725,
+     "read_frac": 0.73,
+     "err_pct_fs": 0.5,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg102",
+     "found": true,
+     "as": "found_gauge_4",
+     "pos_err_m": 0.01,
+     "true_frac": 0.31,
+     "read_frac": 0.31,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_ti201",
+     "found": true,
+     "as": "found_gauge_2",
+     "pos_err_m": 0.01,
+     "true_frac": 0.5667,
+     "read_frac": 0.56,
+     "err_pct_fs": 0.67,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg301",
+     "found": true,
+     "as": "found_gauge_1",
+     "pos_err_m": 0.01,
+     "true_frac": 0.7,
+     "read_frac": 0.7,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg302",
+     "found": true,
+     "as": "found_gauge_3",
+     "pos_err_m": 0.01,
+     "true_frac": 0.75,
+     "read_frac": 0.75,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_fl401",
+     "found": true,
+     "as": "found_gauge_6",
+     "pos_err_m": 0.01,
+     "true_frac": 0.33,
+     "read_frac": 0.33,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    }
+   ],
+   "missed": [],
+   "not_read": [],
+   "max_err_pct_fs": 0.67,
+   "log": []
+  },
+  {
+   "seed": 4,
+   "viewpoints": 29,
+   "viewpoints_unreachable": 0,
+   "sightings": 39,
+   "candidates": 6,
+   "rejected_up_close": 0,
+   "gauges_saved": 6,
+   "unreached": 0,
+   "found": 6,
+   "of": 6,
+   "false_positives": 0,
+   "read_within_5pct": 6,
+   "confident_wrong": 0,
+   "sim_time_s": 1196.2,
+   "wall_s": 138.2,
+   "rows": [
+    {
+     "gauge": "gauge_pg101",
+     "found": true,
+     "as": "found_gauge_5",
+     "pos_err_m": 0.01,
+     "true_frac": 0.725,
+     "read_frac": 0.73,
+     "err_pct_fs": 0.5,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg102",
+     "found": true,
+     "as": "found_gauge_4",
+     "pos_err_m": 0.01,
+     "true_frac": 0.31,
+     "read_frac": 0.31,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_ti201",
+     "found": true,
+     "as": "found_gauge_1",
+     "pos_err_m": 0.01,
+     "true_frac": 0.5667,
+     "read_frac": 0.57,
+     "err_pct_fs": 0.33,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg301",
+     "found": true,
+     "as": "found_gauge_2",
+     "pos_err_m": 0.01,
+     "true_frac": 0.7,
+     "read_frac": 0.7,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg302",
+     "found": true,
+     "as": "found_gauge_3",
+     "pos_err_m": 0.01,
+     "true_frac": 0.75,
+     "read_frac": 0.75,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_fl401",
+     "found": true,
+     "as": "found_gauge_6",
+     "pos_err_m": 0.01,
+     "true_frac": 0.33,
+     "read_frac": 0.33,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    }
+   ],
+   "missed": [],
+   "not_read": [],
+   "max_err_pct_fs": 0.5,
+   "log": []
+  },
+  {
+   "seed": 5,
+   "viewpoints": 29,
+   "viewpoints_unreachable": 0,
+   "sightings": 24,
+   "candidates": 6,
+   "rejected_up_close": 0,
+   "gauges_saved": 6,
+   "unreached": 0,
+   "found": 6,
+   "of": 6,
+   "false_positives": 0,
+   "read_within_5pct": 6,
+   "confident_wrong": 0,
+   "sim_time_s": 1184.4,
+   "wall_s": 135.1,
+   "rows": [
+    {
+     "gauge": "gauge_pg101",
+     "found": true,
+     "as": "found_gauge_5",
+     "pos_err_m": 0.01,
+     "true_frac": 0.725,
+     "read_frac": 0.73,
+     "err_pct_fs": 0.5,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg102",
+     "found": true,
+     "as": "found_gauge_3",
+     "pos_err_m": 0.01,
+     "true_frac": 0.31,
+     "read_frac": 0.31,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_ti201",
+     "found": true,
+     "as": "found_gauge_2",
+     "pos_err_m": 0.01,
+     "true_frac": 0.5667,
+     "read_frac": 0.57,
+     "err_pct_fs": 0.33,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg301",
+     "found": true,
+     "as": "found_gauge_4",
+     "pos_err_m": 0.01,
+     "true_frac": 0.7,
+     "read_frac": 0.7,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg302",
+     "found": true,
+     "as": "found_gauge_1",
+     "pos_err_m": 0.01,
+     "true_frac": 0.75,
+     "read_frac": 0.75,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_fl401",
+     "found": true,
+     "as": "found_gauge_6",
+     "pos_err_m": 0.01,
+     "true_frac": 0.33,
+     "read_frac": 0.33,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    }
+   ],
+   "missed": [],
+   "not_read": [],
+   "max_err_pct_fs": 0.5,
+   "log": []
+  },
+  {
+   "seed": 6,
+   "viewpoints": 29,
+   "viewpoints_unreachable": 0,
+   "sightings": 36,
+   "candidates": 6,
+   "rejected_up_close": 0,
+   "gauges_saved": 5,
+   "unreached": 1,
+   "found": 6,
+   "of": 6,
+   "false_positives": 0,
+   "read_within_5pct": 5,
+   "confident_wrong": 0,
+   "sim_time_s": 1237.5,
+   "wall_s": 136.7,
+   "rows": [
+    {
+     "gauge": "gauge_pg101",
+     "found": true,
+     "as": "found_gauge_5",
+     "pos_err_m": 0.01,
+     "true_frac": 0.725,
+     "read_frac": 0.73,
+     "err_pct_fs": 0.5,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg102",
+     "found": true,
+     "as": "found_gauge_3",
+     "pos_err_m": 0.01,
+     "true_frac": 0.31,
+     "read_frac": 0.31,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_ti201",
+     "found": true,
+     "as": "found_gauge_4",
+     "pos_err_m": 0.01,
+     "true_frac": 0.5667,
+     "read_frac": null,
+     "err_pct_fs": null,
+     "status": "UNREACHED"
+    },
+    {
+     "gauge": "gauge_pg301",
+     "found": true,
+     "as": "found_gauge_1",
+     "pos_err_m": 0.01,
+     "true_frac": 0.7,
+     "read_frac": 0.7,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg302",
+     "found": true,
+     "as": "found_gauge_2",
+     "pos_err_m": 0.01,
+     "true_frac": 0.75,
+     "read_frac": 0.75,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_fl401",
+     "found": true,
+     "as": "found_gauge_6",
+     "pos_err_m": 0.01,
+     "true_frac": 0.33,
+     "read_frac": 0.33,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    }
+   ],
+   "missed": [],
+   "not_read": [
+    [
+     "gauge_ti201",
+     "UNREACHED"
+    ]
+   ],
+   "max_err_pct_fs": 0.5,
+   "log": [
+    "[find] found_gauge_4: UNREACHED (no 0.25 m progress in 12 s (10.77 m left))"
+   ]
+  },
+  {
+   "seed": 7,
+   "viewpoints": 29,
+   "viewpoints_unreachable": 0,
+   "sightings": 33,
+   "candidates": 5,
+   "rejected_up_close": 0,
+   "gauges_saved": 5,
+   "unreached": 0,
+   "found": 5,
+   "of": 6,
+   "false_positives": 0,
+   "read_within_5pct": 5,
+   "confident_wrong": 0,
+   "sim_time_s": 1090.5,
+   "wall_s": 130.2,
+   "rows": [
+    {
+     "gauge": "gauge_pg101",
+     "found": false,
+     "as": null,
+     "pos_err_m": null,
+     "true_frac": 0.725,
+     "read_frac": null,
+     "err_pct_fs": null,
+     "status": "NOT FOUND"
+    },
+    {
+     "gauge": "gauge_pg102",
+     "found": true,
+     "as": "found_gauge_4",
+     "pos_err_m": 0.01,
+     "true_frac": 0.31,
+     "read_frac": 0.31,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_ti201",
+     "found": true,
+     "as": "found_gauge_2",
+     "pos_err_m": 0.01,
+     "true_frac": 0.5667,
+     "read_frac": 0.57,
+     "err_pct_fs": 0.33,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg301",
+     "found": true,
+     "as": "found_gauge_1",
+     "pos_err_m": 0.01,
+     "true_frac": 0.7,
+     "read_frac": 0.7,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_pg302",
+     "found": true,
+     "as": "found_gauge_3",
+     "pos_err_m": 0.01,
+     "true_frac": 0.75,
+     "read_frac": 0.75,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    },
+    {
+     "gauge": "gauge_fl401",
+     "found": true,
+     "as": "found_gauge_5",
+     "pos_err_m": 0.01,
+     "true_frac": 0.33,
+     "read_frac": 0.33,
+     "err_pct_fs": 0.0,
+     "status": "OK"
+    }
+   ],
+   "missed": [
+    "gauge_pg101"
+   ],
+   "not_read": [],
+   "max_err_pct_fs": 0.33,
+   "log": []
+  }
+ ]
+}

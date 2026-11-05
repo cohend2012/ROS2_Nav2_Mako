@@ -18,6 +18,7 @@ across seeds it was 3/6. Report n, the pass count, and the failure modes.
 | Policy G1/G2/field | `python3 tools/ai_nav/evaluate.py --model <onnx> --out <json>` | G1 ≥ 95%, ≤ 2% coll | MuJoCo |
 | Office O1-O3 | `python3 tools/ai_nav/evaluate.py --model <onnx> --office 40 --out <json>` | ≥ scripted baseline | MuJoCo |
 | Gauge mission G5 | `tools/agent/sim_mission.py … --seed N`, **≥ 5 seeds** | ≥ 9/10 missions | MuJoCo + osmesa |
+| Find gauges G6 | `MUJOCO_GL=osmesa python3 tools/agent/find_gauges.py --out <dir> --seed N`, ≥ 4 seeds | 0 false positives, 0 confident-wrong; report found/read per seed | MuJoCo + osmesa |
 | Full stack G3 | `M20_AI_CONTROLLER=… bash tools/ci/batch_nav_test.sh` (owner box) | ≥ 9/10, < 0.5 m | sim images |
 
 Add `CM=1` to any ROS gate to put Nav2's `collision_monitor` (stop/slow polygons,
@@ -43,3 +44,8 @@ Add `CM=1` to any ROS gate to put Nav2's `collision_monitor` (stop/slow polygons
   count that as a navigation failure.
 - Agent tests must go somewhere the nav leg didn't end, or they pass trivially.
 - Don't edit a bash script while a run is executing it (bash reads incrementally).
+- A "tipped over" in MuJoCo on flat ground was the mixer's yaw trim winding up on a
+  stalled turn, not terrain. The trim is now bounded (`YAW_TRIM_MAX`, mixer + bridge,
+  parity-tested). If tips come back, snapshot with `copy.deepcopy(env)` before the leg
+  (pass `{id(core.policy): core.policy}` as memo: ONNX sessions can't be copied) and
+  replay it.

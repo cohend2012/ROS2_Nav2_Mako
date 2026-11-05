@@ -106,10 +106,23 @@ class SimRobotIO:
             info = self._drive(cmd.vx, cmd.wz)
             if info["collision"]:
                 self.collisions += 1
-                return False, f"collision near ({x:.2f},{y:.2f})"
+                return False, f"collision near ({x:.2f},{y:.2f}){self._back_off(cmd.vx)}"
             if info["tipped"]:
                 return False, "tipped over"
         return False, f"timeout ({self.timeout:.0f} s) to {label}"
+
+    def _back_off(self, vx_at_contact):
+        """Nav2's BackUp recovery equivalent: leave the contact before the next leg
+        (without it every later leg 'collides' at t=0 and the mission is lost)."""
+        for direction in ((-1.0, 1.0) if vx_at_contact >= 0 else (1.0, -1.0)):
+            clear = 0
+            for _ in range(400):            # in contact a step is cut to 20 ms: up to ~8 s
+                clear = 0 if self._drive(0.15 * direction, 0.0)["collision"] else clear + 1
+                if clear >= 8:              # ~0.12 m clear of the contact
+                    for _ in range(5):
+                        self._drive(0.0, 0.0)
+                    return ", backed off"
+        return ", still in contact"
 
     def wait(self, seconds):
         for _ in range(int(seconds * spec.CONTROL_HZ)):

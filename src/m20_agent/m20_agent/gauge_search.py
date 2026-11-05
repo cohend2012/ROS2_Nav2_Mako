@@ -68,10 +68,10 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
     log(f"[find] survey done: {sightings} sightings -> {len(cands)} candidates")
     gauges, rejected = [], []
     n_existing = len([n for n in registry.names() if n.startswith("found_gauge_")])
-    for g in cands:
+    for j, g in enumerate(cands):
         if should_stop():
             break
-        name = f"found_gauge_{n_existing + len(gauges) + 1}"
+        name = f"found_gauge_{n_existing + j + 1}"      # unique per candidate, saved or not
         rec = {"name": name, "position": [round(v, 2) for v in g["position"]], "hits": g["hits"]}
         best = None
         for standoff in (1.2, 0.9):                        # second try closer

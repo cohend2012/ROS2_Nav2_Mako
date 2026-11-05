@@ -15,7 +15,17 @@ bash tools/agent/say.sh "go to the kitchen and come back"
 bash tools/agent/say.sh "start the mission"        # the default routine
 bash tools/agent/say.sh "read all the gauges and return to where you started"
 bash tools/agent/say.sh "stop"                     # cancels the leg in flight, skips the rest
+bash tools/agent/say.sh "find the gauges and come back"   # NO known positions: search
 ```
+`find_gauges` drives a coverage survey of the map, looks around at each point, spots
+dials, places them with camera bearing + LiDAR range, then goes up close, confirms,
+and reads each one. Found gauges are saved to `taught_places.yaml` as `found_gauge_N`
+with a viewing spot, so later "read all the gauges" uses them directly. With no scale
+on file, the offline reader reports a fraction of full scale; Claude/Cosmos read the
+units off the dial face. Candidates that aren't confirmed up close are REJECTED, never
+saved. It also runs when someone asks about gauges and the map has none.
+Needs `/map`, `/scan` and `/camera/camera_info` (for the real intrinsics).
+
 The report (JSON + every gauge frame) goes to `/cfg/out/agent/` (sim) or `data/agent/`
 (compose).
 
@@ -38,7 +48,7 @@ Shape: `src/m20_agent/config/office_landmarks.yaml`.
   plus `default_routine:`, which is what "start the mission" runs. Routines cannot call
   routines.
 After editing: `python3 -m pytest tests/test_agent.py -q`, then
-`python3 tools/agent/g4_prompts.py --backend offline` (10/10 is the bar). Add a case to
+`python3 tools/agent/g4_prompts.py --backend offline` (11/11 is the bar). Add a case to
 `CASES` there for any new phrasing you rely on.
 
 ## Backends
