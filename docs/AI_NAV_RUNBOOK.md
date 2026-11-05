@@ -76,6 +76,17 @@ The live controller state is on `/m20/ai_nav/state` (TRACKING / ALIGNING / BLOCK
 `oil_gas_field_gauges.xml`, which `make_gauge_scene.py` installs next to it.
 The plates sit flush on existing equipment, so the saved map stays valid.
 
+## 3b. Choosing the navigation policy
+| File | What it is | Use for |
+|---|---|---|
+| `models/m20_nav_policy.onnx` (default) | v1: 3M PPO steps, outdoor procedural | outdoor; completes the 6-gauge mission in 3 of 6 seeds |
+| `models/m20_nav_policy_v3.onnx` | v3: v1 + 2.5M shielded office/outdoor fine-tune | clutter, site trips, indoors (still below the scripted controller there) |
+
+Select one with `ros2 launch m20_ai_nav ai_nav.launch.py ... model_path:=<file>`. The
+contract (`spec.py`, `OBS_VERSION 1`) is identical, so no other change is needed. Neither is
+mission-grade (`ai_nav/RESULTS.md`): **run missions on classical Nav2**, and use the
+learned controller only in supervised trials.
+
 ## 4. Choosing the brain (VLM backend)
 | Backend | Set | Notes |
 |---|---|---|

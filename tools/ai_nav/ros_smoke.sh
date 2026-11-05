@@ -36,7 +36,9 @@ if [ "$SITE" = "office" ]; then
 import yaml; d={l['name']: l for l in yaml.safe_load(open('$REPO/src/m20_agent/config/office_landmarks.yaml'))['landmarks']}
 print(*d['reception']['approach'][:2], *d['meeting_room']['approach'][:2])")
   export START="$RX $RY" NAV_GOAL="$MX $MY"
-  export AGENT_REQ="go to the meeting room and come back" AGENT_EXPECT=-1
+  # the nav leg ENDS in the meeting room, so the agent goes somewhere else (a no-op
+  # "go to the meeting room" made home_err trivially 0.0 — caught 2026-11-05)
+  export AGENT_REQ="go to the kitchen and come back" AGENT_EXPECT=-1
 fi
 export SITE
 fail=0

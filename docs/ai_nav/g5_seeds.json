@@ -1,0 +1,161 @@
+{
+  "note": "full 6-gauge mission, offline backend, standalone planning + learned policy, MuJoCo vendor physics; one row per seed",
+  "runs": [
+    {
+      "policy": "v1",
+      "seed": 1,
+      "within": 4,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 0.117,
+      "first_failure": "read_gauge:gauge_ti201: no 0.25 m progress in 12 s (9.66 m left)",
+      "max_read_err_pct_fs": 0.36,
+      "readings": 4
+    },
+    {
+      "policy": "v1",
+      "seed": 2,
+      "within": 1,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 0.74,
+      "first_failure": "read_gauge:gauge_pg102: collision near (-0.28,0.60)",
+      "max_read_err_pct_fs": 0.06,
+      "readings": 1
+    },
+    {
+      "policy": "v1",
+      "seed": 3,
+      "within": 6,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": true,
+      "home_error_m": 0.11,
+      "first_failure": "",
+      "max_read_err_pct_fs": 0.2,
+      "readings": 6
+    },
+    {
+      "policy": "v1",
+      "seed": 4,
+      "within": 6,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": true,
+      "home_error_m": 0.164,
+      "first_failure": "",
+      "max_read_err_pct_fs": 0.2,
+      "readings": 6
+    },
+    {
+      "policy": "v1",
+      "seed": 5,
+      "within": 6,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": true,
+      "home_error_m": 0.343,
+      "first_failure": "",
+      "max_read_err_pct_fs": 0.39,
+      "readings": 6
+    },
+    {
+      "policy": "v1",
+      "seed": 6,
+      "within": 2,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 0.062,
+      "first_failure": "read_gauge:gauge_pg301: no 0.25 m progress in 12 s (3.16 m left)",
+      "max_read_err_pct_fs": 0.12,
+      "readings": 2
+    },
+    {
+      "policy": "v3",
+      "seed": 0,
+      "within": 1,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 0.188,
+      "first_failure": "read_gauge:gauge_pg102: no 0.25 m progress in 12 s (3.17 m left)",
+      "max_read_err_pct_fs": 0.0,
+      "readings": 1
+    },
+    {
+      "policy": "v3",
+      "seed": 1,
+      "within": 6,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": true,
+      "home_error_m": 0.166,
+      "first_failure": "",
+      "max_read_err_pct_fs": 0.3,
+      "readings": 6
+    },
+    {
+      "policy": "v3",
+      "seed": 2,
+      "within": 1,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 0.732,
+      "first_failure": "read_gauge:gauge_pg102: collision near (-0.33,0.61)",
+      "max_read_err_pct_fs": 0.06,
+      "readings": 1
+    },
+    {
+      "policy": "v3",
+      "seed": 3,
+      "within": 6,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 0.502,
+      "first_failure": "return_home:: no 0.25 m progress in 12 s (0.53 m left)",
+      "max_read_err_pct_fs": 0.38,
+      "readings": 6
+    },
+    {
+      "policy": "v3",
+      "seed": 4,
+      "within": 2,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 0.194,
+      "first_failure": "read_gauge:gauge_pg301: 0.0 psi (conf 0.0, UNREADABLE)",
+      "max_read_err_pct_fs": 0.3,
+      "readings": 2
+    },
+    {
+      "policy": "v3",
+      "seed": 5,
+      "within": 2,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 1.939,
+      "first_failure": "read_gauge:gauge_pg301: collision near (-0.85,1.74)",
+      "max_read_err_pct_fs": 0.39,
+      "readings": 2
+    },
+    {
+      "policy": "v3",
+      "seed": 6,
+      "within": 2,
+      "of": 6,
+      "confident_wrong": 0,
+      "mission_success": false,
+      "home_error_m": 1.647,
+      "first_failure": "read_gauge:gauge_pg301: no 0.25 m progress in 12 s (3.15 m left)",
+      "max_read_err_pct_fs": 0.24,
+      "readings": 2
+    }
+  ]
+}

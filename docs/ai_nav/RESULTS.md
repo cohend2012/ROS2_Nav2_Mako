@@ -27,7 +27,8 @@ Training curve (rolling last 200 episodes per checkpoint):
 
 | policy | n | success | collision | tipped | timeout | SPL | G1 bar |
 |---|---|---|---|---|---|---|---|
-| **learned (PPO)** | 500 | 98.2% | 0.8% | 1.0% | 0.0% | 0.838 | PASS |
+| **learned v1 (shipped default)** | 500 | 98.2% | 0.8% | 1.0% | 0.0% | 0.838 | PASS |
+| learned v3 (office fine-tune) | 300 | 99.0% | 0.7% | 0.3% | 0.0% | 0.841 | PASS |
 | scripted baseline | 500 | 95.2% | 0.2% | 0.0% | 4.6% | 0.865 | PASS |
 
 SPL uses the straight-line distance as the shortest path, so it is conservative around obstacles.
@@ -47,7 +48,8 @@ SPL uses the straight-line distance as the shortest path, so it is conservative 
 
 | policy | n | success | collision | tipped | timeout | SPL |
 |---|---|---|---|---|---|---|
-| learned | 50 | 94.0% | 4.0% | 2.0% | 0.0% | 0.854 |
+| learned v1 | 50 | 94.0% | 4.0% | 2.0% | 0.0% | 0.854 |
+| learned v3 | 50 | 100.0% | 0.0% | 0.0% | 0.0% | 0.929 |
 | baseline | 50 | 100.0% | 0.0% | 0.0% | 0.0% | 0.966 |
 
 ## ROS 2 wiring smoke (real Humble + Nav2, kinematic fake world)
@@ -79,29 +81,39 @@ Environment: runner=local, Linux-6.18.44-fc-v233-x86_64-with-glibc2.39
 | Patrol the west field, north lane and east field. | goto:west_field → goto:north_lane → goto:east_field | ✓ |
 | Find the kitchen. | wait:1.0 | ✓ |
 
-## G5: end-to-end gauge mission in MuJoCo
+## G5: full gauge mission in MuJoCo, MULTI-SEED
 
-"read all the gauges and return to where you started", offline backend, standalone-mode planning (A*) + learned policy on the vendor M20 physics, first-person camera.
+"read all the gauges and return to where you started" (6 gauges), offline backend, standalone planning + learned policy on the vendor M20 physics. One row per seed. An earlier version of this page reported a single 6/6 run as PASS; across seeds the mission is NOT reliable.
 
-- mission success: **True** (ok); sim time 144.3 s; collisions 0; home error **0.156 m**
-- gauges within 5% FS: **6/6**, confident-but-wrong: **0** → G5 **PASS**
+| policy | seed | gauges read within 5% FS | mission | worst reading error | first failure |
+|---|---|---|---|---|---|
+| v1 | 1 | 4/6 | ✗ | 0.36% FS | read_gauge:gauge_ti201: no 0.25 m progress in 12 s (9.66 m left) |
+| v1 | 2 | 1/6 | ✗ | 0.06% FS | read_gauge:gauge_pg102: collision near (-0.28,0.60) |
+| v1 | 3 | 6/6 | ✓ | 0.2% FS | — |
+| v1 | 4 | 6/6 | ✓ | 0.2% FS | — |
+| v1 | 5 | 6/6 | ✓ | 0.39% FS | — |
+| v1 | 6 | 2/6 | ✗ | 0.12% FS | read_gauge:gauge_pg301: no 0.25 m progress in 12 s (3.16 m left) |
+| v3 | 0 | 1/6 | ✗ | 0.0% FS | read_gauge:gauge_pg102: no 0.25 m progress in 12 s (3.17 m left) |
+| v3 | 1 | 6/6 | ✓ | 0.3% FS | — |
+| v3 | 2 | 1/6 | ✗ | 0.06% FS | read_gauge:gauge_pg102: collision near (-0.33,0.61) |
+| v3 | 3 | 6/6 | ✗ | 0.38% FS | return_home:: no 0.25 m progress in 12 s (0.53 m left) |
+| v3 | 4 | 2/6 | ✗ | 0.3% FS | read_gauge:gauge_pg301: 0.0 psi (conf 0.0, UNREADABLE) |
+| v3 | 5 | 2/6 | ✗ | 0.39% FS | read_gauge:gauge_pg301: collision near (-0.85,1.74) |
+| v3 | 6 | 2/6 | ✗ | 0.24% FS | read_gauge:gauge_pg301: no 0.25 m progress in 12 s (3.15 m left) |
 
-| gauge | true | read | error (% FS) | status |
-|---|---|---|---|---|
-| gauge_pg101 | 72.5 | 72.63 | 0.13 | OK |
-| gauge_pg102 | 31.0 | 31.12 | 0.12 | OK |
-| gauge_ti201 | 85.0 | 84.9 | 0.07 | OK |
-| gauge_pg301 | 140.0 | 140.19 | 0.09 | OK |
-| gauge_pg302 | 12.0 | 12.0 | 0.0 | OK |
-| gauge_fl401 | 3.3 | 3.28 | 0.2 | OK |
+- **v1: 3/6 full missions completed**; confident-but-wrong readings: 0
+
+- **v3: 1/7 full missions completed**; confident-but-wrong readings: 0
+- **Perception is solid, navigation is not:** every reading that returned a value was within 0.39% of full scale, with 0 confident-but-wrong readings. Mission failures are navigation (collisions or stuck legs around skid 2, tank 2 and the cross pipe), except one UNREADABLE frame (v3 seed 4), which was correctly flagged.
 
 ## What the numbers say (read this before deploying)
 
-- **The learned policy is strongest in dense, unstructured clutter.** G1 success 98.2% vs 95.2% for the scripted baseline; most baseline failures are timeouts (4.6%), where it boxes itself in.
-- **It is not yet safer.** Collisions 0.8% vs 0.2%, plus 1.0% tip-overs that the baseline never has.
-- **On the real site layout with a global path, the scripted baseline wins**: 100.0% vs 94.0% (2 collisions, 1 tip-over in 50). When A* already gives a good path through an open pad, a simple reactive tracker is enough; the learned policy has no edge there yet.
-- **G2 cannot separate them.** Both pass every gap width down to 1.0 m, so the brief's "strictly better on gaps < 1.2 m" bar is not demonstrated. The sweep needs narrower gaps or a dynamic obstacle.
-- **Recommendation:** run G3 with `follow_path` against DWB on the owner box before relying on it. Next training run: (1) add the site's long ground pipes to the procedural slots, (2) add a tip-over/roll-rate penalty, (3) curriculum on near-contact pivots. The policy contract (spec.py) does not change, so the ROS side needs no edits to ship v2.
+- **Missions run on classical Nav2.** That is the stack's default and the only configuration with a passed mission-level gate (checkpoint-05 10/10 outdoors; office door + agent run on real Nav2). The learned controller is EXPERIMENTAL on both sites.
+- **Outdoors, the learned policy is good at single trips:** G1 98.2% (v1), 99.0% (v3) vs 95.2% scripted; as-deployed site trips v1 94.0%, v3 100.0%, scripted 100.0%.
+- **...but not at full missions.** The 6-gauge mission completes in about half the runs at best (G5 multi-seed). The failures are collisions or stuck legs in tight spots, plus one dial frame that came back UNREADABLE (flagged, not misread). No reading was ever confidently wrong.
+- **Indoors, no learned policy beats the simple scripted controller** (office gates). Doors are the hard part: the 0.91 m body must cross narrow passages straight, and only does so reliably with a planner that enforces it.
+- **Shipped:** `m20_nav_policy.onnx` = v1 (better at the gauge mission); `m20_nav_policy_v3.onnx` = v3 (better in clutter, on site trips and indoors; select with `model_path`). The ROS interface is identical.
+- **To make the learned controller mission-grade, next:** (1) train on the actual mission legs (approach poses 1.2 m from equipment) and on doors with a footprint-aware planner; (2) let the policy see a short-range occupancy patch instead of 72 bins (thin plates and corners inside the 0.5 m LiDAR blind radius are the collision cause); (3) gate on multi-seed missions, never on one run.
 
 ## Office gates (procedural offices, A* + NavCore + shield as deployed)
 
@@ -109,15 +121,16 @@ O1 = held-out offices (people 0-3), O2 = door-width sweep (no people), O3 = 3 wa
 
 | policy | O1 success | O1 collision | O1 timeout/stuck | O3 success | O3 collision |
 |---|---|---|---|---|---|
-| v1 (outdoor-trained) | 40.0% | 40.0% | 20.0% | 35.0% | 35.0% |
-| scripted baseline | 42.5% | 10.0% | 47.5% | 30.0% | 5.0% |
+| v3 (office fine-tune, shielded RL) | 40.0% | 10.0% | 47.5% | 35.0% | 25.0% |
+| v1 (outdoor-trained) | 35.0% | 22.5% | 42.5% | 50.0% | 20.0% |
+| **scripted baseline** | 52.5% | 2.5% | 45.0% | 45.0% | 5.0% |
 
-| door width | v1 | baseline |
-|---|---|---|
-| 0.80 m | 40.0% ok / 60.0% coll | 40.0% ok / 10.0% coll |
-| 0.85 m | 40.0% ok / 50.0% coll | 40.0% ok / 10.0% coll |
-| 0.90 m | 40.0% ok / 50.0% coll | 40.0% ok / 10.0% coll |
-| 1.00 m | 30.0% ok / 70.0% coll | 30.0% ok / 20.0% coll |
+| door width | v3 | v1 | baseline |
+|---|---|---|---|
+| 0.80 m | 30.0% ok / 0.0% coll | 40.0% ok / 10.0% coll | 20.0% ok / 0.0% coll |
+| 0.85 m | 10.0% ok / 40.0% coll | 30.0% ok / 20.0% coll | 20.0% ok / 0.0% coll |
+| 0.90 m | 30.0% ok / 20.0% coll | 30.0% ok / 10.0% coll | 30.0% ok / 0.0% coll |
+| 1.00 m | 40.0% ok / 0.0% coll | 30.0% ok / 20.0% coll | 50.0% ok / 0.0% coll |
 
 ### Office ROS 2 wiring (real Humble + Nav2, office overlay, box-exact LiDAR)
 
@@ -125,8 +138,7 @@ Reception → meeting room through its **0.85 m door**, then "go to the meeting 
 
 | mode | nav goal | agent mission | verdict |
 |---|---|---|---|
-| `follow_path` | no result in 150.0 s | ok | FAIL |
-| `standalone` | status 4, err 0.132 m | ok | PASS |
+| `nav2` | status 4, err 0.164 m | ok | PASS |
 
 `direct` is refused indoors by design (no map → cannot route through doors).
 

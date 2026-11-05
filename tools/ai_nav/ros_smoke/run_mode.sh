@@ -24,8 +24,8 @@ ros2 run m20_agent agent --ros-args -p backend:=offline -p landmarks:="$LANDMARK
 sleep 15
 # controller state trace for forensics (TRACKING / ALIGNING / BLOCKED / STUCK + detail)
 ros2 topic echo /m20/ai_nav/state std_msgs/msg/String >"$OUT/state.log" 2>&1 &
-python3 "$SMOKE/scenario.py" nav $NAV_GOAL 150 | tee "$OUT/nav.json"; N=${PIPESTATUS[0]}
-python3 "$SMOKE/scenario.py" agent "$AGENT_REQ" 300 "$AGENT_EXPECT" | tee "$OUT/agent.json"; A=${PIPESTATUS[0]}
+python3 "$SMOKE/scenario.py" nav $NAV_GOAL ${NAV_TIMEOUT:-240} | tee "$OUT/nav.json"; N=${PIPESTATUS[0]}
+python3 "$SMOKE/scenario.py" agent "$AGENT_REQ" ${AGENT_TIMEOUT:-600} "$AGENT_EXPECT" | tee "$OUT/agent.json"; A=${PIPESTATUS[0]}
 # stop ONLY our own jobs (SIGINT lets ros2 launch shut its children down cleanly);
 # never pkill -f by pattern — it matched and killed the calling shell once.
 PG=$(jobs -p)

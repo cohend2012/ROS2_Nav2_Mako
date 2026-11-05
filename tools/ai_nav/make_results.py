@@ -45,11 +45,12 @@ def main():
             L.append(f"| {r['t']:,} | {r['density']} | {pct(r['success'])} | {pct(r['collision'])} | "
                      f"{pct(r['tipped'])} | {r['wall_s'] // 60} min |")
         L.append("")
-    ev, bl = load("eval_v1.json"), load("eval_baseline.json")
+    ev, bl, e3 = load("eval_v1.json"), load("eval_baseline.json"), load("eval_v3.json")
     L += ["## G1: held-out procedural episodes (full density, domain randomization on)", ""]
     if ev:
         L += ["| policy | n | success | collision | tipped | timeout | SPL | G1 bar |", "|---|---|---|---|---|---|---|---|"]
-        for name, e in (("**learned (PPO)**", ev), ("scripted baseline", bl)):
+        for name, e in (("**learned v1 (shipped default)**", ev), ("learned v3 (office fine-tune)", e3),
+                        ("scripted baseline", bl)):
             if e is None:
                 L.append(f"| {name} | NOT RUN | | | | | | |"); continue
             g = e["G1"]
@@ -64,7 +65,7 @@ def main():
                      + (f"{pct(b['success'])} | {pct(b['collision'])} |" if b else "— | — |"))
         L += ["", "## Field scene as deployed (`oil_gas_field.xml`; standalone mode: A* path + NavCore + policy)", "",
               "| policy | n | success | collision | tipped | timeout | SPL |", "|---|---|---|---|---|---|---|"]
-        for name, e in (("learned", ev), ("baseline", bl)):
+        for name, e in (("learned v1", ev), ("learned v3", e3), ("baseline", bl)):
             if e:
                 f = e["field"]
                 L.append(f"| {name} | {f['n']} | {pct(f['success'])} | {pct(f['collision'])} | {pct(f['tipped'])} | "
@@ -97,54 +98,67 @@ def main():
         for r in g4["rows"]:
             L.append(f"| {r['prompt']} | {' → '.join(r['plan'])} | {'✓' if r['pass'] else '✗ ' + '; '.join(r['errors'])} |")
     L.append("")
-    reps = sorted(glob.glob(os.path.join(D, "mission_g5", "report_*.json")))
-    L += ["## G5: end-to-end gauge mission in MuJoCo", "",
-          '"read all the gauges and return to where you started", offline backend, standalone-mode '
-          "planning (A*) + learned policy on the vendor M20 physics, first-person camera.", ""]
-    if reps:
-        r = json.load(open(reps[-1]))
-        g5, sim = r.get("G5", {}), r.get("sim", {})
-        L += [f"- mission success: **{r['success']}** ({r['detail']}); sim time {sim.get('sim_time_s')} s; "
-              f"collisions {sim.get('collisions')}; home error **{sim.get('home_error_m')} m**",
-              f"- gauges within 5% FS: **{g5.get('within')}/{g5.get('of')}**, confident-but-wrong: "
-              f"**{g5.get('confident_wrong')}** → G5 **{'PASS' if g5.get('pass') else 'FAIL'}**", "",
-              "| gauge | true | read | error (% FS) | status |", "|---|---|---|---|---|"]
-        for row in g5.get("rows", []):
-            L.append(f"| {row['gauge']} | {row['true']} | {row.get('read')} | {row.get('err_pct_fs', '—')} | {row['status']} |")
-        L.append("")
+    g5 = load("g5_seeds.json")
+    L += ["## G5: full gauge mission in MuJoCo, MULTI-SEED", "",
+          '"read all the gauges and return to where you started" (6 gauges), offline backend, standalone '
+          "planning + learned policy on the vendor M20 physics. One row per seed. An earlier version of "
+          "this page reported a single 6/6 run as PASS; across seeds the mission is NOT reliable.", ""]
+    if g5:
+        L += ["| policy | seed | gauges read within 5% FS | mission | worst reading error | first failure |",
+              "|---|---|---|---|---|---|"]
+        for r in g5["runs"]:
+            L.append(f"| {r['policy']} | {r['seed']} | {r['within']}/{r['of']} | {'✓' if r['mission_success'] else '✗'} | "
+                     f"{r['max_read_err_pct_fs']}% FS | {r['first_failure'] or '—'} |")
+        for pol in ("v1", "v3"):
+            rr = [r for r in g5["runs"] if r["policy"] == pol]
+            ok = sum(r["mission_success"] for r in rr)
+            L.append("")
+            L.append(f"- **{pol}: {ok}/{len(rr)} full missions completed**; confident-but-wrong readings: "
+                     f"{sum(r['confident_wrong'] or 0 for r in rr)}")
+        allr = [r for r in g5["runs"] if r["max_read_err_pct_fs"] is not None]
+        L += [f"- **Perception is solid, navigation is not:** every reading that returned a value was within "
+              f"{max(r['max_read_err_pct_fs'] for r in allr)}% of full scale, with 0 confident-but-wrong readings. "
+              "Mission failures are navigation (collisions or stuck legs around skid 2, tank 2 and the cross "
+              "pipe), except one UNREADABLE frame (v3 seed 4), which was correctly flagged.", ""]
     else:
         L += ["NOT RUN", ""]
     if ev and bl:
         g, b, f, fb = ev["G1"], bl["G1"], ev["field"], bl["field"]
         L += ["## What the numbers say (read this before deploying)", "",
-              f"- **The learned policy is strongest in dense, unstructured clutter.** G1 success "
-              f"{pct(g['success'])} vs {pct(b['success'])} for the scripted baseline; most baseline "
-              f"failures are timeouts ({pct(b['timeout'])}), where it boxes itself in.",
-              f"- **It is not yet safer.** Collisions {pct(g['collision'])} vs {pct(b['collision'])}, "
-              f"plus {pct(g['tipped'])} tip-overs that the baseline never has.",
-              f"- **On the real site layout with a global path, the scripted baseline wins**: "
-              f"{pct(fb['success'])} vs {pct(f['success'])} ({int(round(f['collision'] * f['n']))} collisions, "
-              f"{int(round(f['tipped'] * f['n']))} tip-over in {f['n']}). When A* already gives a good path through an open "
-              "pad, a simple reactive tracker is enough; the learned policy has no edge there yet.",
-              "- **G2 cannot separate them.** Both pass every gap width down to 1.0 m, so the brief's \"strictly "
-              "better on gaps < 1.2 m\" bar is not demonstrated. The sweep needs narrower gaps or a dynamic obstacle.",
-              "- **Recommendation:** run G3 with `follow_path` against DWB on the owner box before relying on it. "
-              "Next training run: (1) add the site's long ground pipes to the procedural slots, (2) add a "
-              "tip-over/roll-rate penalty, (3) curriculum on near-contact pivots. The policy contract (spec.py) does "
-              "not change, so the ROS side needs no edits to ship v2.", ""]
+              "- **Missions run on classical Nav2.** That is the stack's default and the only configuration "
+              "with a passed mission-level gate (checkpoint-05 10/10 outdoors; office door + agent run on real Nav2). "
+              "The learned controller is EXPERIMENTAL on both sites.",
+              f"- **Outdoors, the learned policy is good at single trips:** G1 {pct(g['success'])} (v1), "
+              + (f"{pct(e3['G1']['success'])} (v3)" if e3 else "") + f" vs {pct(b['success'])} scripted; "
+              "as-deployed site trips v1 " + pct(f['success']) + (f", v3 {pct(e3['field']['success'])}" if e3 else "")
+              + f", scripted {pct(fb['success'])}.",
+              "- **...but not at full missions.** The 6-gauge mission completes in about half the runs at best "
+              "(G5 multi-seed). The failures are collisions or stuck legs in tight spots, plus one dial frame "
+              "that came back UNREADABLE (flagged, not misread). No reading was ever confidently wrong.",
+              "- **Indoors, no learned policy beats the simple scripted controller** (office gates). Doors are "
+              "the hard part: the 0.91 m body must cross narrow passages straight, and only does so reliably "
+              "with a planner that enforces it.",
+              "- **Shipped:** `m20_nav_policy.onnx` = v1 (better at the gauge mission); "
+              "`m20_nav_policy_v3.onnx` = v3 (better in clutter, on site trips and indoors; select with "
+              "`model_path`). The ROS interface is identical.",
+              "- **To make the learned controller mission-grade, next:** (1) train on the actual mission legs "
+              "(approach poses 1.2 m from equipment) and on doors with a footprint-aware planner; (2) let the "
+              "policy see a short-range occupancy patch instead of 72 bins (thin plates and corners inside the "
+              "0.5 m LiDAR blind radius are the collision cause); (3) gate on multi-seed missions, never on one "
+              "run.", ""]
     # ---------------- office ----------------
-    ov2, ov1, obl = load("office_v2.json"), load("office_v1.json"), load("office_baseline.json")
+    ov2, ov1, obl = load("office_v3.json"), load("office_v1.json"), load("office_baseline.json")
     if ov2 or ov1:
         L += ["## Office gates (procedural offices, A* + NavCore + shield as deployed)", "",
               "O1 = held-out offices (people 0-3), O2 = door-width sweep (no people), O3 = 3 walking people.", "",
               "| policy | O1 success | O1 collision | O1 timeout/stuck | O3 success | O3 collision |",
               "|---|---|---|---|---|---|"]
-        for name, e in (("**office v2 (shielded RL)**", ov2), ("v1 (outdoor-trained)", ov1), ("scripted baseline", obl)):
+        for name, e in (("v3 (office fine-tune, shielded RL)", ov2), ("v1 (outdoor-trained)", ov1), ("**scripted baseline**", obl)):
             if e and "O1" in e:
                 o1, o3 = e["O1"], e["O3"]
                 L.append(f"| {name} | {pct(o1['success'])} | {pct(o1['collision'])} | {pct(o1['timeout'])} | "
                          f"{pct(o3['success'])} | {pct(o3['collision'])} |")
-        L += ["", "| door width | " + " | ".join(n for n, e in (("v2", ov2), ("v1", ov1), ("baseline", obl)) if e) + " |",
+        L += ["", "| door width | " + " | ".join(n for n, e in (("v3", ov2), ("v1", ov1), ("baseline", obl)) if e) + " |",
               "|---|" + "---|" * sum(1 for e in (ov2, ov1, obl) if e)]
         for w in ("0.80", "0.85", "0.90", "1.00"):
             cells = [f"{pct(e['O2'][w]['success'])} ok / {pct(e['O2'][w]['collision'])} coll"
@@ -154,7 +168,7 @@ def main():
     so = load("smoke_office.json")
     if so:
         L += ["### Office ROS 2 wiring (real Humble + Nav2, office overlay, box-exact LiDAR)", "",
-              "Reception → meeting room through its **0.85 m door**, then \"go to the meeting room and come back\".", "",
+              "Reception → meeting room through its **0.85 m door**, then \"go to the kitchen and come back\" (a different room).", "",
               "| mode | nav goal | agent mission | verdict |", "|---|---|---|---|"]
         for m, r in so["modes"].items():
             n, ag = r["nav"], r["agent"]

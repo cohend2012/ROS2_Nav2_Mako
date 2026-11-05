@@ -86,6 +86,14 @@ run it: docs/AI_NAV_RUNBOOK.md · numbers: docs/ai_nav/RESULTS.md
       (needs a GPU endpoint) — offline passes 10/10
 - [ ] Gauge missions in the full stack (M20_CAMERA=1 + gauge scene)
 - [ ] Phase 4 (designed, not built): open-vocabulary "find X" exploration (VLFM-style)
+- [x] Office readiness (software): M20_SITE=office profile (real 0.91x0.53 m footprint),
+      footprint shield, door-straight planning, procedural office sim + gates, taught
+      places / routines / STOP, docs/OFFICE_DEPLOYMENT.md. Classical Nav2 + office profile
+      verified through a 0.85 m door on real Humble+Nav2 (outdoor params fail there).
+- [ ] **Learned controller mission-grade:** G5 multi-seed full mission ≥ 9/10 (today v1 3/6,
+      v3 2/7: navigation, not perception); office O1 ≥ scripted baseline (today 40% vs 52.5%)
+- [ ] Office hardware day (OFFICE_DEPLOYMENT §2): OQ-3 bridge → OQ-4 e-stop → teleop
+      map (save_map.sh) → classical Nav2 → teach places → learned controller last
 
 ## Later (filed, deliberately not now)
 Cloud-VLM language missions — DONE as the AI track above ·

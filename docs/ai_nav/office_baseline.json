@@ -1,52 +1,52 @@
 {
   "O1": {
-    "success": 0.425,
-    "collision": 0.1,
+    "success": 0.525,
+    "collision": 0.025,
     "tipped": 0.0,
-    "timeout": 0.475,
-    "spl": 0.4124940009311093,
+    "timeout": 0.45,
+    "spl": 0.4541652534473439,
     "n": 40
   },
   "O2": {
     "0.80": {
-      "success": 0.4,
-      "collision": 0.1,
+      "success": 0.2,
+      "collision": 0.0,
       "tipped": 0.0,
-      "timeout": 0.5,
-      "spl": 0.3891354348226545,
+      "timeout": 0.8,
+      "spl": 0.14618032027412975,
       "n": 10
     },
     "0.85": {
-      "success": 0.4,
-      "collision": 0.1,
+      "success": 0.2,
+      "collision": 0.0,
       "tipped": 0.0,
-      "timeout": 0.5,
-      "spl": 0.37370941835561927,
+      "timeout": 0.8,
+      "spl": 0.1758835040526365,
       "n": 10
     },
     "0.90": {
-      "success": 0.4,
-      "collision": 0.1,
+      "success": 0.3,
+      "collision": 0.0,
       "tipped": 0.0,
-      "timeout": 0.5,
-      "spl": 0.3722489415121243,
+      "timeout": 0.7,
+      "spl": 0.2739808563589536,
       "n": 10
     },
     "1.00": {
-      "success": 0.3,
-      "collision": 0.2,
+      "success": 0.5,
+      "collision": 0.0,
       "tipped": 0.0,
       "timeout": 0.5,
-      "spl": 0.28424947317521515,
+      "spl": 0.4778232728360856,
       "n": 10
     }
   },
   "O3": {
-    "success": 0.3,
+    "success": 0.45,
     "collision": 0.05,
     "tipped": 0.0,
-    "timeout": 0.65,
-    "spl": 0.2963553200552399,
+    "timeout": 0.5,
+    "spl": 0.37740473049399303,
     "n": 20
   }
 }
