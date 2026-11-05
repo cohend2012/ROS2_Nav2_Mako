@@ -161,6 +161,32 @@ def score_g5(report, tol=0.05):
             "pass": within >= 5 and wrong_ok == 0}
 
 
+def score_found(report, tol_m=0.6, tol_fs=0.05):
+    """find_gauges: each true plate matched to a found gauge (< tol_m), reading compared
+    as a fraction of full scale (the offline reader's unit when no scale is on file)."""
+    truth = json.load(open(TRUTH))
+    found = [r for r in report["readings"] if r.get("found")]
+    rows, used = [], set()
+    for g, t in truth.items():
+        tx, ty = t["plate"][:2]
+        best = min((r for r in found if r["gauge"] not in used),
+                   key=lambda r: math.hypot(r["position"][0] - tx, r["position"][1] - ty), default=None)
+        d = math.hypot(best["position"][0] - tx, best["position"][1] - ty) if best else None
+        if best is None or d >= tol_m:
+            rows.append({"gauge": g, "found": False}); continue
+        used.add(best["gauge"])
+        tf = (t["value"] - t["min"]) / (t["max"] - t["min"])
+        err = abs(best["value"] - tf) if best.get("readable") else None
+        rows.append({"gauge": g, "found": True, "as": best["gauge"], "pos_err_m": round(d, 3),
+                     "true_frac": round(tf, 4), "read_frac": best.get("value"), "status": best["status"],
+                     "err_pct_fs": None if err is None else round(100 * err, 2),
+                     "within": err is not None and err <= tol_fs})
+    return {"rows": rows, "found": sum(r["found"] for r in rows), "of": len(truth),
+            "read_within": sum(bool(r.get("within")) for r in rows),
+            "false_positives": len(found) - len(used),
+            "confident_wrong": sum(1 for r in rows if r.get("status") == "OK" and not r.get("within"))}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--request", required=True)
@@ -169,6 +195,9 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--start", default="0,0,0")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--hide-gauges", action="store_true",
+                    help="remove every gauge from the landmark file first (find_gauges missions); "
+                         "found gauges are scored against truth.json")
     ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
                     help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
                          "0.32 m planner clearance (= M20_SITE=office)")
@@ -185,8 +214,18 @@ def main():
     sx, sy, syaw = (float(v) for v in a.start.split(","))
     env = M20NavEnv(scene=scene, randomize=True, seed=a.seed, max_steps=10 ** 9)
     env.reset(seed=a.seed, options={"start": (sx, sy), "yaw": syaw, "goal": (sx, sy)})
-    reg = LandmarkRegistry.load(lm_path)
-    io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
+    reg = LandmarkRegistry.load(lm_path, os.path.join(a.out, "taught.yaml") if a.hide_gauges else None)
+    if a.hide_gauges:
+        for n in [n for n in reg.names() if reg.get(n).type == "gauge"]:
+            reg._lm.pop(n)
+        sys.path.insert(0, HERE)
+        from find_gauges import FinderIO, BOUNDS          # + range_along / turn_to / face_normal
+        from m20_agent.gauge_finder import survey_viewpoints
+        io_ = FinderIO(env, a.model, plan_radius=plan_radius)
+        io_.survey_viewpoints = lambda: survey_viewpoints(io_.planner, (sx, sy), spacing=2.0,
+                                                          clear=0.9, bounds=BOUNDS)
+    else:
+        io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
     exe = Executor(reg, make_backend(a.backend, reg), io_, report_dir=a.out)
     t0 = time.time()
     rep = exe.run(a.request)
@@ -196,13 +235,16 @@ def main():
                   "home_error_m": round(math.hypot(x - sx, y - sy), 3)}
     if a.site == "outdoor" and any(s["action"] == "read_gauge" for s in rep.get("plan", [])):
         rep["G5"] = score_g5(rep)
+    if a.hide_gauges:
+        rep["G6"] = score_found(rep)
     with open(os.path.join(a.out, "trace.json"), "w") as f:
         json.dump(io_.trace, f)
     with open(rep["report_path"], "w") as f:
         json.dump(rep, f, indent=2)
     print(json.dumps({k: rep[k] for k in ("success", "detail", "sim") if k in rep}, indent=1))
-    if "G5" in rep:
-        print(json.dumps(rep["G5"], indent=1))
+    for k in ("G5", "G6"):
+        if k in rep:
+            print(json.dumps({x: y for x, y in rep[k].items() if x != "rows"}, indent=1))
 
 
 if __name__ == "__main__":

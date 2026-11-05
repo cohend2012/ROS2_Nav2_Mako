@@ -66,3 +66,16 @@ MUJOCO_GL=osmesa python3 tools/agent/find_gauges.py --out <dir> --seed N
   bin, so something low in front of a dial gives a short range. The up-close verification
   then rejects the candidate rather than saving a wrong position.
 - A survey takes ~20 min of sim time for a 15 × 9 m site, dominated by the 8 headings × 29 points.
+
+## End-to-end demo: the whole agent, from the spoken request
+```bash
+MUJOCO_GL=osmesa python3 tools/agent/sim_mission.py --hide-gauges --seed 3 \
+    --request "find the gauges and come back to where you started" --out <dir>
+python3 tools/agent/plot_find_gauges.py <dir> --seed 3
+```
+Request → offline planner → plan `find_gauges → return_home` → executor → robot. The
+mission SUCCEEDED: 6/6 gauges found (≤ 0.014 m position error), 6/6 read within 0.67 % of
+full scale, all OK, 0 false positives, 29/29 survey points reached, 0 collisions, and it
+ended back within 0.25 m of the start. Files are in `demo_seed3/`: `find_gauges_map.png`
+(path, hidden truth vs found), `find_gauges_photos.png` (the up-close frames the readings
+came from), `report.json`, and `taught.yaml` (the gauges it saved).

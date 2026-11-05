@@ -1,0 +1,219 @@
+{
+  "request": "find the gauges and come back to where you started",
+  "backend": "offline",
+  "started": "2026-11-05T06:58:07",
+  "steps": [
+    {
+      "action": "find_gauges",
+      "status": "OK",
+      "detail": "found 6 gauge(s): 6 OK, 0 NEEDS_REVIEW, 0 UNREADABLE; 0 candidate(s) rejected/unreached; 0/29 survey points unreachable"
+    },
+    {
+      "action": "return_home",
+      "status": "OK",
+      "detail": "xy 0.27 m, yaw -0.09"
+    }
+  ],
+  "readings": [
+    {
+      "gauge": "found_gauge_1",
+      "readable": true,
+      "value": 0.7,
+      "units": "fraction of scale",
+      "confidence": 0.84,
+      "notes": "classical needle fit: needle 35.7 deg, spread 3.1 deg, face r=64px",
+      "status": "OK",
+      "image": "/tmp/claude-0/-home-user/3cb22a8f-41f2-5194-bc52-3cb6a4a2195c/scratchpad/demo3/065943_found_gauge_1.png",
+      "position": [
+        -3.48,
+        -1.0
+      ],
+      "found": true
+    },
+    {
+      "gauge": "found_gauge_2",
+      "readable": true,
+      "value": 0.56,
+      "units": "fraction of scale",
+      "confidence": 0.84,
+      "notes": "classical needle fit: needle 72.6 deg, spread 3.2 deg, face r=42px",
+      "status": "OK",
+      "image": "/tmp/claude-0/-home-user/3cb22a8f-41f2-5194-bc52-3cb6a4a2195c/scratchpad/demo3/065945_found_gauge_2.png",
+      "position": [
+        5.58,
+        -1.0
+      ],
+      "found": true
+    },
+    {
+      "gauge": "found_gauge_3",
+      "readable": true,
+      "value": 0.75,
+      "units": "fraction of scale",
+      "confidence": 0.83,
+      "notes": "classical needle fit: needle 22.3 deg, spread 3.5 deg, face r=35px",
+      "status": "OK",
+      "image": "/tmp/claude-0/-home-user/3cb22a8f-41f2-5194-bc52-3cb6a4a2195c/scratchpad/demo3/065948_found_gauge_3.png",
+      "position": [
+        0.0,
+        1.08
+      ],
+      "found": true
+    },
+    {
+      "gauge": "found_gauge_4",
+      "readable": true,
+      "value": 0.31,
+      "units": "fraction of scale",
+      "confidence": 0.83,
+      "notes": "classical needle fit: needle 140.9 deg, spread 3.3 deg, face r=51px",
+      "status": "OK",
+      "image": "/tmp/claude-0/-home-user/3cb22a8f-41f2-5194-bc52-3cb6a4a2195c/scratchpad/demo3/065949_found_gauge_4.png",
+      "position": [
+        -1.31,
+        3.11
+      ],
+      "found": true
+    },
+    {
+      "gauge": "found_gauge_5",
+      "readable": true,
+      "value": 0.73,
+      "units": "fraction of scale",
+      "confidence": 0.83,
+      "notes": "classical needle fit: needle 29.0 deg, spread 3.4 deg, face r=52px",
+      "status": "OK",
+      "image": "/tmp/claude-0/-home-user/3cb22a8f-41f2-5194-bc52-3cb6a4a2195c/scratchpad/demo3/065950_found_gauge_5.png",
+      "position": [
+        -5.01,
+        2.58
+      ],
+      "found": true
+    },
+    {
+      "gauge": "found_gauge_6",
+      "readable": true,
+      "value": 0.33,
+      "units": "fraction of scale",
+      "confidence": 0.85,
+      "notes": "classical needle fit: needle 136.3 deg, spread 3.0 deg, face r=46px",
+      "status": "OK",
+      "image": "/tmp/claude-0/-home-user/3cb22a8f-41f2-5194-bc52-3cb6a4a2195c/scratchpad/demo3/065953_found_gauge_6.png",
+      "position": [
+        4.99,
+        1.88
+      ],
+      "found": true
+    }
+  ],
+  "home": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "plan": [
+    {
+      "action": "find_gauges"
+    },
+    {
+      "action": "return_home"
+    }
+  ],
+  "rationale": "offline keyword plan",
+  "find_gauges": {
+    "candidates": 6,
+    "sightings": 12,
+    "rejected": [],
+    "unreached_survey_points": 0,
+    "survey_points": 29
+  },
+  "success": true,
+  "detail": "ok",
+  "duration_s": 107.1,
+  "report_path": "/tmp/claude-0/-home-user/3cb22a8f-41f2-5194-bc52-3cb6a4a2195c/scratchpad/demo3/report_20261105_065954.json",
+  "sim": {
+    "sim_time_s": 1212.9,
+    "wall_s": 107.1,
+    "collisions": 0,
+    "final_pose": [
+      -0.238,
+      -0.066
+    ],
+    "home_error_m": 0.247
+  },
+  "G6": {
+    "rows": [
+      {
+        "gauge": "gauge_pg101",
+        "found": true,
+        "as": "found_gauge_5",
+        "pos_err_m": 0.014,
+        "true_frac": 0.725,
+        "read_frac": 0.73,
+        "status": "OK",
+        "err_pct_fs": 0.5,
+        "within": true
+      },
+      {
+        "gauge": "gauge_pg102",
+        "found": true,
+        "as": "found_gauge_4",
+        "pos_err_m": 0.014,
+        "true_frac": 0.31,
+        "read_frac": 0.31,
+        "status": "OK",
+        "err_pct_fs": 0.0,
+        "within": true
+      },
+      {
+        "gauge": "gauge_ti201",
+        "found": true,
+        "as": "found_gauge_2",
+        "pos_err_m": 0.01,
+        "true_frac": 0.5667,
+        "read_frac": 0.56,
+        "status": "OK",
+        "err_pct_fs": 0.67,
+        "within": true
+      },
+      {
+        "gauge": "gauge_pg301",
+        "found": true,
+        "as": "found_gauge_1",
+        "pos_err_m": 0.01,
+        "true_frac": 0.7,
+        "read_frac": 0.7,
+        "status": "OK",
+        "err_pct_fs": 0.0,
+        "within": true
+      },
+      {
+        "gauge": "gauge_pg302",
+        "found": true,
+        "as": "found_gauge_3",
+        "pos_err_m": 0.01,
+        "true_frac": 0.75,
+        "read_frac": 0.75,
+        "status": "OK",
+        "err_pct_fs": 0.0,
+        "within": true
+      },
+      {
+        "gauge": "gauge_fl401",
+        "found": true,
+        "as": "found_gauge_6",
+        "pos_err_m": 0.014,
+        "true_frac": 0.33,
+        "read_frac": 0.33,
+        "status": "OK",
+        "err_pct_fs": 0.0,
+        "within": true
+      }
+    ],
+    "found": 6,
+    "of": 6,
+    "read_within": 6,
+    "false_positives": 0,
+    "confident_wrong": 0
+  }
+}

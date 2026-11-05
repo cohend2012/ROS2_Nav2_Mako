@@ -1,0 +1,85 @@
+landmarks:
+- aliases: []
+  approach:
+  - -2.58
+  - -0.9979
+  - 3.1416
+  gauge:
+    max: 1.0
+    min: 0.0
+    units: fraction of scale
+  name: found_gauge_1
+  position:
+  - -3.48
+  - -0.998
+  type: gauge
+- aliases: []
+  approach:
+  - 4.38
+  - -1.0039
+  - 0.0
+  gauge:
+    max: 1.0
+    min: 0.0
+    units: fraction of scale
+  name: found_gauge_2
+  position:
+  - 5.58
+  - -1.004
+  type: gauge
+- aliases: []
+  approach:
+  - 0.0014
+  - -0.12
+  - 1.5708
+  gauge:
+    max: 1.0
+    min: 0.0
+    units: fraction of scale
+  name: found_gauge_3
+  position:
+  - 0.001
+  - 1.08
+  type: gauge
+- aliases: []
+  approach:
+  - -1.3075
+  - 1.91
+  - 1.5708
+  gauge:
+    max: 1.0
+    min: 0.0
+    units: fraction of scale
+  name: found_gauge_4
+  position:
+  - -1.307
+  - 3.11
+  type: gauge
+- aliases: []
+  approach:
+  - -5.0075
+  - 1.38
+  - 1.5708
+  gauge:
+    max: 1.0
+    min: 0.0
+    units: fraction of scale
+  name: found_gauge_5
+  position:
+  - -5.008
+  - 2.58
+  type: gauge
+- aliases: []
+  approach:
+  - 4.9927
+  - 0.68
+  - 1.5708
+  gauge:
+    max: 1.0
+    min: 0.0
+    units: fraction of scale
+  name: found_gauge_6
+  position:
+  - 4.993
+  - 1.88
+  type: gauge
