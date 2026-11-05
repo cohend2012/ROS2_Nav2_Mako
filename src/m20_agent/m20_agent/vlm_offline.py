@@ -6,6 +6,9 @@ Planning: keyword rules over the operator request + registry. It understands
   "<gauge name|alias>" (unless "go to/drive to")    -> read_gauge
   "go to / visit / inspect <landmark>"             -> goto / inspect
   "patrol" / "tour"                                -> goto every non-gauge landmark
+  "find / search for / look for / locate gauges"   -> find_gauges (no prior positions;
+                                                      also when gauges are asked for and
+                                                      none are on the map yet)
   "...and return / come back / where you started"  -> trailing return_home
 Anything it cannot match becomes a 1 s wait plus a rationale. It never guesses a target.
 
@@ -59,7 +62,12 @@ class OfflineBackend:
                         "rationale": f"offline: routine {name}"}
             notes.append(f"no routine called {word!r}")
         gauges = [lm.name for lm in self.reg.of_type("gauge")]
-        if re.search(r"\b(all|every|each)\b.*\bgauges?\b|\bgauges\b", q):
+        find = re.search(r"\b(find|search|look for|locate|discover|hunt for|map)\b.*\b(gauges?|dials?|meters?)\b", q)
+        if find or (not gauges and re.search(r"\bgauges\b|\b(all|every|each)\b.*\bgauge\b", q)):
+            steps.append({"action": "find_gauges"})
+            if not find:
+                notes.append("no gauges on the map yet: searching for them")
+        elif re.search(r"\b(all|every|each)\b.*\bgauges?\b|\bgauges\b", q):
             for g in self.reg.nearest_order(gauges, (0.0, 0.0)):
                 steps.append({"action": "read_gauge", "target": g})
         else:

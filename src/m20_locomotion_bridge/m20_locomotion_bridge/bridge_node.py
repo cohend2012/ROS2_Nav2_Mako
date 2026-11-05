@@ -52,6 +52,8 @@ _RIGHT = (7, 15)         # FR, HR wheels
 # TODO: Build a way to make the robot walk in a gait. I think we need to add a gait request topic to the bridge node.
 
 
+YAW_TRIM_MAX = 0.6     # rad/s: bound on the closed-loop yaw trim (see send_velocity)
+
 class SimVendorSDK:
     """Sim 'vendor' backend: drives the MuJoCo sim over the drdds joint interface
     (ADR-015). Holds the standing stance on the legs and skid-steers the wheels from
@@ -102,8 +104,14 @@ class SimVendorSDK:
         dt = (now - self._last_t) if self._last_t else 0.05
         self._last_t = now
         yerr = wz - self._omega
-        self._yint = max(-2.0, min(2.0, self._yint + yerr * dt))
-        w_cmd = max(-5.0, min(5.0, wz + self.Kp * yerr + self.Ki * self._yint))
+        # Yaw trim is bounded (+-YAW_TRIM_MAX) and the integrator only runs while the
+        # trim is unsaturated (anti-windup). Unbounded, a STALLED turn (body held by
+        # scrub while wz=0.7 is asked) drove the wheel differential to ~4x the request
+        # and the wheel torque rolled the legs over (find-the-gauges seed 5, 2026-11-05).
+        corr = self.Kp * yerr + self.Ki * self._yint
+        if abs(corr) < YAW_TRIM_MAX:
+            self._yint = max(-2.0, min(2.0, self._yint + yerr * dt))
+        w_cmd = wz + max(-YAW_TRIM_MAX, min(YAW_TRIM_MAX, corr))
         # Skid-scrub dead-zone compensation: pivoting needs |w| >= ~0.5 rad/s of wheel
         # differential to break lateral scrub stiction — commands below that produce
         # ~no rotation (measured 2026-07-17: wz=0.44 held for 100 s yielded 24 deg).

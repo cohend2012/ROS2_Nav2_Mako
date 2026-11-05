@@ -7,6 +7,10 @@ a fake in tests, the MuJoCo harness in tools/agent/gauge_gate.py):
     io.navigate(x, y, yaw, label) -> (ok: bool, why: str)   # via /m20/mission/run
     io.capture() -> PNG bytes | None                          # /camera/image_raw
     io.wait(seconds) -> (ok, why)
+  for the find_gauges action, also (see gauge_search.py):
+    io.survey_viewpoints() -> [(x, y)]
+    io.range_along(bearing, elevation) -> (range_m, (x, y)) | None
+    io.turn_to(yaw) -> bool            (optional: falls back to navigate in place)
 
 Policy rules that make it safe to put a language model on top of a robot:
   * the plan is validated against the registry before ANY motion (plan.validate)
@@ -108,6 +112,8 @@ class Executor:
             return self.io.wait(s["seconds"])
         if a == "return_home":
             return self._goto("home")
+        if a == "find_gauges":
+            return self._find_gauges(report)
         ok, why = self._goto(s["target"])
         if not ok or a == "goto":
             return ok, why
@@ -142,6 +148,29 @@ class Executor:
             return True, r.get("answer", "")[:120]
         except RuntimeError as e:
             return False, f"VLM failed: {e}"
+
+    def _find_gauges(self, report):
+        from m20_agent.gauge_search import search_and_read
+        if not all(hasattr(self.io, m) for m in ("survey_viewpoints", "range_along")):
+            return False, "this robot interface cannot search (no survey_viewpoints/range_along)"
+        try:
+            res = search_and_read(self.io, self.vlm, self.reg, save_png=self._save_png,
+                                  log=self.log, should_stop=lambda: self.stop_requested)
+        except RuntimeError as e:
+            return False, f"search failed: {e}"
+        for g in res["gauges"]:
+            report["readings"].append({"gauge": g["name"], **g["reading"], "status": g["status"],
+                                       "image": g.get("image"), "position": g["position"],
+                                       "found": True})
+        report["find_gauges"] = {k: v for k, v in res.items() if k != "gauges"}
+        if res["survey_points"] and res["unreached_survey_points"] == res["survey_points"]:
+            return False, "could not reach any survey point"
+        n = {st: sum(g["status"] == st for g in res["gauges"])
+             for st in ("OK", "NEEDS_REVIEW", "UNREADABLE")}
+        return True, (f"found {len(res['gauges'])} gauge(s): {n['OK']} OK, {n['NEEDS_REVIEW']} "
+                      f"NEEDS_REVIEW, {n['UNREADABLE']} UNREADABLE; {len(res['rejected'])} "
+                      f"candidate(s) rejected/unreached; {res['unreached_survey_points']}/"
+                      f"{res['survey_points']} survey points unreachable")
 
     def _aim(self, lm):
         """Turn in place to the TRUE bearing of the object from where the robot

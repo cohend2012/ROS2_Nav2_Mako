@@ -14,6 +14,11 @@ Available actions:
 - save_place(target): remember the robot's CURRENT position under this name. Use it
   when the operator says "this is the kitchen", "remember this spot as X", "call this X".
   It does not move the robot.
+- find_gauges: search the whole site for gauges with NO known positions (drive a
+  survey route, spot dials with the camera, locate them with the LiDAR, then go up
+  close and read each). Use it for "find the gauges", "look for gauges", or when the
+  operator asks about gauges and the registry has none. It reads what it finds, so do
+  not add read_gauge steps for the found ones.
 - run_routine(target): run a saved routine from the registry. "Start the mission",
   "do your rounds" and similar mean the DEFAULT routine; pass target "" for it.
 
@@ -39,6 +44,20 @@ confidence, so an honest low confidence is better than a wrong value."""
 
 GAUGE_INSTRUCTION = ("This is gauge {name}. Its scale runs from {min} to {max} {units}. "
                      "Read the needle and call the report_reading tool.")
+
+GAUGE_INSTRUCTION_UNKNOWN = (
+    "This is {name}, a gauge the robot has just found; its scale is NOT on file. Read the "
+    "units and the scale range printed on the dial face and report the value in those "
+    "units, with the range in notes (e.g. 'scale 0-100 psi'). If the scale text is not "
+    "legible, report the needle position as a fraction of full scale (0 to 1) with units "
+    "'fraction of scale'. Call the report_reading tool.")
+
+
+def gauge_instruction(name, spec):
+    if spec.get("unknown"):
+        return GAUGE_INSTRUCTION_UNKNOWN.format(name=name)
+    return GAUGE_INSTRUCTION.format(name=name, **spec)
+
 
 INSPECT_SYSTEM = """You describe equipment seen by an inspection robot's camera for a \
 maintenance report. Be factual and brief. Point out visible anomalies (leaks, \

@@ -95,19 +95,23 @@ class LandmarkRegistry:
                     reg.add(lm)
         return reg
 
-    def teach(self, name, x, y, yaw, aliases=(), type_="room"):
-        """Remember the robot's CURRENT pose as a named place ("this is the kitchen").
-        Stored as an approach pose (the place is where the robot stood). Persisted to
-        the taught overlay. Refuses to overwrite a curated (config-file) landmark."""
+    def teach(self, name, x, y, yaw, aliases=(), type_="room", gauge=None, position=None):
+        """Remember a place: by default the robot's CURRENT pose ("this is the kitchen"),
+        stored as an approach pose. Found gauges (find_gauges) pass the dial's own map
+        `position` and its `gauge` spec, with (x, y, yaw) = the viewing spot. Persisted
+        to the taught overlay. Refuses to overwrite a curated (config-file) landmark."""
         cur = self._lm.get(name)
         if cur is not None and not cur.taught and cur.type != "home":
             raise ValueError(f"{name!r} is a surveyed landmark; teach a different name")
-        self.add(Landmark(name, type_, (x, y), (x, y, yaw), aliases=list(aliases), taught=True))
+        self.add(Landmark(name, type_, tuple(position) if position else (x, y), (x, y, yaw),
+                          aliases=list(aliases), gauge=dict(gauge) if gauge else None,
+                          taught=True))
         if self.taught_path:
             taught = [lm for lm in self._lm.values() if lm.taught]
-            doc = {"landmarks": [{"name": lm.name, "type": lm.type, "aliases": lm.aliases,
-                                  "position": [round(float(v), 3) for v in lm.position],
-                                  "approach": [round(float(v), 4) for v in lm.approach]}
+            doc = {"landmarks": [dict({"name": lm.name, "type": lm.type, "aliases": lm.aliases,
+                                       "position": [round(float(v), 3) for v in lm.position],
+                                       "approach": [round(float(v), 4) for v in lm.approach]},
+                                      **({"gauge": lm.gauge} if lm.gauge else {}))
                                  for lm in taught]}
             os.makedirs(os.path.dirname(os.path.abspath(self.taught_path)), exist_ok=True)
             tmp = self.taught_path + ".tmp"

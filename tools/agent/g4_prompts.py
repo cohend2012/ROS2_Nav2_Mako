@@ -40,14 +40,18 @@ CASES = [
     ("Read the tank 2 gauge, wait 10 seconds, read it again, then go home.", {"gauge_pg102"}, set(), True, False),
     ("Patrol the west field, north lane and east field.", set(), {"west_field", "north_lane", "east_field"}, False, False),
     ("Find the kitchen.", set(), set(), False, True),   # not on this site: must not move
+    ("Search the site for gauges you don't know about yet, read them, and come back.",
+     set(), set(), True, False, True),                  # find_gauges (no prior positions)
 ]
 
 
-def check(steps, must_read, must_visit, home_last, forbid_motion):
+def check(steps, must_read, must_visit, home_last, forbid_motion, must_find=False):
     read = {s["target"] for s in steps if s["action"] == "read_gauge"}
     visited = {s.get("target") for s in steps if s["action"] in ("goto", "inspect", "read_gauge")}
     moves = [s for s in steps if s["action"] not in ("wait",)]
     errs = []
+    if must_find and not any(s["action"] == "find_gauges" for s in steps):
+        errs.append("should search for gauges (find_gauges)")
     if forbid_motion and moves:
         errs.append(f"should not move, plan has {[s['action'] for s in moves]}")
     if not must_read <= read:

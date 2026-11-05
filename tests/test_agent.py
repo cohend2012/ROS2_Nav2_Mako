@@ -302,3 +302,124 @@ def test_overlay_stacks_variants_and_rejects_unknown_nodes(tmp_path):
         import yaml as y
         doc = y.safe_load(open(os.path.join(ROOT, "src", "m20_navigation", "config", "office_variants", v + ".yaml")))
         assert "controller_server" in doc or "planner_server" in doc
+
+
+# ---------------- find the gauges (no prior positions) ----------------
+from m20_agent import gauge_finder as gf  # noqa: E402
+from m20_agent.gauge_search import search_and_read  # noqa: E402
+
+
+class SearchIO(FakeIO):
+    """A flat world with dial plates at hidden positions. The camera renders each plate
+    the pinhole model says is in view; range_along hits a plate when the ray passes it."""
+    PLATE_R = 0.16
+
+    def __init__(self, gauges, viewpoints, wall=None):
+        super().__init__()
+        self.p = (0.0, 0.0, 0.0)
+        self.g, self.vps = gauges, viewpoints     # [(x, y, value_frac)]
+
+    def survey_viewpoints(self): return list(self.vps)
+
+    def turn_to(self, yaw):
+        self.p = (self.p[0], self.p[1], yaw); return True
+
+    def navigate(self, x, y, yaw, label):
+        self.calls.append(label)
+        self.p = (x, y, self.p[2] if yaw is None else yaw); return True, "ok"
+
+    def _rel(self, gx, gy):
+        x, y, yaw = self.p
+        d = math.hypot(gx - x, gy - y)
+        b = math.atan2(math.sin(math.atan2(gy - y, gx - x) - yaw), math.cos(math.atan2(gy - y, gx - x) - yaw))
+        return d, b
+
+    def capture(self):
+        from PIL import Image
+        img = Image.new("RGB", (gf.IMG_W, gf.IMG_H), (90, 95, 100))
+        for gx, gy, v in self.g:
+            d, b = self._rel(gx, gy)
+            if d < 0.3 or abs(b) > math.radians(27):
+                continue
+            r = int(gf.FOCAL_PX * self.PLATE_R / d)
+            if r < 3:
+                continue
+            face = render_dial(v, 0, 1, "", "", size=max(8, int(2 * r / 0.92)))
+            cx = int(gf.IMG_W / 2 - gf.FOCAL_PX * math.tan(b))
+            img.paste(face, (cx - face.size[0] // 2, gf.IMG_H // 2 - face.size[1] // 2))
+        buf = io.BytesIO(); img.save(buf, "PNG"); return buf.getvalue()
+
+    def range_along(self, bearing, elev):
+        for gx, gy, _ in self.g:
+            d, b = self._rel(gx, gy)
+            if abs(d * math.sin(b - bearing)) < self.PLATE_R and math.cos(b - bearing) > 0:
+                return d, (gx, gy)
+        return None
+
+
+def test_find_gauges_locates_and_reads_hidden_gauges(tmp_path):
+    reg = LandmarkRegistry.load(LM, str(tmp_path / "taught.yaml"))
+    for n in [n for n in reg.names() if reg.get(n).type == "gauge"]:
+        reg._lm.pop(n)                                  # positions removed
+    truth = [(3.0, 1.0, 0.25), (-2.0, 3.0, 0.7)]
+    io_ = SearchIO(truth, [(0.0, 0.0), (0.5, 2.5)])
+    res = search_and_read(io_, OfflineBackend(reg), reg, log=lambda *_: None)
+    assert len(res["gauges"]) == 2 and not res["rejected"]
+    for (gx, gy, v) in truth:
+        g = min(res["gauges"], key=lambda g: math.hypot(g["position"][0] - gx, g["position"][1] - gy))
+        assert math.hypot(g["position"][0] - gx, g["position"][1] - gy) < 0.3
+        assert g["status"] in ("OK", "NEEDS_REVIEW")
+        assert abs(g["reading"]["value"] - v) < 0.05      # fraction of scale
+    # saved as gauges with a viewing spot, persisted to the taught overlay
+    found = reg.of_type("gauge")
+    assert len(found) == 2 and all(lm.taught for lm in found)
+    again = LandmarkRegistry.load(LM, str(tmp_path / "taught.yaml"))
+    assert {lm.name for lm in again.of_type("gauge") if lm.taught} == {lm.name for lm in found}
+
+
+def test_find_gauges_saves_nothing_it_cannot_confirm(tmp_path):
+    reg = LandmarkRegistry.load(LM)
+    io_ = SearchIO([], [(0.0, 0.0)])
+    io_.range_along = lambda b, e: (2.0, (2.0, 0.0))     # LiDAR hits something...
+    orig = io_.capture
+    calls = {"n": 0}
+
+    def capture():                                       # ...a dial-like blob far off once
+        calls["n"] += 1
+        if calls["n"] == 1:
+            io_.g = [(3.5, 0.0, 0.5)]
+            png = orig(); io_.g = []; return png
+        return orig()
+    io_.capture = capture
+    n0 = len(reg.of_type("gauge"))
+    res = search_and_read(io_, OfflineBackend(reg), reg, log=lambda *_: None)
+    assert not res["gauges"] and res["rejected"]
+    assert len(reg.of_type("gauge")) == n0
+
+
+def test_offline_plans_find_gauges(reg, tmp_path):
+    b = OfflineBackend(reg)
+    steps = validate(b.plan("find the gauges and come back"), reg)
+    assert [s["action"] for s in steps] == ["find_gauges", "return_home"]
+    empty = LandmarkRegistry.load(os.path.join(ROOT, "src", "m20_agent", "config", "office_landmarks.yaml"))
+    steps = validate(OfflineBackend(empty).plan("read all the gauges"), empty)
+    assert steps[0]["action"] == "find_gauges"
+
+
+def test_executor_find_gauges_reports_readings(tmp_path):
+    reg = LandmarkRegistry.load(LM)
+    for n in [n for n in reg.names() if reg.get(n).type == "gauge"]:
+        reg._lm.pop(n)
+    io_ = SearchIO([(3.0, 1.0, 0.4)], [(0.0, 0.0)])
+    rep = Executor(reg, OfflineBackend(reg), io_, report_dir=str(tmp_path),
+                   log=lambda *_: None).run("look for gauges and return to where you started")
+    assert rep["success"], rep["detail"]
+    assert [r["found"] for r in rep["readings"]] == [True]
+    assert rep["find_gauges"]["candidates"] == 1
+    assert io_.calls[-1] == "home"
+
+
+def test_executor_find_gauges_needs_capable_io(reg):
+    rep = Executor(reg, OfflineBackend(reg), FakeIO(), log=lambda *_: None).run("find the gauges")
+    assert not rep["success"]
+    assert "cannot search" in rep["steps"][0]["detail"]

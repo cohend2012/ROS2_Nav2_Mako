@@ -85,7 +85,7 @@ class ClaudeBackend:
             prompts.GAUGE_SYSTEM,
             [{"type": "image", "source": {"type": "base64", "media_type": "image/png",
                                           "data": img}},
-             {"type": "text", "text": prompts.GAUGE_INSTRUCTION.format(name=name, **spec)}],
+             {"type": "text", "text": prompts.gauge_instruction(name, spec)}],
             "report_reading", "Report the gauge reading.", READING_SCHEMA)
 
     def describe(self, png, question):

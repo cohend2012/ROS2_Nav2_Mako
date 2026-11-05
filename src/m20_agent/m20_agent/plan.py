@@ -8,12 +8,15 @@ A plan is a JSON list of steps:
   {"action": "return_home"}
   {"action": "save_place",  "target": "kitchen"}    # remember the CURRENT pose by name
   {"action": "run_routine", "target": "morning_round"}   # a saved mission; "" = default
+  {"action": "find_gauges"}       # survey the map, find dials with NO prior positions,
+                                  # localize them (camera bearing + LiDAR), read, save
 
 validate() is the grounding step (SayCan-style: the language model proposes, the
 robot's actual capabilities dispose). Unknown targets, reading a non-gauge, or an
 over-long plan are REJECTED before anything moves — never "best-effort" executed.
 """
-ACTIONS = ("goto", "read_gauge", "inspect", "wait", "return_home", "save_place", "run_routine")
+ACTIONS = ("goto", "read_gauge", "inspect", "wait", "return_home", "save_place", "run_routine",
+           "find_gauges")
 MAX_STEPS = 40
 MAX_WAIT_S = 120.0
 
@@ -72,8 +75,8 @@ def validate(plan, registry, _depth=0):
                 raise PlanError(f"step {i}: wait seconds must be in (0, {MAX_WAIT_S}]")
             out.append({"action": "wait", "seconds": sec})
             continue
-        if a == "return_home":
-            out.append({"action": "return_home"})
+        if a in ("return_home", "find_gauges"):
+            out.append({"action": a})
             continue
         if a == "save_place":
             name = _slug(s.get("target") or "")

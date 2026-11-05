@@ -76,7 +76,7 @@ class OpenAICompatBackend:
                 'each step {"action": ..., "target": ...} (wait uses "seconds").'))
 
     def read_gauge(self, png, name, spec):
-        txt = prompts.GAUGE_INSTRUCTION.format(name=name, **spec).replace(
+        txt = prompts.gauge_instruction(name, spec).replace(
             "call the report_reading tool.",
             'reply with ONLY a JSON object {"readable": bool, "value": number, '
             '"units": str, "confidence": 0-1, "notes": str}.')

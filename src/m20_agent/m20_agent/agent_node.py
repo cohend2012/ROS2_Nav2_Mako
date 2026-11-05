@@ -23,7 +23,9 @@ from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from nav_msgs.msg import OccupancyGrid
+from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, qos_profile_sensor_data
+from sensor_msgs.msg import CameraInfo, Image, LaserScan
 from std_msgs.msg import String
 import tf2_ros
 
@@ -48,9 +50,78 @@ class RosRobotIO:
         self._img, self._img_t = None, 0.0
         node.create_subscription(Image, "/camera/image_raw", self._on_img, 3,
                                  callback_group=self.cb)
+        # find_gauges: the map (survey route), the scan (range along a camera ray) and
+        # the camera intrinsics (pixel -> bearing)
+        self._map, self._scan, self._planner = None, None, None
+        latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                             reliability=ReliabilityPolicy.RELIABLE)
+        node.create_subscription(OccupancyGrid, "/map", self._on_map, latched, callback_group=self.cb)
+        node.create_subscription(LaserScan, "/scan", self._on_scan, qos_profile_sensor_data,
+                                 callback_group=self.cb)
+        node.create_subscription(CameraInfo, "/camera/camera_info", self._on_info, 1,
+                                 callback_group=self.cb)
 
     def _on_img(self, msg):
         self._img, self._img_t = msg, time.monotonic()
+
+    def _on_map(self, msg):
+        self._map, self._planner = msg, None          # planner rebuilt on next survey
+
+    def _on_scan(self, msg):
+        self._scan = msg
+
+    def _on_info(self, msg):
+        if msg.k[0] > 0:
+            from m20_agent import gauge_finder
+            gauge_finder.set_camera(msg.width, msg.height, msg.k[0], msg.k[4], msg.k[2], msg.k[5])
+
+    # --- find_gauges hooks (gauge_search.py) ---
+    def survey_viewpoints(self, spacing=3.0, clear=0.9):
+        from m20_agent.gauge_finder import survey_viewpoints
+        from m20_ai_nav.grid_planner import GridPlanner
+        m, p = self._map, self.pose()
+        if m is None or p is None:
+            return []
+        if self._planner is None:
+            i = m.info
+            self._planner = GridPlanner(robot_radius=0.45, inflation_radius=0.9)
+            self._planner.set_map(m.data, i.width, i.height, i.resolution,
+                                  i.origin.position.x, i.origin.position.y)
+        return survey_viewpoints(self._planner, p[:2], spacing=spacing, clear=clear)
+
+    def _scan_hit(self, bearing):
+        sc, p = self._scan, self.pose()
+        if sc is None or p is None:
+            return None
+        i = int(round((bearing - sc.angle_min) / sc.angle_increment))
+        if not 0 <= i < len(sc.ranges):
+            return None
+        r = sc.ranges[i]
+        if not (sc.range_min < r < min(sc.range_max, 12.0)) or math.isnan(r):
+            return None
+        # the scan is in base_link (pointcloud_to_laserscan target_frame)
+        h = p[2] + bearing
+        return r, (p[0] + r * math.cos(h), p[1] + r * math.sin(h))
+
+    def range_along(self, bearing, elevation):
+        """LiDAR range along a camera ray. The 2-D scan is a height band through the
+        dial height, so elevation is ignored; the camera sits on the body axis, so the
+        camera bearing is used as the scan bearing (parallax < 2 deg beyond 1.5 m)."""
+        return self._scan_hit(bearing)
+
+    def face_normal(self, bearing, elevation):
+        a, b = self._scan_hit(bearing + math.radians(1.5)), self._scan_hit(bearing - math.radians(1.5))
+        p = self.pose()
+        if not a or not b or p is None:
+            return None
+        (ax, ay), (bx, by) = a[1], b[1]
+        L = math.hypot(ax - bx, ay - by)
+        if L < 1e-3:
+            return None
+        nx, ny = -(ay - by) / L, (ax - bx) / L
+        if (p[0] - (ax + bx) / 2) * nx + (p[1] - (ay + by) / 2) * ny < 0:
+            nx, ny = -nx, -ny
+        return nx, ny
 
     def pose(self):
         try:
@@ -88,6 +159,9 @@ class RosRobotIO:
         return bool(r.success), r.detail
 
     def navigate(self, x, y, yaw, label):
+        if yaw is None:                                # any heading: face the way we go
+            p = self.pose()
+            yaw = math.atan2(y - p[1], x - p[0]) if p else 0.0
         it = MissionItem(); it.type = MissionItem.TYPE_GOTO; it.label = label
         it.goal.header.frame_id = self.frame
         it.goal.pose.position.x, it.goal.pose.position.y = float(x), float(y)

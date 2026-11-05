@@ -310,3 +310,16 @@ def test_tight_spot_accepts_heading_within_tolerance_when_turn_is_blocked():
     b = CLEAR.copy(); b[8] = 0.50                               # turning would strike a corner
     cmd = c.tick(0.0, 1.0, 0.0, 0.0, b)
     assert cmd.state == SUCCEEDED and "tight spot" in cmd.detail
+
+
+def test_mixer_stalled_turn_does_not_wind_up():
+    """A turn the body can't follow (omega stays 0) must not grow the wheel differential
+    without bound: unbounded trim tipped the robot over (find-the-gauges seed 5)."""
+    from m20_ai_nav.mixer import SkidSteerMixer, YAW_TRIM_MAX
+    mix = SkidSteerMixer()
+    for _ in range(400):                                 # 20 s stalled at 20 Hz
+        vl, vr = mix.wheels(0.4, 0.7, 0.0, 0.05)
+    w_eff = (vl - vr) * mix.R / mix.B                    # differential as a body rate
+    assert abs(w_eff) <= 0.7 + YAW_TRIM_MAX + 1e-6
+    vl, vr = mix.wheels(0.4, 0.7, 0.7, 0.05)             # unstalls: no stored windup
+    assert abs((vl - vr) * mix.R / mix.B - 0.7) < 0.25

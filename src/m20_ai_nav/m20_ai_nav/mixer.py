@@ -13,6 +13,7 @@ import math
 
 R_WHEEL, TRACK = 0.072, 0.40     # calibrated effective radius / track (bridge defaults)
 KP_YAW, KI_YAW = 3.0, 0.1
+YAW_TRIM_MAX = 0.6     # bridge parity: a stalled turn must not wind the trim up (tipped the robot)
 
 
 class SkidSteerMixer:
@@ -26,8 +27,10 @@ class SkidSteerMixer:
     def wheels(self, vx, wz, omega_meas, dt):
         """Returns (left, right) wheel velocity setpoints in rad/s."""
         yerr = wz - omega_meas
-        self.yint = max(-2.0, min(2.0, self.yint + yerr * dt))
-        w_cmd = max(-5.0, min(5.0, wz + KP_YAW * yerr + KI_YAW * self.yint))
+        corr = KP_YAW * yerr + KI_YAW * self.yint       # bounded trim + anti-windup
+        if abs(corr) < YAW_TRIM_MAX:
+            self.yint = max(-2.0, min(2.0, self.yint + yerr * dt))
+        w_cmd = wz + max(-YAW_TRIM_MAX, min(YAW_TRIM_MAX, corr))
         if abs(vx) < 0.05 and abs(wz) >= 0.15 and abs(w_cmd) < 0.5:
             w_cmd = math.copysign(0.5, w_cmd if w_cmd != 0.0 else wz)
         vl = (-vx + w_cmd * self.B / 2.0) / self.R

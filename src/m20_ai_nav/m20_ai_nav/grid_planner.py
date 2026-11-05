@@ -48,6 +48,7 @@ class GridPlanner:
         cost[dist <= self.rr] = np.inf
         self.cost = cost
         self.dist = dist
+        self.unk = unk
 
     def _distance(self, occ):
         """Approximate Euclidean distance transform by ring dilation (bounded at ir)."""
