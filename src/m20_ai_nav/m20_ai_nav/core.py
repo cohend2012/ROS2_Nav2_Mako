@@ -43,6 +43,7 @@ class NavCore:
         self.stuck_timeout, self.stuck_prog = stuck_timeout_s, stuck_min_progress
         self.align_kp = align_kp
         self.realign_dist = 2.5 * xy_tol
+        self.tight_yaw_tol = 0.35        # = Nav2's tight-spot goal checker (lattice_cm)
         self.goal_yaw = None
         self.reset()
 
@@ -96,6 +97,12 @@ class NavCore:
             if abs(wz) < 0.2:
                 wz = math.copysign(0.2, e)        # bridge dead-zone boost needs >= 0.15
             if self._footprint_hits(0.0, wz, bins):
+                # Tight place: the turn would swing a corner into something. If the
+                # heading is already within the tight-spot tolerance (we drove in along
+                # the goal heading), this IS the arrival; otherwise hold (STUCK later).
+                if abs(e) < self.tight_yaw_tol:
+                    return Command(0.0, 0.0, SUCCEEDED,
+                                   f"xy {dist_goal:.2f} m, yaw {e:+.2f} (tight spot: no room to turn)")
                 return Command(0.0, 0.0, BLOCKED, "footprint guard: final heading align blocked")
             return Command(0.0, wz, ALIGNING, f"yaw err {e:+.2f}")
         cx, cy = self.tracker.carrot(x, y)

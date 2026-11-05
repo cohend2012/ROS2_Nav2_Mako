@@ -264,14 +264,14 @@ class AiController(Node):
             if not self.map_ok:
                 self.get_logger().error("standalone mode: no /map received; aborting goal")
                 gh.abort(); return NavigateToPose.Result()
-            path = self.planner.plan(pose[0], pose[1], gx, gy)
+            path = self.planner.plan_pose(pose[0], pose[1], gx, gy, gyaw)
             if path is None:
                 self.get_logger().error("A*: no path to goal")
                 gh.abort(); return NavigateToPose.Result()
             self.core.set_path(path, goal_yaw=gyaw)
 
             def replan(p):
-                new = self.planner.plan(p[0], p[1], gx, gy)
+                new = self.planner.plan_pose(p[0], p[1], gx, gy, gyaw)
                 if new is None:
                     return False
                 self.core.update_path(new)

@@ -292,3 +292,21 @@ def test_pivot_aware_path_crosses_door_straight():
     band = [(x, y) for x, y in q if 2.5 - 0.6 < y < 2.5 + 0.6]  # the robot's length either side
     xs = [x for x, y in band]
     assert xs and max(xs) - min(xs) < 0.15                    # straight across the door
+
+
+def test_plan_pose_arrives_along_goal_heading():
+    """Tight place: the path's last segment must run INTO the goal along its yaw."""
+    g = np.zeros((100, 100), np.int8)
+    pl = GridPlanner(robot_radius=0.32, inflation_radius=0.8, plan_res=0.1)
+    pl.set_map(g.reshape(-1), 100, 100, 0.05, 0.0, 0.0)
+    p = pl.plan_pose(1.0, 1.0, 3.0, 3.0, math.pi / 2)          # arrive heading +y
+    (ax, ay), (bx, by) = p[-2], p[-1]
+    assert (bx, by) == (3.0, 3.0)
+    assert abs(math.atan2(by - ay, bx - ax) - math.pi / 2) < 0.15
+
+
+def test_tight_spot_accepts_heading_within_tolerance_when_turn_is_blocked():
+    c = NavCore(Fwd()); c.set_path([(0, 0), (1, 0)], goal_yaw=0.25)
+    b = CLEAR.copy(); b[8] = 0.50                               # turning would strike a corner
+    cmd = c.tick(0.0, 1.0, 0.0, 0.0, b)
+    assert cmd.state == SUCCEEDED and "tight spot" in cmd.detail

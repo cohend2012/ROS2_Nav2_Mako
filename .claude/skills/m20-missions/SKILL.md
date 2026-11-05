@@ -20,10 +20,10 @@ The report (JSON + every gauge frame) goes to `/cfg/out/agent/` (sim) or `data/a
 (compose).
 
 ## Teach places (no file editing)
-**Teach only where the robot can turn around:** at least 0.85 m clear on every side.
-The corners sweep 0.53 m in a turn. Places with 0.50-0.54 m of clearance made
-Nav2 time out while parking (office batch gate). Not in a doorway, not tight against a
-desk.
+Tight places are fine (the office set has places with only 0.50-0.54 m of clearance,
+less than the 0.53 m corner sweep). The navigation plans the arrival heading, so the
+robot drives in already aligned instead of pivoting at the end. Avoid teaching a place
+INSIDE a doorway: the robot can't stop and turn there.
 
 Drive the robot to the spot, then: `"this is the kitchen"` / `"remember this spot as the
 meeting room"` / `"call this the dock"`. Places go to `taught_places.yaml`, survive

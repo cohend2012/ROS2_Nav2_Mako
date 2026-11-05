@@ -91,6 +91,23 @@ class GridPlanner:
             return path
         return self._pivot_aware(path, gx, gy)
 
+    def plan_pose(self, sx, sy, gx, gy, gyaw, approach=(0.6, 0.45, 0.3)):
+        """Plan to a POSE: arrive driving along the goal heading. Tight places (0.50 m of
+        clearance, less than the 0.53 m corner sweep) leave no room to pivot at the end,
+        so the path ends with a straight run of `approach` metres INTO the goal along
+        gyaw. Falls back to a plain plan when no approach segment fits."""
+        if gyaw is None:
+            return self.plan(sx, sy, gx, gy)
+        c, s_ = math.cos(gyaw), math.sin(gyaw)
+        for d in approach:
+            pre = (gx - c * d, gy - s_ * d)
+            if self._clear(*pre) <= self.rr or not self._line_ok(pre, (gx, gy), self.rr):
+                continue
+            head = self.plan(sx, sy, *pre)
+            if head is not None:
+                return head + [(gx, gy)]
+        return self.plan(sx, sy, gx, gy)
+
     def _clear(self, x, y):
         r, c = self.world_to_cell(x, y)
         if not (0 <= r < self.h and 0 <= c < self.w):

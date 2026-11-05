@@ -53,8 +53,11 @@ TRUTH = os.path.join(REPO, "tools", "sim", "gauges", "truth.json")
 class SimRobotIO:
     def __init__(self, env, policy_path, log=print, nav_timeout_s=120.0, plan_radius=0.55):
         self.env, self.log, self.timeout = env, log, nav_timeout_s
-        self.core = NavCore(OnnxPolicy(policy_path))
-        self.planner = GridPlanner(robot_radius=plan_radius, inflation_radius=max(0.8, plan_radius + 0.5))
+        office = plan_radius < 0.5        # = the office site profile (ai_nav.launch SITE_PARAMS)
+        self.core = NavCore(OnnxPolicy(policy_path), lookahead=0.9 if office else 1.5,
+                            stuck_timeout_s=20.0 if office else 12.0)
+        self.planner = GridPlanner(robot_radius=plan_radius, inflation_radius=max(0.8, plan_radius + 0.5),
+                                   pivot_clear=0.6 if plan_radius < 0.5 else None)
         mujoco.mj_forward(env.m, env.d)
         self.planner.set_map(*rasterize(env.m, env.d))
         self.renderer = mujoco.Renderer(env.m, 240, 320)
@@ -77,7 +80,7 @@ class SimRobotIO:
 
     def navigate(self, gx, gy, gyaw, label):
         x, y, _ = self.pose()
-        path = self.planner.plan(x, y, gx, gy)
+        path = self.planner.plan_pose(x, y, gx, gy, gyaw)
         if path is None:
             return False, f"A*: no path to {label}"
         self.core.set_path(path, goal_yaw=gyaw)
@@ -87,7 +90,7 @@ class SimRobotIO:
         while self.t < t_end:
             if self.t - last_plan > 1.0:                  # 1 Hz replan like standalone mode
                 last_plan = self.t
-                new = self.planner.plan(*self.pose()[:2], gx, gy)
+                new = self.planner.plan_pose(*self.pose()[:2], gx, gy, gyaw)
                 if new is not None:
                     self.core.update_path(new)
             x, y, yaw = self.pose()

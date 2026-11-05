@@ -1,0 +1,68 @@
+# TIGHT-SPOT office variant: Smac Lattice (diff-drive, REVERSE allowed) + RPP (reversing,
+# own collision check off) + collision_monitor (launch with collision_monitor:=true).
+#
+# Why: real office places can have 0.50-0.54 m of clearance, less than the 0.53 m corner
+# sweep of a pivot. The robot must ARRIVE already facing the goal heading (or back in),
+# not pivot at the end. The lattice plans in SE(2) with the real footprint, including
+# the final heading and short reverse moves where a turn won't fit. RPP follows those
+# segments, reversing included. collision_monitor (stop polygon 4-6 cm outside the body,
+# all round) is the hard safety stop.
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 1.0
+    GridBased:
+      plugin: "nav2_smac_planner/SmacPlannerLattice"
+      lattice_filepath: "{share:nav2_smac_planner}/sample_primitives/5cm_resolution/0.5m_turning_radius/diff/output.json"
+      allow_unknown: true
+      tolerance: 0.25
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      max_planning_time: 5.0
+      analytic_expansion_ratio: 3.5
+      analytic_expansion_max_length: 2.0
+      reverse_penalty: 1.5
+      change_penalty: 0.05
+      non_straight_penalty: 1.05
+      cost_penalty: 2.0
+      rotation_penalty: 5.0
+      retrospective_penalty: 0.015
+      lookup_table_size: 20.0
+      cache_obstacle_heuristic: true
+      allow_reverse_expansion: true      # back out of / into tight spots
+      smooth_path: true
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      resolution: 0.05                   # lattice primitives are 0.05 m
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      resolution: 0.05
+      footprint_padding: 0.0
+controller_server:
+  ros__parameters:
+    goal_checker:
+      yaw_goal_tolerance: 0.35           # the path already ends on the goal heading
+    FollowPath:
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 0.3
+      lookahead_dist: 0.5
+      min_lookahead_dist: 0.3
+      max_lookahead_dist: 0.8
+      use_velocity_scaled_lookahead_dist: true
+      transform_tolerance: 0.3
+      # RPP refuses rotate_to_heading together with reversing ("Disabling reversing"),
+      # and tight spots NEED reversing; the lattice already plans any in-place turns.
+      use_rotate_to_heading: false
+      rotate_to_heading_angular_vel: 0.6
+      max_angular_accel: 4.0
+      allow_reversing: true              # follow the lattice's reverse segments
+      use_collision_detection: false     # collision_monitor owns the stop
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 0.6
+      regulated_linear_scaling_min_speed: 0.12
+      cost_scaling_dist: 0.5
+      cost_scaling_gain: 1.0
+      inflation_cost_scaling_factor: 5.0
+      max_robot_pose_search_dist: 10.0
