@@ -8,6 +8,8 @@ A plan is a JSON list of steps:
   {"action": "return_home"}
   {"action": "save_place",  "target": "kitchen"}    # remember the CURRENT pose by name
   {"action": "run_routine", "target": "morning_round"}   # a saved mission; "" = default
+  {"action": "set_gauge_scale", "target": "DIAL-004", "min": 0, "max": 100, "units": "psi"}
+                                  # give a FOUND gauge its real scale (no motion)
   {"action": "find_gauges"}       # survey the map, find dials with NO prior positions,
                                   # localize them (camera bearing + LiDAR), read, save
 
@@ -16,7 +18,7 @@ robot's actual capabilities dispose). Unknown targets, reading a non-gauge, or a
 over-long plan are REJECTED before anything moves — never "best-effort" executed.
 """
 ACTIONS = ("goto", "read_gauge", "inspect", "wait", "return_home", "save_place", "run_routine",
-           "find_gauges")
+           "find_gauges", "set_gauge_scale")
 MAX_STEPS = 40
 MAX_WAIT_S = 120.0
 
@@ -32,6 +34,9 @@ PLAN_SCHEMA = {
                     "target": {"type": "string"},
                     "question": {"type": "string"},
                     "seconds": {"type": "number"},
+                    "min": {"type": "number"},
+                    "max": {"type": "number"},
+                    "units": {"type": "string"},
                 },
                 "required": ["action"],
                 "additionalProperties": False,
@@ -74,6 +79,18 @@ def validate(plan, registry, _depth=0):
             if not 0 < sec <= MAX_WAIT_S:
                 raise PlanError(f"step {i}: wait seconds must be in (0, {MAX_WAIT_S}]")
             out.append({"action": "wait", "seconds": sec})
+            continue
+        if a == "set_gauge_scale":
+            lm = registry.resolve(s.get("target") or "")
+            if lm is None or lm.type != "gauge":
+                raise PlanError(f"step {i}: no gauge called {s.get('target')!r}")
+            try:
+                lo, hi = float(s.get("min")), float(s.get("max"))
+            except (TypeError, ValueError):
+                raise PlanError(f"step {i}: set_gauge_scale needs numeric min and max")
+            if not lo < hi or not (s.get("units") or "").strip():
+                raise PlanError(f"step {i}: set_gauge_scale needs min < max and units")
+            out.append({"action": a, "target": lm.name, "min": lo, "max": hi, "units": s["units"].strip()})
             continue
         if a in ("return_home", "find_gauges"):
             out.append({"action": a})

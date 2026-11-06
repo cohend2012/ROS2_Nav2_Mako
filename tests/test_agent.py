@@ -532,3 +532,25 @@ def test_always_on_camera_tags_dials_while_driving():
     assert any("DIAL-001 spotted" in l and "while driving" in l for l in logs)
     assert len(res["gauges"]) == 1 and res["gauges"][0]["asset_tag"] == "DIAL-001"
     assert "DIAL-001" in reg.get(res["gauges"][0]["name"]).aliases
+
+
+def test_found_gauge_scale_by_voice_then_readings_in_units_and_logged(tmp_path):
+    import csv
+    reg = LandmarkRegistry.load(LM, str(tmp_path / "taught.yaml"))
+    reg.teach("found_gauge_1", 1.0, 0.0, 0.0, aliases=["DIAL-004"], type_="gauge",
+              gauge={"units": "fraction of scale", "min": 0.0, "max": 1.0}, position=(2.2, 0.0))
+    b = OfflineBackend(reg)
+    steps = validate(b.plan("DIAL-004 is 0 to 100 psi"), reg)
+    assert steps == [{"action": "set_gauge_scale", "target": "found_gauge_1", "min": 0.0,
+                      "max": 100.0, "units": "psi"}]
+    io_ = FakeIO(frame=png_of(31.0, 0, 100))
+    rep = Executor(reg, b, io_, report_dir=str(tmp_path), log=lambda *_: None).run(
+        "DIAL-004 is 0 to 100 psi and read DIAL-004")
+    r = rep["readings"][0]
+    assert r["units"] == "psi" and abs(r["value"] - 31.0) < 2.0 and r["asset_tag"] == "DIAL-004"
+    assert LandmarkRegistry.load(LM, str(tmp_path / "taught.yaml")).get("found_gauge_1").gauge["units"] == "psi"
+    rows = list(csv.DictReader(open(tmp_path / "inspection_log.csv")))
+    assert rows[-1]["asset_tag"] == "DIAL-004" and rows[-1]["units"] == "psi" and rows[-1]["x"] == "2.2"
+    # surveyed gauges can't be re-scaled by voice
+    rep2 = Executor(reg, b, io_, log=lambda *_: None).run("PG-101 is 0 to 5 bar")
+    assert not rep2["success"]

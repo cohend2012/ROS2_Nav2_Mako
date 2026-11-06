@@ -60,6 +60,17 @@ def _look_headings(io, n, look_range):
     return out
 
 
+def crop_dial(rgb, det, scale=2):
+    """PNG of just this dial (cx, cy, r): a second dial in the frame can't be read."""
+    from PIL import Image
+    cx, cy, r = det[:3]
+    m = int(1.6 * r) + 4
+    H, W = rgb.shape[:2]
+    crop = rgb[max(0, int(cy) - m):min(H, int(cy) + m), max(0, int(cx) - m):min(W, int(cx) + m)]
+    buf = _io.BytesIO(); Image.fromarray(crop).resize((crop.shape[1] * scale, crop.shape[0] * scale)).save(buf, "PNG")
+    return np.ascontiguousarray(crop), buf.getvalue()
+
+
 def _read_from_survey(io, vlm, cluster, rgb, det, range_m, log, max_range=2.8):
     """A survey photo taken by a planned view is already close and nearly head-on. If the
     dial passes the same up-close test the reading visit uses (near the image centre, big
@@ -231,6 +242,10 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
             log(f"[find] {name}: {rec['status']} ({rec.get('detail', 'no dial seen up close')})")
             continue
         r, png, spot = best
+        if rec.get("read_on_survey"):
+            # read from wherever the survey happened to be: store a PROPER viewing spot
+            # (1.2 m in front of the face) for later rounds, not that survey pose
+            spot = viewing_spot(g["position"], g["normal"], spot[:2], 1.2)
         rec.update(viewing_spot=[round(v, 3) for v in spot], reading=r,
                    status=("UNREADABLE" if not r.get("readable") else
                            "NEEDS_REVIEW" if r.get("confidence", 0) < 0.7 else "OK"))

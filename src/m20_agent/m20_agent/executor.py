@@ -30,6 +30,11 @@ from m20_agent.plan import validate, PlanError
 REVIEW_THRESHOLD = 0.7
 
 
+def _tag(lm):
+    """A found gauge's asset tag (DIAL-NNN alias), if it has one."""
+    return next((a for a in lm.aliases if a.upper().startswith("DIAL-")), None)
+
+
 class Executor:
     def __init__(self, registry, backend, io, report_dir=None, continue_on_fail=False,
                  log=print, read_retries=1):
@@ -79,10 +84,14 @@ class Executor:
             ok_all &= ok
         if self.stop_requested:
             return self._finish(report, False, "stopped by operator", t0)
+        if report.get("flagged"):
+            ok_all = False
         if wants_home and not any(r["action"] == "return_home" and r["status"] == "OK"
                                   for r in report["steps"]):
             ok_all = False
-        return self._finish(report, ok_all, "ok" if ok_all else "one or more steps failed", t0)
+        why = ("unreadable: " + ", ".join(report["flagged"])) if report.get("flagged") and ok_all is False \
+            and all(st["status"] == "OK" for st in report["steps"]) else "one or more steps failed"
+        return self._finish(report, ok_all, "ok" if ok_all else why, t0)
 
     def _goto(self, name):
         lm = self.reg.get(name)
@@ -108,6 +117,12 @@ class Executor:
             except ValueError as e:
                 return False, str(e)
             return True, f"remembered {lm.name} at ({p[0]:.2f}, {p[1]:.2f})"
+        if a == "set_gauge_scale":
+            try:
+                lm = self.reg.set_gauge_scale(s["target"], s["min"], s["max"], s["units"])
+            except ValueError as e:
+                return False, str(e)
+            return True, f"{lm.name} scale set to {s['min']:g}-{s['max']:g} {s['units']}"
         if a == "wait":
             return self.io.wait(s["seconds"])
         if a == "return_home":
@@ -128,16 +143,23 @@ class Executor:
                         return False, "no camera frame"
                     img_path = self._save_png(png, s["target"])
                     r = self.vlm.read_gauge(png, lm.name, lm.gauge)
+                    if not r.get("readable"):
+                        r = self._read_crop(png, lm) or r      # whole frame failed: the dial alone
                     if r.get("readable") and r.get("confidence", 0) >= REVIEW_THRESHOLD:
                         break
                 r["attempts"] = attempt + 1
                 status = ("UNREADABLE" if not r.get("readable") else
                           "NEEDS_REVIEW" if r.get("confidence", 0) < REVIEW_THRESHOLD else
                           "OK")
-                rec = {"gauge": lm.name, **r, "status": status, "image": img_path}
+                rec = {"gauge": lm.name, "asset_tag": _tag(lm), **r, "status": status,
+                       "image": img_path, "position": [round(float(v), 2) for v in lm.position]}
                 report["readings"].append(rec)
-                return status != "UNREADABLE", f"{r.get('value')} {r.get('units')} " \
-                                               f"(conf {r.get('confidence')}, {status})"
+                self._log_reading(rec, report)
+                if status == "UNREADABLE":
+                    # flagged, and the mission fails at the end, but the round carries on:
+                    # one dirty dial must not leave every gauge after it unread
+                    report.setdefault("flagged", []).append(lm.name)
+                return True, f"{r.get('value')} {r.get('units')} (conf {r.get('confidence')}, {status})"
             self._aim(lm)
             png = self.io.capture()
             if png is None:
@@ -159,9 +181,11 @@ class Executor:
         except RuntimeError as e:
             return False, f"search failed: {e}"
         for g in res["gauges"]:
-            report["readings"].append({"gauge": g["name"], **g["reading"], "status": g["status"],
-                                       "image": g.get("image"), "position": g["position"],
-                                       "found": True})
+            rec = {"gauge": g["name"], "asset_tag": g.get("asset_tag"), **g["reading"],
+                   "status": g["status"], "image": g.get("image"), "position": g["position"],
+                   "viewing_spot": g.get("viewing_spot"), "found": True}
+            report["readings"].append(rec)
+            self._log_reading(rec, report)
         report["find_gauges"] = {k: v for k, v in res.items() if k != "gauges"}
         if res["survey_points"] and res["unreached_survey_points"] == res["survey_points"]:
             return False, "could not reach any survey point"
@@ -171,6 +195,47 @@ class Executor:
                       f"NEEDS_REVIEW, {n['UNREADABLE']} UNREADABLE; {len(res['rejected'])} "
                       f"candidate(s) rejected/unreached; {res['unreached_survey_points']}/"
                       f"{res['survey_points']} survey points unreachable")
+
+    def _read_crop(self, png, lm):
+        """Find the dial nearest the image centre (we just aimed at it) and read only it."""
+        try:
+            from m20_agent.dial_detector import ClassicalDetector
+            from m20_agent.gauge_search import crop_dial, _rgb
+            rgb = _rgb(png)
+            det = getattr(self.io, "detector", None) or ClassicalDetector()
+            dets = det(rgb)
+            if not dets:
+                return None
+            d = min(dets, key=lambda o: abs(o[0] - rgb.shape[1] / 2) + abs(o[1] - rgb.shape[0] / 2))
+            _, cpng = crop_dial(rgb, d)
+            r = self.vlm.read_gauge(cpng, lm.name, lm.gauge)
+            return r if r.get("readable") else None
+        except Exception:
+            return None
+
+    LOG_FIELDS = ("time", "request", "gauge", "asset_tag", "x", "y", "value", "units",
+                  "confidence", "status", "image")
+
+    def _log_reading(self, rec, report):
+        """Append one row per reading to <report_dir>/inspection_log.csv: the running
+        record of every gauge's location and value across missions."""
+        if not self.report_dir:
+            return
+        import csv
+        os.makedirs(self.report_dir, exist_ok=True)
+        path = os.path.join(self.report_dir, "inspection_log.csv")
+        new = not os.path.exists(path)
+        pos = rec.get("position") or (None, None)
+        row = {"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "request": report.get("request", ""),
+               "gauge": rec.get("gauge"), "asset_tag": rec.get("asset_tag") or "",
+               "x": pos[0], "y": pos[1], "value": rec.get("value") if rec.get("readable") else "",
+               "units": rec.get("units", ""), "confidence": rec.get("confidence"),
+               "status": rec.get("status"), "image": rec.get("image") or ""}
+        with open(path, "a", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=self.LOG_FIELDS)
+            if new:
+                w.writeheader()
+            w.writerow(row)
 
     def _aim(self, lm):
         """Turn in place to the TRUE bearing of the object from where the robot

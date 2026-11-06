@@ -375,8 +375,8 @@ def main():
     env.reset(seed=a.seed, options={"start": (sx, sy), "yaw": syaw, "goal": (sx, sy)})
     reg = LandmarkRegistry.load(lm_path, os.path.join(a.out, "taught.yaml") if a.hide_gauges else None)
     if a.hide_gauges:
-        for n in [n for n in reg.names() if reg.get(n).type == "gauge"]:
-            reg._lm.pop(n)
+        for n in [n for n in reg.names() if reg.get(n).type == "gauge" and not reg.get(n).taught]:
+            reg._lm.pop(n)                 # surveyed gauges hidden; ones FOUND earlier stay
         sys.path.insert(0, HERE)
         from find_gauges import FinderIO, BOUNDS          # + range_along / turn_to / face_normal
         from m20_agent.gauge_finder import survey_viewpoints

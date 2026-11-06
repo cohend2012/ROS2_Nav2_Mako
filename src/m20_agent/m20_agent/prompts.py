@@ -19,6 +19,9 @@ Available actions:
   close and read each). Use it for "find the gauges", "look for gauges", or when the
   operator asks about gauges and the registry has none. It reads what it finds, so do
   not add read_gauge steps for the found ones.
+- set_gauge_scale(target, min, max, units): the operator tells you a found gauge's scale
+  ("DIAL-004 is 0 to 100 psi"). It does not move the robot; later readings of that gauge
+  are then in those units.
 - run_routine(target): run a saved routine from the registry. "Start the mission",
   "do your rounds" and similar mean the DEFAULT routine; pass target "" for it.
 

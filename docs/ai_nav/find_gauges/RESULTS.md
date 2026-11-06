@@ -236,3 +236,39 @@ trained around (new poses, randomized faces). On a real site it needs real label
 from the robot's camera, fine-tuned from this model (`train_dial_yolo.py --init best.pt`).
 Real cameras also blur while the robot moves: on hardware, read only when the robot is
 slow, and use moving frames for spotting and tagging.
+
+## What gets logged: location, asset tag, and the value in real units (2026-11-06)
+Every reading, from any mission, is appended to `<report_dir>/inspection_log.csv`
+(`/data/agent/` in compose), the running record across missions:
+`time, request, gauge, asset_tag, x, y, value, units, confidence, status, image`.
+Each mission's JSON report also has asset tag, map position, viewing spot and the photo.
+Found gauges and their tags are kept in `taught_places.yaml`.
+
+**Units.** A gauge found with no scale on file is read as a **fraction of its scale**: the
+offline reader can't read the printed numbers, which are a few pixels tall at survey
+range. The operator says the scale once, e.g. "DIAL-004 is 0 to 100 psi", or several in one
+sentence (plan action `set_gauge_scale`, found gauges only; surveyed ones keep their file
+scale). From then on that gauge is read in those units. The Claude / Cosmos backends are
+asked to read the scale off the dial face themselves.
+
+Sim, seed 3 (example files in `example_log/`):
+1. "find the gauges and come back": 6 found, tagged DIAL-001…006, values as fractions;
+2. the operator gives the six scales in one sentence (no motion);
+3. "read all the gauges and come back": **3.0 min**:
+
+| Tag | Read | True |
+|---|---|---|
+| DIAL-003 | 12.02 bar | 12.0 bar |
+| DIAL-006 | 140.19 psi | 140.0 psi |
+| DIAL-004 | 31.09 psi | 31.0 psi |
+| DIAL-005 | 72.66 psi | 72.5 psi |
+| DIAL-001 | 84.99 degC | 85.0 degC |
+| DIAL-002 | 3.31 bar | 3.3 bar |
+
+Two fixes this exposed:
+- A gauge read during the survey had its viewing spot saved as that survey pose (2.5 m,
+  at an angle), and the next round could not read it from there. It now saves a proper spot
+  1.2 m in front of the face, and a failed whole-frame read retries on a crop of the dial
+  nearest the image centre.
+- One UNREADABLE gauge used to stop the whole round. Now it is flagged, the round
+  continues, and the mission still reports failure, naming the gauge.

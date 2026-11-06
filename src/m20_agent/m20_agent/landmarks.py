@@ -106,6 +106,25 @@ class LandmarkRegistry:
         self.add(Landmark(name, type_, tuple(position) if position else (x, y), (x, y, yaw),
                           aliases=list(aliases), gauge=dict(gauge) if gauge else None,
                           taught=True))
+        self._save_taught()
+        return self._lm[name]
+
+    def set_gauge_scale(self, text, lo, hi, units):
+        """'DIAL-004 is 0 to 100 psi': give a FOUND gauge its real scale, so readings are
+        logged in units instead of a fraction of the dial. Curated gauges keep their
+        surveyed scale (not changeable by voice)."""
+        lm = self.resolve(text)
+        if lm is None or lm.type != "gauge":
+            raise ValueError(f"no gauge called {text!r}")
+        if not lm.taught:
+            raise ValueError(f"{lm.name} is a surveyed gauge; its scale is in the landmark file")
+        if not float(lo) < float(hi):
+            raise ValueError(f"scale {lo}..{hi} is empty")
+        lm.gauge = {"units": str(units), "min": float(lo), "max": float(hi)}
+        self._save_taught()
+        return lm
+
+    def _save_taught(self):
         if self.taught_path:
             taught = [lm for lm in self._lm.values() if lm.taught]
             doc = {"landmarks": [dict({"name": lm.name, "type": lm.type, "aliases": lm.aliases,
@@ -118,7 +137,6 @@ class LandmarkRegistry:
             with open(tmp, "w") as f:
                 yaml.safe_dump(doc, f)
             os.replace(tmp, self.taught_path)      # atomic: a crash never corrupts it
-        return self._lm[name]
 
     def resolve_routine(self, text):
         t = (text or "").strip().lower()

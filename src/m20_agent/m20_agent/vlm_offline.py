@@ -22,6 +22,8 @@ import numpy as np
 
 from m20_agent.gauge_dial import read_dial
 
+UNIT_CASE = {"degc": "degC", "degf": "degF", "kpa": "kPa", "mpa": "MPa", "°c": "°C", "°f": "°F",
+             "m3/h": "m3/h", "inh2o": "inH2O"}
 STOP = {"the", "a", "an", "read", "what", "does", "say", "says", "gauge", "gauges", "on", "at",
         "of", "is", "me", "tell", "check", "please", "and", "come", "back", "to", "dial", "value",
         "reading", "go", "oil"}
@@ -37,6 +39,9 @@ class OfflineBackend:
 
     TEACH = re.compile(r"(?:remember|save|mark|store)\s+(?:this|here|this\s+(?:place|spot|location|room))\s+"
                        r"as\s+(?P<a>.+)|^(?:this|here)\s+is\s+(?P<b>.+)|^call\s+(?:this|here)\s+(?P<c>.+)")
+    SCALE = re.compile(r"(?:(?:set\s+)?(?:the\s+)?scale\s+(?:of|on|for)\s+)?(?P<t>[a-z]+-\d+|found_gauge_\d+)"
+                       r"\s+(?:is|reads|goes|runs|scale is|to)?\s*(?:from\s+)?(?P<lo>-?\d+(?:\.\d+)?)"
+                       r"\s*(?:to|-|–)\s*(?P<hi>-?\d+(?:\.\d+)?)\s*(?P<u>[a-z°%/0-9]+)")
     ROUTINE = re.compile(r"\b(?:start|run|begin|do|execute|launch)\s+(?:the\s+|your\s+|my\s+)?"
                          r"(?P<r>mission|routine|rounds?|patrol|[a-z0-9 _-]*?(?:round|routine|mission|patrol|tour))\b")
 
@@ -65,6 +70,14 @@ class OfflineBackend:
                 return {"steps": [{"action": "run_routine", "target": name}],
                         "rationale": f"offline: routine {name}"}
             notes.append(f"no routine called {word!r}")
+        for m in list(self.SCALE.finditer(q)):           # "DIAL-004 is 0 to 100 psi, ..."
+            steps.append({"action": "set_gauge_scale", "target": m.group("t").strip(),
+                          "min": float(m.group("lo")), "max": float(m.group("hi")),
+                          "units": UNIT_CASE.get(m.group("u"), m.group("u"))})
+        if steps:
+            q = self.SCALE.sub(" ", q)
+            if not re.search(r"\b(read|check|go|find|return|come back)\b", q):
+                return {"steps": steps, "rationale": "offline: gauge scale(s)"}
         gauges = [lm.name for lm in self.reg.of_type("gauge")]
         find = re.search(r"\b(find|search|look for|locate|discover|hunt for|map)\b.*\b(gauges?|dials?|meters?)\b", q)
         if find or (not gauges and re.search(r"\bgauges\b|\b(all|every|each)\b.*\bgauge\b", q)):
