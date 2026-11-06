@@ -1,0 +1,60 @@
+{
+ "classical": {
+  "ms_per_frame": 115.5,
+  "poses": 1010,
+  "by_distance_m": {
+   "1.0": 0.552,
+   "1.5": 0.562,
+   "2.0": 0.5,
+   "2.5": 0.462,
+   "3.0": 0.462,
+   "3.5": 0.037,
+   "4.0": 0.02,
+   "5.0": 0.01,
+   "6.0": 0.01
+  },
+  "by_off_axis_deg": {
+   "0": 0.566,
+   "20": 0.613,
+   "35": 0.402,
+   "50": 0.047,
+   "65": 0.0
+  },
+  "by_image_bearing_deg": {
+   "0": 0.405,
+   "12": 0.366,
+   "24": 0.084
+  },
+  "false_alarms_per_300_frames_oil_gas_field_gauges": 0,
+  "false_alarms_per_300_frames_office": 0
+ },
+ "yolo": {
+  "ms_per_frame": 15.6,
+  "poses": 1010,
+  "by_distance_m": {
+   "1.0": 1.0,
+   "1.5": 1.0,
+   "2.0": 1.0,
+   "2.5": 1.0,
+   "3.0": 1.0,
+   "3.5": 1.0,
+   "4.0": 1.0,
+   "5.0": 1.0,
+   "6.0": 1.0
+  },
+  "by_off_axis_deg": {
+   "0": 1.0,
+   "20": 1.0,
+   "35": 1.0,
+   "50": 1.0,
+   "65": 1.0
+  },
+  "by_image_bearing_deg": {
+   "0": 1.0,
+   "12": 1.0,
+   "24": 1.0
+  },
+  "false_alarms_per_300_frames_oil_gas_field_gauges": 6,
+  "false_alarms_per_300_frames_office": 0
+ }
+}

@@ -78,8 +78,8 @@ class GaugeClusters:
     candidate only becomes a gauge after VERIFICATION up close (executor / find_gauges:
     a dial must be seen near the image centre from the viewing spot)."""
 
-    def __init__(self, radius=0.6, min_hits=1):
-        self.radius, self.min_hits = radius, min_hits
+    def __init__(self, radius=0.6, min_hits=1, tag_prefix="DIAL"):
+        self.radius, self.min_hits, self.tag_prefix = radius, min_hits, tag_prefix
         self.clusters = []            # dicts: pts [(x,y)], normals [(nx,ny)], score
 
     def add(self, x, y, normal=None, score=1.0):
@@ -90,7 +90,8 @@ class GaugeClusters:
                 if normal is not None:
                     c["normals"].append(normal)
                 return c
-        c = {"pts": [(x, y)], "normals": [normal] if normal is not None else [], "score": score}
+        c = {"pts": [(x, y)], "normals": [normal] if normal is not None else [], "score": score,
+             "tag": f"{self.tag_prefix}-{len(self.clusters) + 1:03d}"}     # asset tag, first sight
         self.clusters.append(c)
         return c
 
@@ -106,7 +107,7 @@ class GaugeClusters:
                 if np.hypot(*v) > 1e-6:
                     n = tuple(v / np.hypot(*v))
             out.append({"position": (float(x), float(y)), "normal": n, "hits": len(c["pts"]),
-                        "score": round(c["score"], 2), "read": c.get("read")})
+                        "score": round(c["score"], 2), "read": c.get("read"), "tag": c.get("tag")})
         return sorted(out, key=lambda g: -g["hits"])
 
 
@@ -268,17 +269,42 @@ def view_plan(planner, start_xy, bounds=None, rng=(1.0, 2.8), half_fov_deg=18.0,
         views.remove(best)
         if not reachable(best):
             continue
-        chosen.append(best[:3]); seen |= best[3]
+        chosen.append(best); seen |= best[3]
     tour, cur = [], start_xy
     while chosen:
         nxt = min(chosen, key=lambda v: math.hypot(v[0] - cur[0], v[1] - cur[1]))
         tour.append(nxt); chosen.remove(nxt); cur = nxt[:2]
-    return _two_opt(tour, start_xy)
+    tour = _two_opt(tour, start_xy)
+
+    def seen_from(x, y, yaw, rng_m=None, half_fov_deg=None, max_incidence_deg=None):
+        """Surface samples a camera at (x, y, yaw) sees well enough to spot a dial on.
+        Defaults to the rule the views were chosen by; a detector passes its own measured
+        envelope (DialDetector.envelope). Lets the search skip views whose surfaces the
+        always-on camera already covered while driving."""
+        r_ = rng_m or rng
+        hf = math.radians(half_fov_deg) if half_fov_deg else hfov
+        mc = math.cos(math.radians(max_incidence_deg)) if max_incidence_deg else minc
+        dx, dy = S[:, 0] - x, S[:, 1] - y
+        d = np.hypot(dx, dy)
+        facing = -(dx * N[:, 0] + dy * N[:, 1]) / np.maximum(d, 1e-6)
+        rel = np.abs(np.arctan2(np.sin(np.arctan2(dy, dx) - yaw), np.cos(np.arctan2(dy, dx) - yaw)))
+        idx = np.nonzero((d >= r_[0]) & (d <= r_[1]) & (facing >= mc) & (rel <= hf))[0]
+        return {int(i) for i in idx if los(x, y, S[i, 0], S[i, 1])}
+    return ViewPlan([v[:3] for v in tour], [v[3] for v in tour], seen_from)
+
+
+class ViewPlan(list):
+    """[(x, y, yaw)] plus, per view, the surface samples it covers (`cover`) and
+    `seen_from(x, y, yaw)` for frames taken anywhere else."""
+
+    def __init__(self, views, cover, seen_from):
+        super().__init__(views)
+        self.cover, self.seen_from = cover, seen_from
 
 
 def _two_opt(tour, start_xy, rounds=50):
     """Untangle the nearest-neighbour tour (reverse any segment that shortens it)."""
-    pts = [tuple(start_xy)] + [t[:2] for t in tour]
+    pts = [tuple(start_xy)] + [tuple(t[:2]) for t in tour]
     d = lambda a, b: math.hypot(a[0] - b[0], a[1] - b[1])  # noqa: E731
     t = list(tour)
     for _ in range(rounds):
@@ -291,7 +317,7 @@ def _two_opt(tour, start_xy, rounds=50):
                 new = d(a, c) + (d(b, e) if e else 0.0)
                 if new < old - 1e-6:
                     t[i - 1:j - 1] = reversed(t[i - 1:j - 1])     # = pts[i .. j-1]
-                    pts = [tuple(start_xy)] + [v[:2] for v in t]
+                    pts = [tuple(start_xy)] + [tuple(v[:2]) for v in t]
                     better = True
         if not better:
             break

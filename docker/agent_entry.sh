@@ -16,6 +16,7 @@ LM=${M20_LANDMARKS:-oil_gas_field_landmarks.yaml}
 case "$LM" in /*) ;; *) LM="$(ros2 pkg prefix m20_agent)/share/m20_agent/config/$LM" ;; esac
 [ -f "$LM" ] || { echo "[agent] landmark file not found: $LM"; exit 1; }
 mkdir -p /data/agent
-echo "[agent] backend=${M20_AGENT:-offline} landmarks=$LM"
+echo "[agent] backend=${M20_AGENT:-offline} landmarks=$LM detector=${M20_DIAL_DETECTOR:-auto}"
 exec ros2 run m20_agent agent --ros-args -p backend:="${M20_AGENT:-offline}" \
-  -p landmarks:="$LM" -p taught_places:=/data/taught_places.yaml -p report_dir:=/data/agent
+  -p landmarks:="$LM" -p taught_places:=/data/taught_places.yaml -p report_dir:=/data/agent \
+  -p dial_detector:="${M20_DIAL_DETECTOR:-auto}"

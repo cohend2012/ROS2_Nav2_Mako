@@ -25,6 +25,11 @@ on file, the offline reader reports a fraction of full scale; Claude/Cosmos read
 units off the dial face. Candidates that aren't confirmed up close are REJECTED, never
 saved. It also runs when someone asks about gauges and the map has none.
 Needs `/map`, `/scan` and `/camera/camera_info` (for the real intrinsics).
+The camera runs the whole time: dials are spotted and asset-tagged (`DIAL-001`…) while
+driving, and stops already covered on the way are skipped. Detector: `M20_DIAL_DETECTOR=auto`
+(YOLO from `src/m20_agent/models/dial_yolo.onnx` when present) | `yolo` | `classical`.
+Retrain or fine-tune: `tools/perception/make_dial_dataset.py` → `train_dial_yolo.py`
+(add real labelled robot frames for a real site), then check with `eval_dial_detector.py`.
 
 The report (JSON + every gauge frame) goes to `/cfg/out/agent/` (sim) or `data/agent/`
 (compose).

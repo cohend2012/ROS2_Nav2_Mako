@@ -19,6 +19,7 @@ across seeds it was 3/6. Report n, the pass count, and the failure modes.
 | Office O1-O3 | `python3 tools/ai_nav/evaluate.py --model <onnx> --office 40 --out <json>` | ≥ scripted baseline | MuJoCo |
 | Gauge mission G5 | `tools/agent/sim_mission.py … --seed N`, **≥ 5 seeds** | ≥ 9/10 missions | MuJoCo + osmesa |
 | Find gauges G6 | `MUJOCO_GL=osmesa python3 tools/agent/find_gauges.py --out <dir> --seed N`, ≥ 4 seeds | 0 false positives, 0 confident-wrong; report found/read per seed | MuJoCo + osmesa |
+| Dial detector | `MUJOCO_GL=osmesa python3 tools/perception/eval_dial_detector.py` | YOLO ≥ 95 % in its envelope, 0 office false alarms | MuJoCo + osmesa |
 | Full stack G3 | `M20_AI_CONTROLLER=… bash tools/ci/batch_nav_test.sh` (owner box) | ≥ 9/10, < 0.5 m | sim images |
 
 Add `CM=1` to any ROS gate to put Nav2's `collision_monitor` (stop/slow polygons,

@@ -112,6 +112,7 @@ services:
       - "ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}"
       - "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
       - "M20_AGENT=${M20_AGENT:-offline}"       # claude | cosmos | offline
+      - "M20_DIAL_DETECTOR=${M20_DIAL_DETECTOR:-auto}"   # auto (YOLO if the model is installed) | yolo | classical
       - "M20_LANDMARKS=${M20_LANDMARKS:-oil_gas_field_landmarks.yaml}"
       - "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}"
       - "M20_COSMOS_BASE_URL=${M20_COSMOS_BASE_URL:-}"

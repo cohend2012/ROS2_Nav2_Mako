@@ -50,6 +50,7 @@ RUN source /opt/ros/humble/setup.bash && \
              m20_navigation m20_ai_nav m20_agent m20_station m20_bringup; do \
       test -d install/$p || { echo "MISSING PACKAGE $p"; exit 1; }; done && \
     test -f install/m20_ai_nav/share/m20_ai_nav/models/m20_nav_policy.onnx && \
+    test -f install/m20_agent/share/m20_agent/models/dial_yolo.onnx && \
     test -f install/m20_navigation/share/m20_navigation/config/collision_monitor.yaml && \
     rm -rf /var/lib/apt/lists/*
 

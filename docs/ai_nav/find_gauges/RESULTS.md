@@ -194,3 +194,45 @@ The progression on this site: 20.2 min (spin, learned driver) → 16.7 (spin, cl
 
 Once the gauges have been found, the daily "read all the gauges and return" on the saved
 landmarks takes **3.4 min** (G5 6/6, 0 confident-wrong, re-checked with the new reader).
+
+## Camera always on + YOLO dial detector with asset tags (2026-11-06, current default)
+**Always-on camera.** `search_and_read` registers a frame listener with the robot interface
+(`io.set_frame_listener`: the sim calls it every 0.5 s of robot time while driving or
+turning; `RosRobotIO` runs it on its own thread from `/camera/image_raw`). Every frame:
+1. detect dials, place each with camera bearing + LiDAR range, and give a new one an
+   **asset tag** (`DIAL-001`, …), saved as an alias of the found gauge;
+2. read the dial if it is close and centred enough;
+3. mark the mapped surfaces the frame saw, judged by the detector's measured envelope.
+   A planned view whose surfaces were all seen on the way is **skipped**.
+
+**YOLO detector.** A YOLO11n detector, trained only on sim-rendered frames:
+`tools/perception/make_dial_dataset.py` places the robot camera at random free spots,
+projects every gauge plate into the image for an exact box, and ray-checks occlusion.
+Dial faces are re-randomized (value, range, units, label, brightness) so it learns "a dial",
+not these six. Office frames are the negatives. 1600 frames; trained in 29 min on 4 CPU cores:
+precision 0.96, recall 0.97, mAP50 0.993 (held-out 15 %). It runs as ONNX on onnxruntime,
+the same runtime as the driving policy; no PyTorch on the robot.
+
+`tools/perception/eval_dial_detector.py` (`detector_eval.json`), 1010 poses not used in training:
+
+| | Detection rate | ms / frame | False alarms, 300 site / 300 office frames |
+|---|---|---|---|
+| classical | 55 % within 3 m head-on; 4 % at 3.5 m; 5 % at 50° off the face | 116 | 0 / 0 |
+| **YOLO** | **100 % at every pose: 1–6 m, 0–65° off the face, up to 24° off-centre** | **16** | 6 / 0 (plate backs / edge-on plates: real gauge positions, never read or saved) |
+
+Find-the-gauges, seeds 3 / 5 / 7:
+
+| Camera | Detector | Time | Planned views skipped | Found / read | Collisions, false positives, confident-wrong |
+|---|---|---|---|---|---|
+| at stops only (before) | classical | 10.3 / 10.7 / 9.8 min | 0 / 42 | 6/6 | 0 |
+| always on | classical | 9.2 / 9.8 / 8.6 min | 3–5 / 42 | 6/6 | 0 |
+| **always on** | **YOLO** | **6.9 / 6.9 / 6.3 min** | **18–20 / 42** | **6/6** | **0** |
+
+All 6 dials are spotted and read while the robot is on its way (0 drives back); worst
+reading 1.0 % FS. Progression on this site: 20.2 → 16.7 → 14.4 → 10.3 → **6.6 min**.
+
+**Limits, plainly:** the YOLO numbers are in the sim, on the same 6 plate geometries it was
+trained around (new poses, randomized faces). On a real site it needs real labelled frames
+from the robot's camera, fine-tuned from this model (`train_dial_yolo.py --init best.pt`).
+Real cameras also blur while the robot moves: on hardware, read only when the robot is
+slow, and use moving frames for spotting and tagging.

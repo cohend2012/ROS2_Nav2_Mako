@@ -136,7 +136,15 @@ class MissionVideo:
 
         onboard = io.capture()
         from io import BytesIO
-        cam_img = Image.open(BytesIO(onboard)).convert("RGB").resize((self.mw, int(self.mw * 0.75)))
+        raw = Image.open(BytesIO(onboard)).convert("RGB")
+        det = getattr(io, "detector", None)
+        if det is not None and getattr(io, "dial_tags", None) is not None:
+            cd = ImageDraw.Draw(raw)                        # what the detector sees, live
+            for cx, cy, r, sc in det(np.asarray(raw)):
+                cd.rectangle([cx - r / 0.92, cy - r / 0.92, cx + r / 0.92, cy + r / 0.92],
+                             outline=(255, 170, 0), width=2)
+                cd.text((cx - r, cy - r / 0.92 - 12), f"dial {sc:.2f}", fill=(255, 170, 0), font=self.tiny)
+        cam_img = raw.resize((self.mw, int(self.mw * 0.75)))
 
         px, py = self.to(x, y)
         if self.last_px is not None:
@@ -148,6 +156,13 @@ class MissionVideo:
         if home is not None:
             hx, hy = self.to(*home.position)
             md.rectangle([hx - 5, hy - 5, hx + 5, hy + 5], fill=(30, 30, 30))
+        tags = getattr(io, "dial_tags", None)
+        for c in (tags.clusters if tags is not None else []):    # asset-tagged, not yet saved
+            tx, ty = np.mean(c["pts"], axis=0)
+            gx, gy = self.to(tx, ty)
+            col = (30, 160, 70) if c.get("read") else (240, 140, 0)
+            md.ellipse([gx - 6, gy - 6, gx + 6, gy + 6], outline=col, width=3)
+            md.text((gx + 8, gy + 4), c["tag"] + (" read" if c.get("read") else ""), fill=col, font=self.tiny)
         for lm in self.reg.of_type("gauge"):
             gx, gy = self.to(*lm.position)
             md.ellipse([gx - 6, gy - 6, gx + 6, gy + 6], fill=(30, 160, 70))
@@ -164,11 +179,13 @@ class MissionVideo:
         dr.text((16, 8), f"t = {int(t // 60):02d}:{int(t % 60):02d}  robot time", fill=(255, 255, 255), font=self.font)
         dr.text((300, 8), self.phase(), fill=(255, 210, 90), font=self.font)
         n_g = len(self.reg.of_type("gauge"))
-        dr.text((16, 36), f"request: \"{self.request}\"   driver: {self.driver}   gauges saved: {n_g}   "
+        n_t = len(tags.clusters) if tags is not None else 0
+        n_r = sum(1 for c in tags.clusters if c.get("read")) if tags is not None else 0
+        dr.text((16, 36), f"request: \"{self.request}\"   driver: {self.driver}   dials tagged {n_t}, read {n_r}, saved {n_g}   "
                 f"cmd vx {vx:+.2f} m/s  wz {wz:+.2f} rad/s   (video 15x speed)",
                 fill=(190, 190, 190), font=self.small)
-        dr.text((LEFT_W + 10, 64), "robot camera", fill=(190, 190, 190), font=self.small)
-        dr.text((LEFT_W + 10, 60 + 24 + cam_img.height + 8), "map: path, saved gauges (green), robot (red)",
+        dr.text((LEFT_W + 10, 64), f"robot camera (always on, {getattr(det, 'name', '')} detector)", fill=(190, 190, 190), font=self.small)
+        dr.text((LEFT_W + 10, 60 + 24 + cam_img.height + 8), "map: path, tagged dials (orange; green = read), robot (red)",
                 fill=(190, 190, 190), font=self.small)
         self.ff.stdin.write(np.asarray(f, np.uint8).tobytes())
 

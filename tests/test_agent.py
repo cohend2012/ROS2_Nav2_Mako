@@ -485,3 +485,50 @@ def test_two_opt_never_lengthens_or_drops_views():
         t = [(rnd.uniform(-5, 5), rnd.uniform(-5, 5), 0.0) for _ in range(rnd.randint(2, 15))]
         o = _two_opt(t, (0, 0))
         assert sorted(o) == sorted(t) and L(o) <= L(t) + 1e-9
+
+
+# ---------------- always-on camera + YOLO detector ----------------
+YOLO_ONNX = os.path.join(ROOT, "src", "m20_agent", "models", "dial_yolo.onnx")
+
+
+@pytest.mark.skipif(not os.path.exists(YOLO_ONNX), reason="no dial_yolo.onnx")
+def test_yolo_detector_finds_a_dial_and_ignores_a_blank_frame():
+    from PIL import Image
+    from m20_agent.dial_detector import make_detector
+    det = make_detector("yolo")
+    img = Image.new("RGB", (320, 240), (90, 95, 100))
+    img.paste(render_dial(0.4, 0, 1, "bar", "PG-1", size=60), (140, 90))
+    out = det(np.asarray(img))
+    assert len(out) == 1
+    cx, cy, r, score = out[0]
+    assert abs(cx - 170) < 8 and abs(cy - 120) < 8 and 20 < r < 35 and score > 0.5
+    assert det(np.full((240, 320, 3), 100, np.uint8)) == []
+
+
+class AlwaysOnIO(SearchIO):
+    """SearchIO whose camera also fires DURING navigate (like the robot interface)."""
+
+    def set_frame_listener(self, fn, period_s=0.5):
+        self.listener = fn
+
+    def navigate(self, x, y, yaw, label):
+        fn = getattr(self, "listener", None)
+        x0, y0 = self.p[:2]
+        for t in (0.33, 0.66):                         # two frames on the way
+            self.p = (x0 + t * (x - x0), y0 + t * (y - y0), math.atan2(y - y0, x - x0) if (x, y) != (x0, y0) else self.p[2])
+            if fn:
+                fn(self.capture())
+        return super().navigate(x, y, yaw, label)
+
+
+def test_always_on_camera_tags_dials_while_driving():
+    reg = LandmarkRegistry.load(LM)
+    for n in [n for n in reg.names() if reg.get(n).type == "gauge"]:
+        reg._lm.pop(n)
+    io_ = AlwaysOnIO([(3.0, 1.0, 0.25)], [(0.0, 0.0), (4.0, 0.9)])
+    logs = []
+    res = search_and_read(io_, OfflineBackend(reg), reg, log=logs.append)
+    assert res["camera"]["frames_moving"] > 0
+    assert any("DIAL-001 spotted" in l and "while driving" in l for l in logs)
+    assert len(res["gauges"]) == 1 and res["gauges"][0]["asset_tag"] == "DIAL-001"
+    assert "DIAL-001" in reg.get(res["gauges"][0]["name"]).aliases

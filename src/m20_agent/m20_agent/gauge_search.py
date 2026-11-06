@@ -90,65 +90,105 @@ def _read_from_survey(io, vlm, cluster, rgb, det, range_m, log, max_range=2.8):
 
 
 def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, headings=8,
-                    should_stop=lambda: False, look_range=4.5, read_on_survey=True):
+                    should_stop=lambda: False, look_range=4.5, read_on_survey=True,
+                    detector=None, frame_period_s=0.5):
     """Returns {"candidates", "sightings", "gauges": [record], "rejected", "unreached"}.
-    Each saved record: name, position, viewing_spot, hits, reading (vlm.read_gauge dict)
-    and status OK / NEEDS_REVIEW / UNREADABLE. Nothing that wasn't confirmed up close is
-    saved as a gauge."""
-    # Preferred: planned VIEWS of every mapped surface (arrive facing it, one photo each).
-    # Fallback: grid survey points with a look-around sweep at each.
+    Each saved record: name, asset tag, position, viewing_spot, hits, reading (vlm.read_gauge
+    dict) and status OK / NEEDS_REVIEW / UNREADABLE. Nothing that wasn't confirmed up close
+    is saved as a gauge.
+
+    The camera runs ALL THE TIME when the robot interface supports it
+    (io.set_frame_listener): every frame_period_s while driving and turning, dials are
+    detected (`detector`: classical or YOLO), placed on the map, asset-tagged on first
+    sight, and read when close and centred enough. Every frame also marks the surfaces it
+    saw, and a planned view whose surfaces were all seen on the way is skipped."""
+    from m20_agent.dial_detector import ClassicalDetector
+    det = detector or getattr(io, "detector", None) or ClassicalDetector()
     views = io.view_poses() if hasattr(io, "view_poses") else None
     vps = views if views else io.survey_viewpoints()
-    log(f"[find] {len(vps)} {'planned views' if views else 'survey viewpoints'}")
-    clusters, sightings, unreached = GaugeClusters(radius=0.6, min_hits=1), 0, 0
-    for i, vp in enumerate(vps):
-        if should_stop():
-            break
-        # Drive to the spot (any heading), THEN one short turn to the view heading: arriving
-        # at a fixed heading made the planner loop in for a straight approach (2x the path).
-        ok, why = io.navigate(vp[0], vp[1], None, f"survey_{i}")
-        if not ok:
-            unreached += 1
-            log(f"[find] survey point {i} unreachable: {why}")
-            continue
-        looks = [vp[2]] if views else _look_headings(io, headings, look_range)
-        for yaw_k in looks:
-            if yaw_k is not None:
-                _turn(io, yaw_k)
-            png = io.capture()
-            if png is None:
+    log(f"[find] {len(vps)} {'planned views' if views else 'survey viewpoints'}, detector={det.name}")
+    clusters, unreached = GaugeClusters(radius=0.6, min_hits=1), 0
+    try:
+        io.dial_tags = clusters             # live view for UIs / the mission video
+    except AttributeError:
+        pass
+    stats = {"sightings": 0, "frames": 0, "frames_moving": 0, "views_skipped": 0}
+    seen = set()
+    seen_from = getattr(views, "seen_from", None)
+
+    def process(png, moving):
+        rgb = _rgb(png)
+        stats["frames"] += 1
+        stats["frames_moving"] += bool(moving)
+        p = io.pose()
+        if p is not None and seen_from is not None:
+            seen.update(seen_from(*p, **getattr(det, "envelope", {})))
+        close = []
+        for (cx, cy, r, score) in det(rgb):
+            b, e = pixel_to_ray(cx, cy)
+            hit = io.range_along(b, e)
+            if hit is None:
                 continue
-            rgb = _rgb(png)
-            close = []
-            for (cx, cy, r, score) in detect_dials(rgb):
-                b, e = pixel_to_ray(cx, cy)
-                hit = io.range_along(b, e)
-                if hit is None:
+            n = io.face_normal(b, e) if hasattr(io, "face_normal") else None
+            new = len(clusters.clusters)
+            c = clusters.add(hit[1][0], hit[1][1], n, score)
+            if len(clusters.clusters) > new:
+                log(f"[find] {c['tag']} spotted at ({hit[1][0]:.1f}, {hit[1][1]:.1f}), "
+                    f"{hit[0]:.1f} m{' while driving' if moving else ''}")
+            stats["sightings"] += 1
+            if read_on_survey and views and c.get("read") is None:
+                _read_from_survey(io, vlm, c, rgb, (cx, cy, r), hit[0], log)
+                if c.get("read") is not None:
+                    log(f"[find] {c['tag']} read: {c['read'][0].get('value')} (conf {c['read'][0].get('confidence')})")
+                elif hit[0] <= 3.0:
+                    close.append((c, hit[1]))
+        return close
+
+    def on_frame(png):                    # called by the robot interface while it moves
+        try:
+            process(png, True)
+        except Exception as e:            # never let perception stop the drive
+            log(f"[find] frame error: {e}")
+
+    listening = callable(getattr(io, "set_frame_listener", None))
+    if listening:
+        io.set_frame_listener(on_frame, frame_period_s)
+    try:
+        for i, vp in enumerate(vps):
+            if should_stop():
+                break
+            if views is not None and getattr(views, "cover", None) and views.cover[i] <= seen:
+                stats["views_skipped"] += 1        # the camera already saw these surfaces
+                continue
+            ok, why = io.navigate(vp[0], vp[1], None, f"survey_{i}")
+            if not ok:
+                unreached += 1
+                log(f"[find] survey point {i} unreachable: {why}")
+                continue
+            looks = [vp[2]] if views else _look_headings(io, headings, look_range)
+            for yaw_k in looks:
+                if yaw_k is not None:
+                    _turn(io, yaw_k)
+                png = io.capture()
+                if png is None:
                     continue
-                n = io.face_normal(b, e) if hasattr(io, "face_normal") else None
-                c = clusters.add(hit[1][0], hit[1][1], n, score)
-                sightings += 1
-                if read_on_survey and views:
-                    _read_from_survey(io, vlm, c, rgb, (cx, cy, r), hit[0], log)
-                    if c.get("read") is None and hit[0] <= 3.0:
-                        close.append((c, hit[1]))
-            # a dial close by but off-centre: turn to it here (a few seconds) rather than
-            # drive back for it later
-            for c, (hx, hy) in close[:2]:
-                p = io.pose()
-                if p is None or c.get("read") is not None:
-                    continue
-                _turn(io, math.atan2(hy - p[1], hx - p[0]))
-                png2 = io.capture()
-                if png2 is None:
-                    continue
-                rgb2 = _rgb(png2)
-                for (cx, cy, r, score) in detect_dials(rgb2):
-                    b, e = pixel_to_ray(cx, cy)
-                    hit = io.range_along(b, e)
-                    if hit is not None and math.hypot(hit[1][0] - hx, hit[1][1] - hy) < 0.6:
-                        _read_from_survey(io, vlm, c, rgb2, (cx, cy, r), hit[0], log)
-                        break
+                close = process(png, False)
+                # a dial close by but off-centre: turn to it here (a few seconds) rather
+                # than drive back for it later
+                for c, (hx, hy) in close[:2]:
+                    p = io.pose()
+                    if p is None or c.get("read") is not None:
+                        continue
+                    _turn(io, math.atan2(hy - p[1], hx - p[0]))
+                    png2 = io.capture()
+                    if png2 is not None:
+                        process(png2, False)
+    finally:
+        if listening:
+            io.set_frame_listener(None, frame_period_s)
+    sightings = stats["sightings"]
+    log(f"[find] camera: {stats['frames']} frames ({stats['frames_moving']} while moving), "
+        f"{stats['views_skipped']}/{len(vps)} planned views skipped (already seen)")
     cands = clusters.gauges()
     log(f"[find] survey done: {sightings} sightings -> {len(cands)} candidates")
     gauges, rejected = [], []
@@ -164,7 +204,8 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
         if should_stop():
             break
         name = f"found_gauge_{n_existing + j + 1}"      # unique per candidate, saved or not
-        rec = {"name": name, "position": [round(v, 2) for v in g["position"]], "hits": g["hits"]}
+        rec = {"name": name, "asset_tag": g.get("tag"), "position": [round(v, 2) for v in g["position"]],
+               "hits": g["hits"]}
         best = g.get("read")
         if best is not None:
             rec["read_on_survey"] = True
@@ -197,7 +238,7 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
             rec["image"] = save_png(png, name)
         if teach:
             try:
-                registry.teach(name, *spot, aliases=[], type_="gauge",
+                registry.teach(name, *spot, aliases=[g["tag"]] if g.get("tag") else [], type_="gauge",
                                gauge={k: v for k, v in UNKNOWN_SPEC.items() if k != "unknown"},
                                position=tuple(g["position"]))
             except ValueError as e:
@@ -205,5 +246,5 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
         gauges.append(rec)
         log(f"[find] {name} at {rec['position']}: {rec['status']} "
             f"{r.get('value')} {r.get('units')} (conf {r.get('confidence')})")
-    return {"candidates": len(cands), "sightings": sightings, "gauges": gauges,
+    return {"candidates": len(cands), "sightings": sightings, "camera": stats, "gauges": gauges,
             "rejected": rejected, "unreached_survey_points": unreached, "survey_points": len(vps)}

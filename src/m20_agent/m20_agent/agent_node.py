@@ -89,6 +89,25 @@ class RosRobotIO:
                                   i.origin.position.x, i.origin.position.y)
         return survey_viewpoints(self._planner, p[:2], spacing=spacing, clear=clear)
 
+    def set_frame_listener(self, fn, period_s=0.5):
+        """Always-on camera for find_gauges: fn(png) on the latest frame every period_s
+        while a search runs (the robot is moving or turning between views). Runs on its
+        own thread so perception never blocks the mission action client."""
+        self._listen_fn = fn
+        if fn is None:
+            return
+        if getattr(self, "_listen_thread", None) is None or not self._listen_thread.is_alive():
+            def loop():
+                while self._listen_fn is not None:
+                    t0 = time.monotonic()
+                    png = self.capture(settle_s=0.0, max_age_s=0.5)
+                    f = self._listen_fn
+                    if png is not None and f is not None:
+                        f(png)
+                    time.sleep(max(0.0, period_s - (time.monotonic() - t0)))
+            self._listen_thread = threading.Thread(target=loop, daemon=True)
+            self._listen_thread.start()
+
     def view_poses(self):
         """find_gauges: planned views of every mapped surface (gauge_finder.view_plan)."""
         from m20_agent.gauge_finder import view_plan
@@ -206,11 +225,17 @@ class AgentNode(Node):
         self.declare_parameter("report_dir", "")
         self.declare_parameter("frame", "map")
         self.declare_parameter("taught_places", "")   # overlay file for "this is the kitchen"
+        self.declare_parameter("dial_detector", "auto")  # find_gauges: auto | yolo | classical
+        self.declare_parameter("dial_model", "")         # YOLO ONNX (default models/dial_yolo.onnx)
         path = self.get_parameter("landmarks").value
         if not path:
             raise ValueError("landmarks:=<yaml> is required")
         self.reg = LandmarkRegistry.load(path, self.get_parameter("taught_places").value or None)
         self.io = RosRobotIO(self, self.get_parameter("frame").value)
+        from m20_agent.dial_detector import make_detector
+        self.io.detector = make_detector(self.get_parameter("dial_detector").value,
+                                         self.get_parameter("dial_model").value or None)
+        self.get_logger().info(f"dial detector: {self.io.detector.name}")
         log = lambda s: self.get_logger().info(s)  # noqa: E731
         self.exe = Executor(self.reg, make_backend(self.get_parameter("backend").value, self.reg),
                             self.io, self.get_parameter("report_dir").value or None, log=log)

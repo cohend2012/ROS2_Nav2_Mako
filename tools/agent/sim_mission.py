@@ -143,8 +143,23 @@ class SimRobotIO:
                     env.d.mocap_pos[mid][0] = px + stp * (tx - px) / d
                     env.d.mocap_pos[mid][1] = py + stp * (ty - py) / d
 
+    def set_frame_listener(self, fn, period_s=0.5):
+        """Always-on camera: fn(png) is called every period_s of robot time while the
+        robot moves (driving legs and turns), on the frame the camera sees right then."""
+        self._listener, self._listen_every = fn, max(1, int(round(period_s * spec.CONTROL_HZ)))
+        self._listen_n = 0
+
     def _drive(self, vx, wz):
         self.cmds.append((round(float(vx), 3), round(float(wz), 3)))
+        fn = getattr(self, "_listener", None)
+        if fn is not None and (abs(vx) > 1e-3 or abs(wz) > 1e-3):
+            self._listen_n += 1
+            if self._listen_n % self._listen_every == 0:
+                self._listener = None                      # no re-entry from inside fn
+                try:
+                    fn(self.capture())
+                finally:
+                    self._listener = fn
         if self.people_step_aside:
             self._step_aside()
         env = self.env
@@ -336,6 +351,11 @@ def main():
                     help="find_gauges: planned surface views (default) or grid points + look-around")
     ap.add_argument("--people", default="step-aside", choices=["step-aside", "static"],
                     help="fixed scenes: people walk out of the robot's way (default) or stand still")
+    ap.add_argument("--detector", default="auto", choices=["auto", "yolo", "classical"],
+                    help="find_gauges dial detector; auto = YOLO (src/m20_agent/models/dial_yolo.onnx) "
+                         "when present, else classical")
+    ap.add_argument("--camera", default="always", choices=["always", "stops"],
+                    help="find_gauges: camera on while driving (default) or only at stops")
     ap.add_argument("--video", help="record the mission live to this .mp4 (tools/agent/mission_video.py)")
     ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
                     help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
@@ -363,6 +383,10 @@ def main():
         io_ = FinderIO(env, a.model, plan_radius=plan_radius)
         io_.survey_viewpoints = lambda: survey_viewpoints(io_.planner, (sx, sy), spacing=2.0,
                                                           clear=0.9, bounds=BOUNDS)
+        from m20_agent.dial_detector import make_detector
+        io_.detector = make_detector(a.detector)
+        if a.camera == "stops":
+            io_.set_frame_listener = None                   # gauge_search checks callable()
         if a.search == "views":
             from m20_agent.gauge_finder import view_plan
             io_.view_poses = lambda: view_plan(io_.planner, (sx, sy), bounds=BOUNDS)
