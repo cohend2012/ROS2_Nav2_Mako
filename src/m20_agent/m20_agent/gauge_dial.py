@@ -131,7 +131,9 @@ def read_dial(rgb):
     H, W = face.shape
     gy, gx = np.mgrid[0:H, 0:W]
     in_dial = np.hypot(gx - cx, gy - cy) <= rad * 1.02
-    red = (R > 110) & (R - G > 60) & (R - B > 60) & in_dial
+    # relative redness (as gauge_finder.detect_dials): a needle under side light or
+    # seen off-axis is ~100,40,40, which an absolute R > 110 test misses
+    red = (R > 50) & (R > 1.6 * G) & (R > 1.6 * B) & (R - G > 30) & in_dial
     yy, xx = np.nonzero(red)
     if len(yy) < 8:
         return None, 0.0, f"no needle found ({len(yy)} red px in dial)"

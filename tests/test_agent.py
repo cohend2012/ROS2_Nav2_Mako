@@ -474,3 +474,14 @@ def test_view_plan_sees_every_face_including_thin_racks():
     for face in [(-2.0, -1.0, 0, -1), (-2.0, 1.0, 0, 1), (-3.0, 0.0, -1, 0), (-1.0, 0.0, 1, 0),
                  (2.75, -0.1, 0, -1), (2.75, 0.0, 0, 1)]:          # rack: south AND north face
         assert seen(*face), f"no view of face {face}"
+
+
+def test_two_opt_never_lengthens_or_drops_views():
+    import random
+    from m20_agent.gauge_finder import _two_opt
+    L = lambda t: sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip([(0, 0)] + list(t), t))  # noqa: E731
+    rnd = random.Random(1)
+    for _ in range(200):
+        t = [(rnd.uniform(-5, 5), rnd.uniform(-5, 5), 0.0) for _ in range(rnd.randint(2, 15))]
+        o = _two_opt(t, (0, 0))
+        assert sorted(o) == sorted(t) and L(o) <= L(t) + 1e-9

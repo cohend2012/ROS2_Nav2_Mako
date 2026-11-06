@@ -106,7 +106,7 @@ class GaugeClusters:
                 if np.hypot(*v) > 1e-6:
                     n = tuple(v / np.hypot(*v))
             out.append({"position": (float(x), float(y)), "normal": n, "hits": len(c["pts"]),
-                        "score": round(c["score"], 2)})
+                        "score": round(c["score"], 2), "read": c.get("read")})
         return sorted(out, key=lambda g: -g["hits"])
 
 
@@ -273,4 +273,26 @@ def view_plan(planner, start_xy, bounds=None, rng=(1.0, 2.8), half_fov_deg=18.0,
     while chosen:
         nxt = min(chosen, key=lambda v: math.hypot(v[0] - cur[0], v[1] - cur[1]))
         tour.append(nxt); chosen.remove(nxt); cur = nxt[:2]
-    return tour
+    return _two_opt(tour, start_xy)
+
+
+def _two_opt(tour, start_xy, rounds=50):
+    """Untangle the nearest-neighbour tour (reverse any segment that shortens it)."""
+    pts = [tuple(start_xy)] + [t[:2] for t in tour]
+    d = lambda a, b: math.hypot(a[0] - b[0], a[1] - b[1])  # noqa: E731
+    t = list(tour)
+    for _ in range(rounds):
+        better = False
+        for i in range(1, len(t)):
+            for j in range(i + 1, len(t) + 1):
+                a, b = pts[i - 1], pts[i]
+                c, e = pts[j - 1], (pts[j] if j < len(pts) else None)
+                old = d(a, b) + (d(c, e) if e else 0.0)
+                new = d(a, c) + (d(b, e) if e else 0.0)
+                if new < old - 1e-6:
+                    t[i - 1:j - 1] = reversed(t[i - 1:j - 1])     # = pts[i .. j-1]
+                    pts = [tuple(start_xy)] + [v[:2] for v in t]
+                    better = True
+        if not better:
+            break
+    return t

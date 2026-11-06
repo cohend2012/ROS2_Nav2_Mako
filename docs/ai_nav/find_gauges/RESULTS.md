@@ -166,3 +166,31 @@ The kitchen run showed three more problems, now fixed:
 3. office.xml's people never moved, and one stood in the kitchen doorway forever. The robot
    correctly stopped 6 cm short and gave up. People now step aside (`--people step-aside`,
    the default); `--people static` keeps the old blocked-doorway case.
+
+## Faster: read during the survey (2026-11-06, current default)
+Of the 14.4 min, 3.2 min went on driving BACK to each gauge for a close-up. But a planned
+view's photo is already 1–2.8 m from the dial and nearly head-on. Changes:
+- **Read on survey:** if the dial in a survey photo passes the same up-close test, it is
+  read from a crop around just that dial (so a second dial in the frame can't be read
+  instead). If the dial is within 3 m but off-centre, the robot turns to it on the spot
+  (a few seconds) and reads it from there. It only drives back if neither works.
+- **The reader's needle test** was still the absolute `R > 110` that the detector had
+  already dropped. Survey photos see the needle off-axis and darker ("no needle found,
+  0–5 red px"). It is relative now, like the detector.
+- **Route:** 2-opt over the nearest-first tour (57 m vs 60 m; a property test checks it
+  never lengthens or drops a view). The first version had an off-by-one that tripled
+  the route to 199 m (22 min); caught by the timing table before it shipped.
+- Gauges that still need a visit are visited nearest-first.
+
+| Seed | Found / read | Time | Drives back for a close-up | Worst error |
+|---|---|---|---|---|
+| 3 | 6/6, 6/6 | 10.3 min | 0 | 0.67 % FS |
+| 5 | 6/6, 6/6 | 10.7 min | 0 | 1.0 % FS |
+| 7 | 6/6, 6/6 | 9.8 min | 0 | 1.0 % FS |
+
+The progression on this site: 20.2 min (spin, learned driver) → 16.7 (spin, classical) →
+14.4 (planned views) → **~10 min** (read on survey). 0 collisions, 0 false positives,
+0 confident-wrong in every run.
+
+Once the gauges have been found, the daily "read all the gauges and return" on the saved
+landmarks takes **3.4 min** (G5 6/6, 0 confident-wrong, re-checked with the new reader).
