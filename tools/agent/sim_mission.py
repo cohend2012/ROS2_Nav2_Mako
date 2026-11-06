@@ -478,6 +478,7 @@ def main():
         os.makedirs(a.out, exist_ok=True)
         lidar_map.save_png(grid, os.path.join(a.out, "lidar_map.png"))
         io_.set_plan_map(grid)                          # everything below plans on THIS map
+        io_._lidar_map = True
         rep_map = {"map": "lidar", "mapping_route_m": round(sum(math.hypot(b[0] - q[0], b[1] - q[1])
                                                                for q, b in zip(route, route[1:])), 1)}
     else:

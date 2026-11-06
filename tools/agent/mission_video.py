@@ -62,8 +62,12 @@ class MissionVideo:
     # ------------------------------------------------------------------ map
     def _map_base(self, env):
         mujoco.mj_forward(env.m, env.d)
-        data, w, h, res, ox, oy = rasterize(env.m, env.d)
-        occ = np.asarray(data).reshape(h, w) >= 50
+        # the map the robot is USING (e.g. its own LiDAR map), else the scene raster
+        grid = getattr(self.io, "_grid", None) or rasterize(env.m, env.d)
+        data, w, h, res, ox, oy = grid
+        raw = np.asarray(data).reshape(h, w)
+        occ = raw >= 50
+        unk = raw < 0
         x0, x1, y0, y1 = self.bounds
         self.mw = W - LEFT_W - 20
         self.ppm = self.mw / (x1 - x0)
@@ -74,8 +78,13 @@ class MissionVideo:
             d.line([self.to(gx, y0), self.to(gx, y1)], fill=(228, 228, 222))
         for gy in range(int(y0), int(y1) + 1):
             d.line([self.to(x0, gy), self.to(x1, gy)], fill=(228, 228, 222))
-        ys, xs = np.nonzero(occ)
         half = res * self.ppm / 2 + 0.5
+        for r, c in zip(*np.nonzero(unk)):
+            wx, wy = ox + (c + 0.5) * res, oy + (r + 0.5) * res
+            if x0 <= wx <= x1 and y0 <= wy <= y1:
+                px, py = self.to(wx, wy)
+                d.rectangle([px - half, py - half, px + half, py + half], fill=(200, 200, 200))
+        ys, xs = np.nonzero(occ)
         for r, c in zip(ys, xs):
             wx, wy = ox + (c + 0.5) * res, oy + (r + 0.5) * res
             if x0 <= wx <= x1 and y0 <= wy <= y1:
@@ -185,7 +194,7 @@ class MissionVideo:
                 f"cmd vx {vx:+.2f} m/s  wz {wz:+.2f} rad/s   (video 15x speed)",
                 fill=(190, 190, 190), font=self.small)
         dr.text((LEFT_W + 10, 64), f"robot camera (always on, {getattr(det, 'name', '')} detector)", fill=(190, 190, 190), font=self.small)
-        dr.text((LEFT_W + 10, 60 + 24 + cam_img.height + 8), "map: path, tagged dials (orange; green = read), robot (red)",
+        dr.text((LEFT_W + 10, 60 + 24 + cam_img.height + 8), "map (robot's own" + (" LiDAR" if getattr(io, "_lidar_map", False) else "") + " map): tagged dials orange/green=read",
                 fill=(190, 190, 190), font=self.small)
         self.ff.stdin.write(np.asarray(f, np.uint8).tobytes())
 
