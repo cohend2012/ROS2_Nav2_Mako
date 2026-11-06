@@ -88,6 +88,17 @@ class ClaudeBackend:
              {"type": "text", "text": prompts.gauge_instruction(name, spec)}],
             "report_reading", "Report the gauge reading.", READING_SCHEMA)
 
+    def plan_route(self, map_png, system, instruction):
+        img = base64.standard_b64encode(map_png).decode("utf-8")
+        schema = {"type": "object", "properties": {
+            "waypoints": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+            "rationale": {"type": "string"}}, "required": ["waypoints", "rationale"],
+            "additionalProperties": False}
+        return self._call(system, [
+            {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": img}},
+            {"type": "text", "text": instruction.replace("Reply with ONLY a JSON object", "Call the submit_route tool with")}],
+            "submit_route", "Submit the route.", schema)
+
     def describe_asset(self, png, tag):
         img = base64.standard_b64encode(png).decode("utf-8")
         out = self._call(

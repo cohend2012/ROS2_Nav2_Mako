@@ -610,3 +610,47 @@ def test_context_failure_never_stops_the_mission(tmp_path):
                           register_path=str(tmp_path / "r.json"))
     a = res["asset_register"]["assets"][0]
     assert a["status"] == "READ" and "error" in a["context"]
+
+
+def _box_world():
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT, "src", "m20_ai_nav"))
+    from m20_ai_nav.grid_planner import GridPlanner
+    res, n = 0.05, 200                                   # 10 x 10 m, a 2 x 2 m block in the middle
+    g = np.zeros((n, n), np.int8)
+    g[[0, -1], :] = 100; g[:, [0, -1]] = 100
+    g[80:120, 80:120] = 100
+    pl = GridPlanner(robot_radius=0.4, inflation_radius=0.8)
+    pl.set_map(g.reshape(-1), n, n, res, -5.0, -5.0)
+    return pl
+
+
+class RouteVLM:
+    """First answer cuts straight through the block; after feedback it goes round."""
+    name = "route-fake"
+
+    def __init__(self):
+        self.calls = []
+
+    def plan_route(self, png, system, instruction):
+        self.calls.append(instruction)
+        if len(self.calls) == 1:
+            return {"waypoints": [[-3, 0], [3, 0]], "rationale": "straight"}
+        return {"waypoints": [[-3, 0], [-2.2, 2.2], [2.2, 2.2], [3, 0]], "rationale": "round the top"}
+
+
+def test_vlm_route_is_checked_fixed_by_feedback_and_falls_back():
+    from m20_agent.vlm_route import VlmGlobalPlanner
+    pl = _box_world()
+    vlm = RouteVLM()
+    r = VlmGlobalPlanner(vlm, pl, log=lambda *_: None).plan((-3.0, 0.0), (3.0, 0.0))
+    assert r["source"] == "vlm+feedback" and len(r["tries"]) == 2
+    assert r["tries"][0]["errors"] and "passes too close" in r["tries"][0]["errors"][0]
+    assert "rejected" in vlm.calls[1]                     # the model was told why
+    assert r["map_png"][:4] == b"\x89PNG"
+
+    class Down:
+        def plan_route(self, *a):
+            raise RuntimeError("link down")
+    r2 = VlmGlobalPlanner(Down(), pl, log=lambda *_: None).plan((-3.0, 0.0), (3.0, 0.0))
+    assert r2["source"] == "astar-fallback" and r2["waypoints"]

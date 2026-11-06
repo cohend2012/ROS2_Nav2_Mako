@@ -106,3 +106,7 @@ class OpenAICompatBackend:
         out["model"] = self.model
         return out
 
+    def plan_route(self, map_png, system, instruction):
+        """Global route as waypoints from a map image (m20_agent.vlm_route)."""
+        return self._chat(system, [self._img(map_png), {"type": "text", "text": instruction}])
+

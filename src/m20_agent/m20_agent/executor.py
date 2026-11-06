@@ -296,6 +296,9 @@ class FallbackBackend:
     def read_gauge(self, *a): return self._try("read_gauge", *a)
     def describe(self, *a): return self._try("describe", *a)
 
+    def plan_route(self, *a):
+        return self.p.plan_route(*a)          # no offline route model: the caller falls back to A*
+
     def describe_asset(self, *a):
         try:
             return self.p.describe_asset(*a)
