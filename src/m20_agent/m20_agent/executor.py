@@ -177,7 +177,10 @@ class Executor:
             return False, "this robot interface cannot search (no survey_viewpoints/range_along)"
         try:
             res = search_and_read(self.io, self.vlm, self.reg, save_png=self._save_png,
-                                  log=self.log, should_stop=lambda: self.stop_requested)
+                                  log=self.log, should_stop=lambda: self.stop_requested,
+                                  register_path=(os.path.join(self.report_dir, "asset_register.json")
+                                                 if self.report_dir else None),
+                                  request=report.get("request", ""))
         except RuntimeError as e:
             return False, f"search failed: {e}"
         for g in res["gauges"]:
@@ -186,7 +189,8 @@ class Executor:
                    "viewing_spot": g.get("viewing_spot"), "found": True}
             report["readings"].append(rec)
             self._log_reading(rec, report)
-        report["find_gauges"] = {k: v for k, v in res.items() if k != "gauges"}
+        report["find_gauges"] = {k: v for k, v in res.items() if k not in ("gauges", "asset_register")}
+        report["asset_register"] = res.get("asset_register")
         if res["survey_points"] and res["unreached_survey_points"] == res["survey_points"]:
             return False, "could not reach any survey point"
         n = {st: sum(g["status"] == st for g in res["gauges"])
@@ -291,6 +295,13 @@ class FallbackBackend:
     def plan(self, *a): return self._try("plan", *a)
     def read_gauge(self, *a): return self._try("read_gauge", *a)
     def describe(self, *a): return self._try("describe", *a)
+
+    def describe_asset(self, *a):
+        try:
+            return self.p.describe_asset(*a)
+        except RuntimeError as e:
+            self.log(f"[agent] {self.p.name}.describe_asset failed ({e})")
+            return {"error": str(e)[:200], "model": self.p.name}
 
 
 def make_backend(name, registry, offline_fallback=True):

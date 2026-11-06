@@ -554,3 +554,59 @@ def test_found_gauge_scale_by_voice_then_readings_in_units_and_logged(tmp_path):
     # surveyed gauges can't be re-scaled by voice
     rep2 = Executor(reg, b, io_, log=lambda *_: None).run("PG-101 is 0 to 5 bar")
     assert not rep2["success"]
+
+
+class FakeCosmos(OfflineBackend):
+    """Offline reader + a fake VLM context description (what Cosmos returns)."""
+    name = "fake-cosmos"
+
+    def describe_asset(self, png, tag):
+        return {"mounted_on": "a vertical pipe", "surroundings": "valve to the left",
+                "labels_visible": ["PG-1"], "condition": "clean", "anomaly": False,
+                "confidence": 0.8, "model": "fake"}
+
+
+def test_asset_register_is_live_and_complete(tmp_path):
+    reg = LandmarkRegistry.load(LM)
+    for n in [n for n in reg.names() if reg.get(n).type == "gauge"]:
+        reg._lm.pop(n)
+    path = str(tmp_path / "asset_register.json")
+    io_ = AlwaysOnIO([(3.0, 1.0, 0.25)], [(0.0, 0.0), (0.0, 1.0)])
+    snap = {}
+    orig = io_.navigate
+
+    def nav(x, y, yaw, label):                       # peek at the file mid-mission
+        if label == "survey_1" and os.path.exists(path):
+            snap["mid"] = json.load(open(path))
+        return orig(x, y, yaw, label)
+    io_.navigate = nav
+    saved = []
+    res = search_and_read(io_, FakeCosmos(reg), reg, log=lambda *_: None, register_path=path,
+                          request="find the gauges", save_png=lambda png, n: saved.append(n) or f"/x/{n}.png")
+    mid = {a["asset_tag"]: a for a in snap["mid"]["assets"]}
+    assert "DIAL-001" in mid and mid["DIAL-001"]["status"] == "SPOTTED"   # written at first sight
+    doc = json.load(open(path))
+    a = doc["assets"][0]
+    assert a["asset_tag"] == "DIAL-001" and a["status"] == "READ" and a["landmark"]
+    assert abs(a["location"]["x"] - 3.0) < 0.3 and abs(a["location"]["y"] - 1.0) < 0.3
+    assert a["reading"]["value"] is not None and a["reading"]["units"] == "fraction of scale"
+    assert a["first_seen"]["robot_pose"] and a["first_seen"]["image"].endswith("_first_seen.png")
+    assert a["viewing_spot"] and "mounted_on" in a          # None here: the fake has no map
+    assert a["context"]["mounted_on"] == "a vertical pipe" and a["context"]["model"] == "fake"
+    assert res["asset_register"]["assets"][0]["asset_tag"] == "DIAL-001"
+
+
+def test_context_failure_never_stops_the_mission(tmp_path):
+    reg = LandmarkRegistry.load(LM)
+    for n in [n for n in reg.names() if reg.get(n).type == "gauge"]:
+        reg._lm.pop(n)
+
+    class Down(OfflineBackend):
+        name = "down"
+        def describe_asset(self, png, tag):
+            raise RuntimeError("endpoint unreachable")
+    io_ = AlwaysOnIO([(3.0, 1.0, 0.25)], [(0.0, 0.0)])
+    res = search_and_read(io_, Down(reg), reg, log=lambda *_: None,
+                          register_path=str(tmp_path / "r.json"))
+    a = res["asset_register"]["assets"][0]
+    assert a["status"] == "READ" and "error" in a["context"]

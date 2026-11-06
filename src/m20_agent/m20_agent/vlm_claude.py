@@ -88,6 +88,17 @@ class ClaudeBackend:
              {"type": "text", "text": prompts.gauge_instruction(name, spec)}],
             "report_reading", "Report the gauge reading.", READING_SCHEMA)
 
+    def describe_asset(self, png, tag):
+        img = base64.standard_b64encode(png).decode("utf-8")
+        out = self._call(
+            prompts.ASSET_SYSTEM,
+            [{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": img}},
+             {"type": "text", "text": prompts.ASSET_INSTRUCTION.format(tag=tag) +
+              "\n\nCall the report_asset tool."}],
+            "report_asset", "Report the asset register entry.", prompts.ASSET_SCHEMA)
+        out["model"] = getattr(self, "model", "claude")
+        return out
+
     def describe(self, png, question):
         img = base64.standard_b64encode(png).decode("utf-8")
         schema = {"type": "object", "properties": {"answer": {"type": "string"},

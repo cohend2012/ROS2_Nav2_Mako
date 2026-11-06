@@ -181,6 +181,9 @@ class OfflineBackend:
         return {"readable": True, "value": round(float(v), 2), "units": spec["units"],
                 "confidence": round(conf, 2), "notes": "classical needle fit: " + detail}
 
+    def describe_asset(self, png, tag):
+        return None                  # no model: the register keeps the LiDAR mount guess only
+
     def describe(self, png, question):
         return {"answer": "offline backend: image captured, no description model available",
                 "anomaly": False}

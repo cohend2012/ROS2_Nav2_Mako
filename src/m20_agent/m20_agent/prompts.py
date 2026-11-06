@@ -65,3 +65,29 @@ def gauge_instruction(name, spec):
 INSPECT_SYSTEM = """You describe equipment seen by an inspection robot's camera for a \
 maintenance report. Be factual and brief. Point out visible anomalies (leaks, \
 corrosion, damage, obstructions). Say so plainly when the image is unclear."""
+
+
+ASSET_SYSTEM = """You write the context entry of an asset register for an industrial \
+inspection robot. You are shown one camera frame centred on an analog gauge the robot \
+found. Describe only what is visible: what the gauge is mounted on (pipe, tank, vessel, \
+skid, wellhead, rack, wall...), the equipment and fittings around it, any legible tags \
+or labels, and its visible condition (corrosion, leaks, damage, cracked glass, missing \
+parts, obstructions). Never guess text you cannot read; say "none legible". Keep each \
+field to one short sentence."""
+
+ASSET_INSTRUCTION = ("Asset {tag}. Fill the asset register entry for this gauge.")
+
+ASSET_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "mounted_on": {"type": "string"},
+        "surroundings": {"type": "string"},
+        "labels_visible": {"type": "array", "items": {"type": "string"}},
+        "condition": {"type": "string"},
+        "anomaly": {"type": "boolean"},
+        "confidence": {"type": "number"},
+    },
+    "required": ["mounted_on", "surroundings", "labels_visible", "condition", "anomaly", "confidence"],
+    "additionalProperties": False,
+}
+

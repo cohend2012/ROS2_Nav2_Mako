@@ -38,18 +38,25 @@ def _extract_json(text):
         raise BackendError(f"invalid JSON from model: {e}: {cand[:200]!r}") from e
 
 
+DEFAULT_BASE_URL = "https://integrate.api.nvidia.com/v1"
+DEFAULT_MODEL = "nvidia/cosmos-reason2-8b"
+
+
 class OpenAICompatBackend:
     name = "cosmos"
 
     def __init__(self, base_url=None, model=None, api_key=None, client=None):
-        base_url = base_url or os.environ.get("M20_COSMOS_BASE_URL")
-        self.model = model or os.environ.get("M20_COSMOS_MODEL")
+        # default: NVIDIA's hosted Cosmos Reason 2 (OpenAI-compatible, key in
+        # M20_COSMOS_API_KEY / NVIDIA_API_KEY); point at a local vLLM / NIM to run on-site
+        base_url = base_url or os.environ.get("M20_COSMOS_BASE_URL") or DEFAULT_BASE_URL
+        self.model = model or os.environ.get("M20_COSMOS_MODEL") or DEFAULT_MODEL
         if client is None and (not base_url or not self.model):
             raise BackendError("cosmos backend needs M20_COSMOS_BASE_URL and M20_COSMOS_MODEL")
         if client is None:
             from openai import OpenAI          # lazy: only needed for this backend
-            client = OpenAI(base_url=base_url,
-                            api_key=api_key or os.environ.get("M20_COSMOS_API_KEY", "none"))
+            client = OpenAI(base_url=base_url, timeout=60.0, max_retries=1,
+                            api_key=api_key or os.environ.get("M20_COSMOS_API_KEY")
+                            or os.environ.get("NVIDIA_API_KEY") or "none")
         self.client = client
 
     def _chat(self, system, content, max_tokens=4096):
@@ -87,3 +94,15 @@ class OpenAICompatBackend:
             self._img(png),
             {"type": "text", "text": question + '\nReply with ONLY a JSON object '
                                                 '{"answer": str, "anomaly": bool}.'}])
+
+    def describe_asset(self, png, tag):
+        """Asset-register context for a found dial (what it is on, what is around it)."""
+        keys = ", ".join(f'"{k}"' for k in prompts.ASSET_SCHEMA["properties"])
+        out = self._chat(prompts.ASSET_SYSTEM, [
+            self._img(png),
+            {"type": "text", "text": prompts.ASSET_INSTRUCTION.format(tag=tag) +
+             f"\nReply with ONLY a JSON object with keys {keys} "
+             '(labels_visible: list of strings; anomaly: bool; confidence: 0-1).'}])
+        out["model"] = self.model
+        return out
+

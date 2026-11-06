@@ -102,7 +102,7 @@ def _read_from_survey(io, vlm, cluster, rgb, det, range_m, log, max_range=2.8):
 
 def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, headings=8,
                     should_stop=lambda: False, look_range=4.5, read_on_survey=True,
-                    detector=None, frame_period_s=0.5):
+                    detector=None, frame_period_s=0.5, register_path=None, request=""):
     """Returns {"candidates", "sightings", "gauges": [record], "rejected", "unreached"}.
     Each saved record: name, asset tag, position, viewing_spot, hits, reading (vlm.read_gauge
     dict) and status OK / NEEDS_REVIEW / UNREADABLE. Nothing that wasn't confirmed up close
@@ -118,7 +118,35 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
     views = io.view_poses() if hasattr(io, "view_poses") else None
     vps = views if views else io.survey_viewpoints()
     log(f"[find] {len(vps)} {'planned views' if views else 'survey viewpoints'}, detector={det.name}")
+    from m20_agent.asset_register import AssetRegister
     clusters, unreached = GaugeClusters(radius=0.6, min_hits=1), 0
+    n_existing = len([n for n in registry.names() if n.startswith("found_gauge_")])
+    planner = getattr(io, "planner", None) or getattr(io, "_planner", None)
+    areg = AssetRegister(register_path, request, getattr(det, "name", ""), planner,
+                         describe=getattr(vlm, "describe_asset", None), save_png=save_png,
+                         clock=(lambda: io.t) if hasattr(io, "t") else None, log=log)
+
+    def confirm(c, how):
+        """Tag as you go: the moment a dial is READ it becomes a gauge landmark (with a
+        proper viewing spot) and its register entry is updated; nothing waits for the end."""
+        rd, png_r, pose_r = c["read"]
+        name = c.setdefault("name", f"found_gauge_{n_existing + int(c['tag'].split('-')[1])}")
+        pos = tuple(np.mean(c["pts"], axis=0))
+        nrm = None
+        if c["normals"]:
+            v = np.mean(np.array(c["normals"]), axis=0)
+            nrm = tuple(v / np.hypot(*v)) if np.hypot(*v) > 1e-6 else None
+        spot = viewing_spot(pos, nrm, pose_r[:2], 1.2)
+        areg.read(c["tag"], rd, pose_r, c.get("read_range"), png=png_r, method=how,
+                  context_png=c.get("read_frame"))
+        areg.set(c["tag"], landmark=name, viewing_spot=[round(float(v), 3) for v in spot])
+        if teach:
+            try:
+                registry.teach(name, *spot, aliases=[c["tag"]], type_="gauge",
+                               gauge={k: v for k, v in UNKNOWN_SPEC.items() if k != "unknown"},
+                               position=pos)
+            except ValueError as e:
+                log(f"[find] {name}: not saved ({e})")
     try:
         io.dial_tags = clusters             # live view for UIs / the mission video
     except AttributeError:
@@ -143,14 +171,18 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
             n = io.face_normal(b, e) if hasattr(io, "face_normal") else None
             new = len(clusters.clusters)
             c = clusters.add(hit[1][0], hit[1][1], n, score)
-            if len(clusters.clusters) > new:
+            first = len(clusters.clusters) > new
+            if first:
                 log(f"[find] {c['tag']} spotted at ({hit[1][0]:.1f}, {hit[1][1]:.1f}), "
                     f"{hit[0]:.1f} m{' while driving' if moving else ''}")
+            areg.spotted(c, p, hit[0], score, moving, png if first else None)
             stats["sightings"] += 1
             if read_on_survey and views and c.get("read") is None:
                 _read_from_survey(io, vlm, c, rgb, (cx, cy, r), hit[0], log)
                 if c.get("read") is not None:
+                    c["read_range"], c["read_frame"] = hit[0], png
                     log(f"[find] {c['tag']} read: {c['read'][0].get('value')} (conf {c['read'][0].get('confidence')})")
+                    confirm(c, "while driving" if moving else "at a survey view")
                 elif hit[0] <= 3.0:
                     close.append((c, hit[1]))
         return close
@@ -203,7 +235,6 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
     cands = clusters.gauges()
     log(f"[find] survey done: {sightings} sightings -> {len(cands)} candidates")
     gauges, rejected = [], []
-    n_existing = len([n for n in registry.names() if n.startswith("found_gauge_")])
     # read-on-survey hits first (no driving), then the rest nearest-first from here
     done = [g for g in cands if g.get("read")]
     todo, cur = [g for g in cands if not g.get("read")], (io.pose() or (0.0, 0.0))[:2]
@@ -214,7 +245,9 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
     for j, g in enumerate(order):
         if should_stop():
             break
-        name = f"found_gauge_{n_existing + j + 1}"      # unique per candidate, saved or not
+        # the name follows the asset tag (DIAL-004 -> found_gauge_<n+4>), fixed at first sight
+        name = f"found_gauge_{n_existing + int(g['tag'].split('-')[1])}" if g.get("tag") else \
+            f"found_gauge_{n_existing + j + 1}"
         rec = {"name": name, "asset_tag": g.get("tag"), "position": [round(v, 2) for v in g["position"]],
                "hits": g["hits"]}
         best = g.get("read")
@@ -232,6 +265,8 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
             if png is None or verify_dial(_rgb(png)) is None:
                 continue
             r = vlm.read_gauge(png, name, UNKNOWN_SPEC)
+            if g.get("tag"):
+                areg.read(g["tag"], r, io.pose(), None, png=png, method="revisit", context_png=png)
             if best is None or r.get("confidence", 0) > best[0].get("confidence", 0):
                 best = (r, png, (vx, vy, vyaw))
             if r.get("readable") and r.get("confidence", 0) >= 0.7:
@@ -239,6 +274,8 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
         if best is None:
             rec.update(status="REJECTED" if "detail" not in rec else "UNREACHED")
             rejected.append(rec)
+            if g.get("tag"):
+                areg.set(g["tag"], status=rec["status"], detail=rec.get("detail", "no dial seen up close"))
             log(f"[find] {name}: {rec['status']} ({rec.get('detail', 'no dial seen up close')})")
             continue
         r, png, spot = best
@@ -258,8 +295,12 @@ def search_and_read(io, vlm, registry, save_png=None, log=print, teach=True, hea
                                position=tuple(g["position"]))
             except ValueError as e:
                 log(f"[find] {name}: not saved ({e})")
+        if g.get("tag"):
+            areg.set(g["tag"], landmark=name, viewing_spot=rec["viewing_spot"])
         gauges.append(rec)
         log(f"[find] {name} at {rec['position']}: {rec['status']} "
             f"{r.get('value')} {r.get('units')} (conf {r.get('confidence')})")
+    register = areg.finish()
     return {"candidates": len(cands), "sightings": sightings, "camera": stats, "gauges": gauges,
+            "asset_register": register, "asset_register_path": register_path,
             "rejected": rejected, "unreached_survey_points": unreached, "survey_points": len(vps)}

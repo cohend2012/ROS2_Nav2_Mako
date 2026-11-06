@@ -115,8 +115,9 @@ services:
       - "M20_DIAL_DETECTOR=${M20_DIAL_DETECTOR:-auto}"   # auto (YOLO if the model is installed) | yolo | classical
       - "M20_LANDMARKS=${M20_LANDMARKS:-oil_gas_field_landmarks.yaml}"
       - "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}"
-      - "M20_COSMOS_BASE_URL=${M20_COSMOS_BASE_URL:-}"
-      - "M20_COSMOS_MODEL=${M20_COSMOS_MODEL:-}"
+      - "M20_COSMOS_BASE_URL=${M20_COSMOS_BASE_URL:-https://integrate.api.nvidia.com/v1}"
+      - "M20_COSMOS_MODEL=${M20_COSMOS_MODEL:-nvidia/cosmos-reason2-8b}"
+      - "M20_COSMOS_API_KEY=${M20_COSMOS_API_KEY:-}"        # NVIDIA API key (or none for a local server)
       - "HEALTH_NODE=m20_agent"
     volumes:
       - ../data:/data                           # taught places + mission reports survive restarts
