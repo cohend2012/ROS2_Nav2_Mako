@@ -272,3 +272,42 @@ Two fixes this exposed:
   nearest the image centre.
 - One UNREADABLE gauge used to stop the whole round. Now it is flagged, the round
   continues, and the mission still reports failure, naming the gauge.
+
+## Without a perfect map (2026-11-06)
+Everything above had a perfect map (rasterized from the scene), perfect pose, and exact
+ranges. Two tests remove that.
+
+**1. A map from the robot's own LiDAR** (`--map lidar`, `tools/agent/lidar_map.py`). This is
+"map the area": a 164 m operator loop over the site. Along it, the simulated 3-D LiDAR (16
+rings, 0.5°) is collapsed per degree to the nearest return in the 0.10–1.00 m band, exactly as
+`pointcloud_to_laserscan` makes `/scan`. Cells it crosses are free, the endpoint is
+occupied, and everything never seen is unknown. Each scan is placed with SLAM-like pose
+error (3 cm, 0.7°), range noise 2 cm and 5 % dropouts. The search plans and drives ONLY on this
+map, and planned views must stand on mapped free floor (`map_truth_vs_lidar.png`: tanks
+become outlines with unknown insides). It also has the ground pipes, which the scene
+rasterizer had silently dropped (it skips capsules).
+
+**2. Localization and range errors during the search** (`--noise`): the reported pose drifts
+(bounded random walk ≤ 10 cm, ≤ 1.5°) plus 2 cm / 0.3° jitter. Navigation, dial placement and
+reports all use the reported pose; the physics and the camera use the truth. LiDAR ranges get
+2 cm noise and 5 % dropouts.
+
+| Map | Errors | Seeds | Found | Read within 5 % FS | Time | Worst position error | Collisions |
+|---|---|---|---|---|---|---|---|
+| perfect | none | 3, 5, 7 | 18/18 | 18/18 | 6.3–6.9 min | 0.01 m | 0 |
+| perfect | pose + range | 3, 5, 7 | 18/18 | 18/18 | 6.4–7.2 min | 0.15 m | 0 |
+| LiDAR-built | none | 3, 5, 7 | 18/18 | 18/18 | 6.5–7.1 min | 0.03 m | 0 |
+| **LiDAR-built** | **pose + range** | 3, 5, 7, 11, 13, 17 | **36/36** | **35/36** (1 flagged NEEDS_REVIEW, conf 0.33) | **6.4–8.1 min** | **0.18 m** | 1 (recovered) |
+
+0 false positives and 0 confident-wrong readings in all of these.
+
+What broke before the last row: in one noisy run (seed 5) the robot clipped the end of the
+ground pipe. It then hit the same spot 13 more times, because the back-off was 12 cm and the
+next plan went straight back through it. That run lost 2 gauges and ended 2.6 m from home.
+Fix, as in Nav2: back up ≥ 0.3 m, and put the contact point into the planning map (an
+obstacle layer). Seed 5 then: 1 collision, recovered, 6/6.
+
+So: **no, it does not need a perfect map**. A LiDAR map from one mapping drive, with
+localization error, costs ~1 min and found every gauge in 6 seeds. Still untested: a
+building with NO map (frontier exploration), a real SLAM stack (slam_toolbox loop closure,
+real drift), and real camera images.

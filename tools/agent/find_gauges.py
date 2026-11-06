@@ -56,6 +56,9 @@ class FinderIO(SimRobotIO):
     """SimRobotIO + a LiDAR-equivalent range query along a camera ray."""
 
     def range_along(self, bearing, elev):
+        """Range along the camera ray, measured in the TRUE scene, but placed on the map
+        from where localization says the robot is (pose()), with optional range noise and
+        dropouts (range_noise): what the robot really gets."""
         d = self.env.d
         x, y, z = d.qpos[0:3]
         yaw = self.env.yaw()
@@ -66,7 +69,16 @@ class FinderIO(SimRobotIO):
         dist = mujoco.mj_ray(self.env.m, d, eye, vec, np.array([1, 0, 0, 0, 0, 0], np.uint8), 1, -1, gid)
         if gid[0] < 0 or dist <= 0 or dist > 12.0:
             return None
-        hit = eye + dist * vec
+        rn = getattr(self, "range_noise", None)
+        if rn:
+            if self._prng.random() < rn["dropout"]:
+                return None
+            dist = dist + self._prng.normal(0, rn["sigma_m"])
+        bx, by, byaw = self.pose()                     # believed pose
+        bh = byaw + bearing
+        bvec = np.array([math.cos(elev) * math.cos(bh), math.cos(elev) * math.sin(bh), math.sin(elev)])
+        beye = np.array([bx + CAM_FORWARD * math.cos(byaw), by + CAM_FORWARD * math.sin(byaw), z + 0.05])
+        hit = beye + dist * bvec
         return dist, (float(hit[0]), float(hit[1]))
 
     def turn_to(self, yaw, timeout_s=15.0):

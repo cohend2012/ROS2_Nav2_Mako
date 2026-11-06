@@ -91,7 +91,7 @@ class SimRobotIO:
         self.planner = GridPlanner(robot_radius=plan_radius, inflation_radius=max(0.8, plan_radius + 0.5),
                                    pivot_clear=0.6 if plan_radius < 0.5 else None)
         mujoco.mj_forward(env.m, env.d)
-        self.planner.set_map(*rasterize(env.m, env.d))
+        self.set_plan_map(rasterize(env.m, env.d))
         self.renderer = mujoco.Renderer(env.m, 240, 320)
         self.cam = mujoco.MjvCamera(); self.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
         self.t = 0.0
@@ -102,9 +102,39 @@ class SimRobotIO:
         self.xte = []                     # distance from the planned path, each driving tick
         self.people_step_aside = True                  # (label, t_start, t_end, ok, detail) per leg
 
-    def pose(self):
+    def true_pose(self):
         d = self.env.d
         return float(d.qpos[0]), float(d.qpos[1]), self.env.yaw()
+
+    def pose(self):
+        """What localization REPORTS. With pose_noise set: the truth plus a slowly
+        drifting bias (random walk, bounded: AMCL / SLAM localization error) plus
+        per-call jitter. Navigation, dial placement and reports all use this; the physics
+        and the camera use the truth."""
+        x, y, yaw = self.true_pose()
+        pn = getattr(self, "pose_noise", None)
+        if not pn:
+            return x, y, yaw
+        bx, by, byaw = self._pose_bias
+        return (x + bx + self._prng.normal(0, pn["jitter_m"]), y + by + self._prng.normal(0, pn["jitter_m"]),
+                yaw + byaw + self._prng.normal(0, math.radians(pn["jitter_deg"])))
+
+    def set_pose_noise(self, drift_max_m=0.10, drift_step_m=0.004, yaw_max_deg=1.5, jitter_m=0.02,
+                       jitter_deg=0.3, seed=0):
+        self.pose_noise = dict(drift_max_m=drift_max_m, drift_step_m=drift_step_m,
+                               yaw_max_deg=yaw_max_deg, jitter_m=jitter_m, jitter_deg=jitter_deg)
+        self._prng = np.random.default_rng(seed)
+        self._pose_bias = [0.0, 0.0, 0.0]
+
+    def _drift(self):
+        pn = getattr(self, "pose_noise", None)
+        if not pn:
+            return
+        b = self._pose_bias
+        for i in (0, 1):
+            b[i] = float(np.clip(b[i] + self._prng.normal(0, pn["drift_step_m"]), -pn["drift_max_m"], pn["drift_max_m"]))
+        lim = math.radians(pn["yaw_max_deg"])
+        b[2] = float(np.clip(b[2] + self._prng.normal(0, lim / 25), -lim, lim))
 
     def _step_aside(self, dt=0.1, near=1.3, speed=0.6):
         """Fixed scenes (office.xml) park people where the generator put them, e.g. in the
@@ -151,6 +181,7 @@ class SimRobotIO:
 
     def _drive(self, vx, wz):
         self.cmds.append((round(float(vx), 3), round(float(wz), 3)))
+        self._drift()
         fn = getattr(self, "_listener", None)
         if fn is not None and (abs(vx) > 1e-3 or abs(wz) > 1e-3):
             self._listen_n += 1
@@ -165,7 +196,7 @@ class SimRobotIO:
         env = self.env
         _, _, _, _, info = env.step(spec.cmd_to_action(vx, wz))
         self.t += 1.0 / spec.CONTROL_HZ
-        x, y, yaw = self.pose()
+        x, y, yaw = self.true_pose()
         self.trace.append((round(self.t, 1), round(x, 3), round(y, 3), round(yaw, 3)))
         return info
 
@@ -227,17 +258,51 @@ class SimRobotIO:
         from m20_ai_nav.geometry import densify
         return np.asarray(densify(np.asarray(path, float)[:, :2], step), float)
 
+    def set_plan_map(self, grid):
+        self._grid = [np.asarray(grid[0], np.int8).copy()] + list(grid[1:])
+        self.planner.set_map(*self._grid)
+
+    def _mark_contact(self):
+        """Nav2's obstacle layer: what the robot ran into goes into the planning map
+        (where localization believes it is), so the next plan goes round it instead of
+        through the same spot again."""
+        env, d = self.env, self.env.d
+        tx, ty, _ = self.true_pose()
+        bx, by, _ = self.pose()
+        pts = []
+        for i in range(d.ncon):
+            c = d.contact[i]
+            b1, b2 = env.m.geom_bodyid[c.geom1], env.m.geom_bodyid[c.geom2]
+            if (b1 == 0) != (b2 == 0):                     # robot (or person) vs world geometry
+                pts.append((c.pos[0] - tx + bx, c.pos[1] - ty + by))
+        if not pts:
+            return 0
+        data, w, h, res, ox, oy = self._grid
+        g = data.reshape(h, w)
+        for px, py in pts:
+            c0, r0 = int((px - ox) / res), int((py - oy) / res)
+            k = int(0.15 / res) + 1
+            rr, cc = np.mgrid[-k:k + 1, -k:k + 1]
+            m = rr ** 2 + cc ** 2 <= k * k
+            R, C = (r0 + rr)[m], (c0 + cc)[m]
+            ok = (R >= 0) & (R < h) & (C >= 0) & (C < w)
+            g[R[ok], C[ok]] = 100
+        self.planner.set_map(*self._grid)
+        return len(pts)
+
     def _back_off(self, vx_at_contact):
-        """Nav2's BackUp recovery equivalent: leave the contact before the next leg
-        (without it every later leg 'collides' at t=0 and the mission is lost)."""
+        """Nav2's BackUp recovery: leave the contact by >= 0.3 m before the next leg, and
+        put the contact into the planning map (without both, every later leg 'collided'
+        at the same pipe end: 13 times in one noisy run)."""
+        marked = self._mark_contact()
         for direction in ((-1.0, 1.0) if vx_at_contact >= 0 else (1.0, -1.0)):
             clear = 0
-            for _ in range(400):            # in contact a step is cut to 20 ms: up to ~8 s
+            for _ in range(500):            # in contact a step is cut to 20 ms
                 clear = 0 if self._drive(0.15 * direction, 0.0)["collision"] else clear + 1
-                if clear >= 8:              # ~0.12 m clear of the contact
+                if clear >= 20:             # ~0.3 m clear of the contact
                     for _ in range(5):
                         self._drive(0.0, 0.0)
-                    return ", backed off"
+                    return f", backed off 0.3 m, {marked} contact point(s) added to the map"
         return ", still in contact"
 
     def wait(self, seconds):
@@ -356,6 +421,11 @@ def main():
                          "when present, else classical")
     ap.add_argument("--camera", default="always", choices=["always", "stops"],
                     help="find_gauges: camera on while driving (default) or only at stops")
+    ap.add_argument("--map", default="truth", choices=["truth", "lidar"],
+                    help="lidar: plan and drive on a map built from the robot's own LiDAR along a "
+                         "mapping loop (tools/agent/lidar_map.py), not the scene geometry")
+    ap.add_argument("--noise", action="store_true",
+                    help="localization drift (<= 10 cm, 1.5 deg) + jitter, LiDAR range noise and dropouts")
     ap.add_argument("--video", help="record the mission live to this .mp4 (tools/agent/mission_video.py)")
     ap.add_argument("--site", default="outdoor", choices=["outdoor", "office"],
                     help="office: tools/sim/office.xml + office_landmarks.yaml, start at reception, "
@@ -393,6 +463,28 @@ def main():
     else:
         io_ = SimRobotIO(env, a.model, plan_radius=plan_radius)
     io_.people_step_aside = a.people == "step-aside"
+    if a.map == "lidar":
+        import lidar_map
+        from m20_agent.gauge_finder import survey_viewpoints as _svp
+        truth_planner = io_.planner                      # used ONLY to route the operator's loop
+        loop = _svp(truth_planner, (sx, sy), spacing=3.0, clear=0.9)
+        route, cur = [(sx, sy)], (sx, sy)
+        for p_ in loop + [(sx, sy)]:
+            seg = truth_planner.plan(cur[0], cur[1], p_[0], p_[1])
+            if seg:
+                route += [tuple(q[:2]) for q in seg[1:]]
+                cur = p_
+        grid = lidar_map.build(env, route, seed=a.seed)
+        os.makedirs(a.out, exist_ok=True)
+        lidar_map.save_png(grid, os.path.join(a.out, "lidar_map.png"))
+        io_.set_plan_map(grid)                          # everything below plans on THIS map
+        rep_map = {"map": "lidar", "mapping_route_m": round(sum(math.hypot(b[0] - q[0], b[1] - q[1])
+                                                               for q, b in zip(route, route[1:])), 1)}
+    else:
+        rep_map = {"map": "truth"}
+    if a.noise:
+        io_.set_pose_noise(seed=a.seed)
+        io_.range_noise = {"sigma_m": 0.02, "dropout": 0.05}
     if a.driver == "pursuit":                  # RPP-style: short look-ahead (Nav2 office 0.5-0.8 m)
         io_.core = NavCore(PursuitDriver(), lookahead=0.6, stuck_timeout_s=20.0)
     video = None
@@ -425,6 +517,7 @@ def main():
     with open(os.path.join(a.out, "trace.json"), "w") as f:
         json.dump(io_.trace, f)
     rep["sim"]["smoothness"] = smoothness(io_.cmds)
+    rep["sim"].update(rep_map, noise=bool(a.noise))
     rep["sim"]["path_tracking"] = path_tracking(io_)
     with open(os.path.join(a.out, "events.json"), "w") as f:
         json.dump(io_.events, f)

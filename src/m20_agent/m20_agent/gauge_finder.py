@@ -229,10 +229,13 @@ def view_plan(planner, start_xy, bounds=None, rng=(1.0, 2.8), half_fov_deg=18.0,
     step = max(1, int(round(cand_step / res)))
     hfov, minc = math.radians(half_fov_deg), math.cos(math.radians(max_incidence_deg))
     views = []                                           # (x, y, yaw, covered index set)
+    unk = getattr(planner, "unk", None)
     for r0 in range(step // 2, h, step):
         for c0 in range(step // 2, w, step):
             if dist[r0, c0] < clear:
                 continue
+            if unk is not None and unk[max(0, r0 - 2):r0 + 3, max(0, c0 - 2):c0 + 3].any():
+                continue                      # a view must stand on MAPPED free floor
             x, y = planner.cell_to_world(r0, c0)
             if bounds and not (bounds[0] <= x <= bounds[1] and bounds[2] <= y <= bounds[3]):
                 continue
