@@ -1,0 +1,439 @@
+{
+ "updated": "2026-11-07T01:45:52",
+ "mission": "find the gauges and come back to where you started",
+ "frame": "map",
+ "assets": [
+  {
+   "asset_tag": "DIAL-001",
+   "type": "analog dial gauge",
+   "landmark": "found_gauge_1",
+   "status": "READ",
+   "first_seen": {
+    "time": "2026-11-07T01:38:26",
+    "mission_time_s": 0.4,
+    "robot_pose": [
+     0.005,
+     0.025,
+     -0.002
+    ],
+    "range_m": 5.34,
+    "while_driving": true,
+    "image": "013826_DIAL-001_first_seen.png"
+   },
+   "detector": {
+    "name": "yolo",
+    "best_score": 0.96
+   },
+   "mission": "find the gauges and come back to where you started",
+   "mounted_on": {
+    "shape": "box",
+    "size_m": [
+     1.0,
+     0.9
+    ],
+    "guess": "skid, enclosure or wellhead base"
+   },
+   "last_seen": {
+    "time": "2026-11-07T01:43:33",
+    "mission_time_s": 283.9,
+    "robot_pose": [
+     -2.599,
+     0.787,
+     0.232
+    ],
+    "range_m": 8.18,
+    "while_driving": true
+   },
+   "location": {
+    "frame": "map",
+    "x": 5.641,
+    "y": -1.005,
+    "uncertainty_m": 0.077,
+    "facing_deg": 179.8,
+    "sightings": 63
+   },
+   "reading": {
+    "value": 0.57,
+    "units": "fraction of scale",
+    "confidence": 0.8,
+    "notes": "classical needle fit: needle 71.8 deg, spread 4.0 deg, face r=38px",
+    "status": "READ",
+    "method": "while driving",
+    "time": "2026-11-07T01:39:14",
+    "mission_time_s": 45.4,
+    "robot_pose": [
+     3.316,
+     -1.612,
+     0.089
+    ],
+    "range_m": 2.14,
+    "image": "013914_DIAL-001_read.png"
+   },
+   "viewing_spot": [
+    4.421,
+    -0.999,
+    -0.004
+   ]
+  },
+  {
+   "asset_tag": "DIAL-002",
+   "type": "analog dial gauge",
+   "landmark": "found_gauge_2",
+   "status": "READ",
+   "first_seen": {
+    "time": "2026-11-07T01:38:26",
+    "mission_time_s": 0.4,
+    "robot_pose": [
+     0.005,
+     0.025,
+     -0.002
+    ],
+    "range_m": 5.02,
+    "while_driving": true,
+    "image": "013826_DIAL-002_first_seen.png"
+   },
+   "detector": {
+    "name": "yolo",
+    "best_score": 0.96
+   },
+   "mission": "find the gauges and come back to where you started",
+   "mounted_on": {
+    "shape": "linear",
+    "size_m": [
+     3.2,
+     0.4
+    ],
+    "guess": "pipe, rack beam or wall"
+   },
+   "last_seen": {
+    "time": "2026-11-07T01:42:35",
+    "mission_time_s": 230.4,
+    "robot_pose": [
+     -0.936,
+     -1.466,
+     0.93
+    ],
+    "range_m": 6.5,
+    "while_driving": true
+   },
+   "location": {
+    "frame": "map",
+    "x": 5.048,
+    "y": 1.882,
+    "uncertainty_m": 0.062,
+    "facing_deg": -90.0,
+    "sightings": 36
+   },
+   "reading": {
+    "value": 0.34,
+    "units": "fraction of scale",
+    "confidence": 0.86,
+    "notes": "classical needle fit: needle 134.2 deg, spread 2.8 deg, face r=38px",
+    "status": "READ",
+    "method": "while driving",
+    "time": "2026-11-07T01:39:35",
+    "mission_time_s": 64.9,
+    "robot_pose": [
+     4.289,
+     -0.382,
+     1.437
+    ],
+    "range_m": 2.14,
+    "image": "013935_DIAL-002_read.png"
+   },
+   "viewing_spot": [
+    5.063,
+    0.683,
+    1.571
+   ]
+  },
+  {
+   "asset_tag": "DIAL-003",
+   "type": "analog dial gauge",
+   "landmark": "found_gauge_3",
+   "status": "READ",
+   "first_seen": {
+    "time": "2026-11-07T01:39:27",
+    "mission_time_s": 57.4,
+    "robot_pose": [
+     4.711,
+     -1.574,
+     -2.858
+    ],
+    "range_m": 7.86,
+    "while_driving": true,
+    "image": "013927_DIAL-003_first_seen.png"
+   },
+   "detector": {
+    "name": "yolo",
+    "best_score": 0.97
+   },
+   "mission": "find the gauges and come back to where you started",
+   "mounted_on": {
+    "shape": "box",
+    "size_m": [
+     1.2,
+     1.6
+    ],
+    "guess": "skid, enclosure or wellhead base"
+   },
+   "last_seen": {
+    "time": "2026-11-07T01:43:26",
+    "mission_time_s": 278.4,
+    "robot_pose": [
+     -2.721,
+     0.791,
+     -1.694
+    ],
+    "range_m": 1.67,
+    "while_driving": true
+   },
+   "location": {
+    "frame": "map",
+    "x": -3.468,
+    "y": -1.013,
+    "uncertainty_m": 0.08,
+    "facing_deg": -4.6,
+    "sightings": 74
+   },
+   "reading": {
+    "value": 0.7,
+    "units": "fraction of scale",
+    "confidence": 0.8,
+    "notes": "classical needle fit: needle 35.0 deg, spread 4.0 deg, face r=38px",
+    "status": "READ",
+    "method": "while driving",
+    "time": "2026-11-07T01:42:42",
+    "mission_time_s": 237.4,
+    "robot_pose": [
+     -1.044,
+     -1.494,
+     2.712
+    ],
+    "range_m": 2.15,
+    "image": "014242_DIAL-003_read.png"
+   },
+   "viewing_spot": [
+    -2.276,
+    -1.108,
+    3.062
+   ]
+  },
+  {
+   "asset_tag": "DIAL-004",
+   "type": "analog dial gauge",
+   "landmark": "found_gauge_4",
+   "status": "READ",
+   "first_seen": {
+    "time": "2026-11-07T01:39:29",
+    "mission_time_s": 59.4,
+    "robot_pose": [
+     4.567,
+     -1.6,
+     3.0
+    ],
+    "range_m": 4.93,
+    "while_driving": true,
+    "image": "013929_DIAL-004_first_seen.png"
+   },
+   "detector": {
+    "name": "yolo",
+    "best_score": 0.95
+   },
+   "mission": "find the gauges and come back to where you started",
+   "mounted_on": {
+    "shape": "box",
+    "size_m": [
+     1.0,
+     1.0
+    ],
+    "guess": "skid, enclosure or wellhead base"
+   },
+   "last_seen": {
+    "time": "2026-11-07T01:42:39",
+    "mission_time_s": 233.9,
+    "robot_pose": [
+     -0.942,
+     -1.372,
+     1.683
+    ],
+    "range_m": 2.32,
+    "while_driving": true
+   },
+   "location": {
+    "frame": "map",
+    "x": 0.046,
+    "y": 1.094,
+    "uncertainty_m": 0.06,
+    "facing_deg": -95.3,
+    "sightings": 17
+   },
+   "reading": {
+    "value": 0.75,
+    "units": "fraction of scale",
+    "confidence": 0.81,
+    "notes": "classical needle fit: needle 23.6 deg, spread 3.8 deg, face r=33px",
+    "status": "READ",
+    "method": "while driving",
+    "time": "2026-11-07T01:42:35",
+    "mission_time_s": 230.9,
+    "robot_pose": [
+     -1.015,
+     -1.411,
+     1.034
+    ],
+    "range_m": 2.39,
+    "image": "014235_DIAL-004_read.png"
+   },
+   "viewing_spot": [
+    -0.077,
+    -0.115,
+    1.478
+   ]
+  },
+  {
+   "asset_tag": "DIAL-005",
+   "type": "analog dial gauge",
+   "landmark": "found_gauge_5",
+   "status": "READ",
+   "first_seen": {
+    "time": "2026-11-07T01:39:29",
+    "mission_time_s": 59.4,
+    "robot_pose": [
+     4.567,
+     -1.6,
+     3.0
+    ],
+    "range_m": 10.07,
+    "while_driving": true,
+    "image": "013929_DIAL-005_first_seen.png"
+   },
+   "detector": {
+    "name": "yolo",
+    "best_score": 0.95
+   },
+   "mission": "find the gauges and come back to where you started",
+   "mounted_on": {
+    "shape": "large round/square",
+    "size_m": [
+     2.9,
+     3.0
+    ],
+    "guess": "tank or vessel"
+   },
+   "last_seen": {
+    "time": "2026-11-07T01:44:55",
+    "mission_time_s": 360.4,
+    "robot_pose": [
+     -7.207,
+     1.939,
+     0.616
+    ],
+    "range_m": 1.82,
+    "while_driving": true
+   },
+   "location": {
+    "frame": "map",
+    "x": -5.004,
+    "y": 2.543,
+    "uncertainty_m": 0.074,
+    "facing_deg": -93.2,
+    "sightings": 43
+   },
+   "reading": {
+    "value": 0.73,
+    "units": "fraction of scale",
+    "confidence": 0.82,
+    "notes": "classical needle fit: needle 28.5 deg, spread 3.6 deg, face r=52px",
+    "status": "READ",
+    "method": "while driving",
+    "time": "2026-11-07T01:44:01",
+    "mission_time_s": 309.9,
+    "robot_pose": [
+     -5.167,
+     0.597,
+     1.654
+    ],
+    "range_m": 1.65,
+    "image": "014401_DIAL-005_read.png"
+   },
+   "viewing_spot": [
+    -5.067,
+    1.338,
+    1.514
+   ]
+  },
+  {
+   "asset_tag": "DIAL-006",
+   "type": "analog dial gauge",
+   "landmark": "found_gauge_6",
+   "status": "READ",
+   "first_seen": {
+    "time": "2026-11-07T01:39:54",
+    "mission_time_s": 82.9,
+    "robot_pose": [
+     7.562,
+     -0.58,
+     3.053
+    ],
+    "range_m": 9.18,
+    "while_driving": true,
+    "image": "013954_DIAL-006_first_seen.png"
+   },
+   "detector": {
+    "name": "yolo",
+    "best_score": 0.97
+   },
+   "mission": "find the gauges and come back to where you started",
+   "mounted_on": {
+    "shape": "large round/square",
+    "size_m": [
+     3.0,
+     3.0
+    ],
+    "guess": "tank or vessel"
+   },
+   "last_seen": {
+    "time": "2026-11-07T01:44:38",
+    "mission_time_s": 344.4,
+    "robot_pose": [
+     -6.915,
+     -1.408,
+     1.113
+    ],
+    "range_m": 6.85,
+    "while_driving": true
+   },
+   "location": {
+    "frame": "map",
+    "x": -1.224,
+    "y": 3.095,
+    "uncertainty_m": 0.066,
+    "facing_deg": -91.8,
+    "sightings": 59
+   },
+   "reading": {
+    "value": 0.32,
+    "units": "fraction of scale",
+    "confidence": 0.72,
+    "notes": "classical needle fit: needle 138.7 deg, spread 5.5 deg, face r=30px",
+    "status": "READ",
+    "method": "while driving",
+    "time": "2026-11-07T01:43:06",
+    "mission_time_s": 258.9,
+    "robot_pose": [
+     -2.263,
+     0.352,
+     1.18
+    ],
+    "range_m": 2.62,
+    "image": "014306_DIAL-006_read.png"
+   },
+   "viewing_spot": [
+    -1.258,
+    1.899,
+    1.539
+   ]
+  }
+ ]
+}
